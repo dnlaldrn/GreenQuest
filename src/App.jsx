@@ -14,6 +14,10 @@ const router = createBrowserRouter([
     element: <MainLayout />,
     children: [
       {
+        index: true,
+        element: <p>Welcome! Please login or sign up.</p>,
+      },
+      {
         path: "login",
         element: <Login />,
       },
