@@ -1,35 +1,38 @@
-import { createBrowserRouter, RouterProvider } from "react-router";
-
+import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import MainLayout from "./layout/MainLayout";
-import SignUpPage from "./pages/SignUpPage/SignUpPage";
-import Login from "./pages/LogInPage/LogInPage";
-import Dashboard from "./pages/Dashboard/DashBoardPage";
- 
+import HomePage from "./pages/HomePage";
+import Login from "./components/LoginComponent";
+import SignUpComponent from "./components/SignUpComponent";
+import AdminDashBoard from "./pages/AdminDashBoard";
+
 const router = createBrowserRouter([
   {
+    path:"/login", element: <Login/>
+  },
+  {
+    path:"/signup", element: <SignUpComponent/>
+  },
+   {
+    path:"/admin", element: <AdminDashBoard/>
+  },
+  {
     path: "/",
-    Component: MainLayout,
+    element: <MainLayout />,
     children: [
       {
         index: true,
-        element: <p>Welcome! Please login or sign up.</p>,
-      },
-      {
-        path: "login",
-        Component: Login,
-      },
-      {
-        path: "signup",
-        Component: SignUpPage,
-      },
-      {
-        path: "dashboard",
-        Component: Dashboard,
+        element: (
+          <>
+          < HomePage/>
+          </>
+        ),
       },
     ],
   },
 ]);
 
-export default function App() {
+function App() {
   return <RouterProvider router={router} />;
 }
+
+export default App;
