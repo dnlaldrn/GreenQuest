@@ -3,7 +3,10 @@ import MainLayout from "./layout/MainLayout";
 import HomePage from "./pages/HomePage";
 import Login from "./components/LoginComponent";
 import SignUpComponent from "./components/SignUpComponent";
+import  AdminLogin from "./components/AdminLoginComponent"
+import DashBoardPage from "./pages/DashBoardPage";
 import AdminDashBoard from "./pages/AdminDashBoard";
+
 
 const router = createBrowserRouter([
   {
@@ -13,7 +16,13 @@ const router = createBrowserRouter([
     path:"/signup", element: <SignUpComponent/>
   },
    {
-    path:"/admin", element: <AdminDashBoard/>
+    path:"/admin", element: <AdminLogin/>
+  },
+  {
+    path:"/userDasboard", element: <DashBoardPage/>
+  },
+  {
+    path:"/adminDasboard", element: <AdminDashBoard/>
   },
   {
     path: "/",
