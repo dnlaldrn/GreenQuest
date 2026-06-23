@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import {signUp} from '../services/authService'
 import { useNavigate } from "react-router-dom";
+import { supabase } from '../lib/supabase';
 
 export default function SignUpComponent() {
   const navigate = useNavigate();
@@ -19,12 +20,25 @@ export default function SignUpComponent() {
 
     const result = await signUp(username, email, password);
 
-    if (result.error) {
-      setError(result.error.message);
-      return;
-    }
+   if (error) {
+    setError(error.message);
+    return;
+  }
 
-    navigate("/login");
+  // IMPORTANT: create profile row
+  const user = result.data.user;
+
+  if (user) {
+    await supabase.from("profiles").insert({
+      id: user.id,
+      username,
+      role: "user",
+    });
+
+    
+  }
+  
+  navigate('/login')
   } catch (err) {
     setError(err.message);
   } finally {
