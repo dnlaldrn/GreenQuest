@@ -5,7 +5,7 @@ import Footer from "../components/Footer";
 export default function MainLayout() {
   return (
     <>
-      <div class="h-screen flex justify-center items-center">
+      <div >
         <Navbar />
         <main>
           <Outlet />
