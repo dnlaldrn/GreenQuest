@@ -1,4 +1,3 @@
-import React from "react";
 
 export default function HeroSection() {
   const steps = [
@@ -257,7 +256,7 @@ export default function HeroSection() {
           <div className="space-y-4">
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-white leading-tight">
               Turn Sustainable <br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-green-500">
+              <span className=" text-[#22C55E] ">
                 Actions Into Rewards
               </span>
             </h1>
