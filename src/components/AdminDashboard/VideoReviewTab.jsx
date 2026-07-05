@@ -137,10 +137,10 @@ export default function VideoReviewTab({
       {/* Video Player Modal */}
       {selectedVideo && createPortal(
         <div className="fixed inset-0 bg-black/75 backdrop-blur-md flex items-center justify-center p-4 z-50 animate-fade-in">
-          <div className="bg-[#161D16] border border-[#4BE277]/30 shadow-[0_0_50px_rgba(74,225,118,0.15)] max-w-3xl w-full rounded-2xl overflow-hidden p-6 space-y-5">
+          <div className="bg-[#161D16] border border-[#4BE277]/30 shadow-[0_0_40px_rgba(74,225,118,0.15)] max-w-2xl w-full rounded-2xl overflow-hidden p-5 space-y-4">
             
             {/* Modal Header */}
-            <div className="flex justify-between items-center border-b border-[#DCE5D9]/10 pb-3">
+            <div className="flex justify-between items-center border-b border-[#DCE5D9]/10 pb-2.5">
               <div className="flex items-center gap-2">
                 <span className="w-2.5 h-2.5 rounded-full bg-[#4BE277] animate-pulse"></span>
                 <h3 className="font-bold text-sm text-[#DCE5D9] uppercase tracking-wider font-mono">
@@ -155,32 +155,32 @@ export default function VideoReviewTab({
               </button>
             </div>
             
-            {/* Sleek Cinematic Video Box */}
-            <div className="aspect-video bg-black/90 rounded-xl overflow-hidden border border-[#3D4A3D] shadow-inner relative flex items-center justify-center">
+            {/* Sleek Cinematic Video Box with Max Height Capped */}
+            <div className="aspect-video bg-black/90 rounded-xl overflow-hidden border border-[#3D4A3D] shadow-inner relative flex items-center justify-center max-h-[240px] md:max-h-[260px] mx-auto w-full">
               <video
                 src={selectedVideo.video_url}
                 controls
                 autoPlay
-                className="w-full h-full object-contain"
+                className="max-h-full max-w-full object-contain"
               />
             </div>
 
             {/* Structured Metadata Box */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-black/30 border border-[#3D4A3D]/50 p-4 rounded-xl font-mono text-xs text-[#BCCBB9]">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 bg-black/30 border border-[#3D4A3D]/50 p-3 rounded-xl font-mono text-[11px] text-[#BCCBB9]">
               <div className="space-y-2">
                 <div>
-                  <span className="text-[#4BE277]/70 font-semibold uppercase block text-[10px] tracking-wider">
+                  <span className="text-[#4BE277]/70 font-semibold uppercase block text-[9px] tracking-wider">
                     Participant
                   </span>
-                  <p className="text-sm font-semibold text-[#DCE5D9]">
+                  <p className="text-xs font-semibold text-[#DCE5D9]">
                     {selectedVideo.profiles?.username || "Eco Participant"}
                   </p>
                 </div>
                 <div>
-                  <span className="text-[#4BE277]/70 font-semibold uppercase block text-[10px] tracking-wider">
+                  <span className="text-[#4BE277]/70 font-semibold uppercase block text-[9px] tracking-wider">
                     Estimated Points
                   </span>
-                  <p className="text-sm font-bold text-[#92DB2A]">
+                  <p className="text-xs font-bold text-[#92DB2A]">
                     +{selectedVideo.points_awarded || 150} pts
                   </p>
                 </div>
@@ -188,7 +188,7 @@ export default function VideoReviewTab({
 
               <div className="space-y-2">
                 <div>
-                  <span className="text-[#4BE277]/70 font-semibold uppercase block text-[10px] tracking-wider">
+                  <span className="text-[#4BE277]/70 font-semibold uppercase block text-[9px] tracking-wider">
                     Evidence Description
                   </span>
                   <p className="text-xs text-[#DCE5D9] leading-relaxed">
@@ -197,10 +197,10 @@ export default function VideoReviewTab({
                 </div>
                 {selectedVideo.ai_feedback && (
                   <div>
-                    <span className="text-[#FFB4AB]/70 font-semibold uppercase block text-[10px] tracking-wider">
+                    <span className="text-[#FFB4AB]/70 font-semibold uppercase block text-[9px] tracking-wider">
                       AI Feedback & Diagnostics
                     </span>
-                    <p className="text-[11px] text-[#FFB4AB] leading-relaxed">
+                    <p className="text-[10px] text-[#FFB4AB] leading-relaxed">
                       {selectedVideo.ai_feedback}
                     </p>
                   </div>
@@ -209,8 +209,8 @@ export default function VideoReviewTab({
             </div>
 
             {/* Modal Actions */}
-            <div className="flex justify-between items-center pt-4 border-t border-[#DCE5D9]/10">
-              <div className="text-[10px] text-[#BCCBB9] font-mono">
+            <div className="flex justify-between items-center pt-3 border-t border-[#DCE5D9]/10">
+              <div className="text-[9px] text-[#BCCBB9] font-mono">
                 Status: <span className="uppercase text-[#FFB4AB]">{selectedVideo.status}</span>
               </div>
               <div className="flex gap-2">
@@ -221,26 +221,26 @@ export default function VideoReviewTab({
                         handleApprove(selectedVideo.id, selectedVideo.user_id, selectedVideo.points_awarded || 150);
                         setSelectedVideo(null);
                       }}
-                      className="bg-[#4BE277] text-[#003915] font-bold px-5 py-2.5 rounded-lg text-xs hover:scale-105 active:scale-95 transition-all flex items-center gap-1.5 cursor-pointer font-mono shadow-[0_0_15px_rgba(75,226,119,0.2)]"
+                      className="bg-[#4BE277] text-[#003915] font-bold px-4 py-2 rounded-lg text-[10px] hover:scale-105 active:scale-95 transition-all flex items-center gap-1 cursor-pointer font-mono shadow-[0_0_15px_rgba(75,226,119,0.2)]"
                     >
-                      <Check size={14} />
-                      <span>Approve Submission</span>
+                      <Check size={12} />
+                      <span>Approve</span>
                     </button>
                     <button
                       onClick={() => {
                         handleReject(selectedVideo.id);
                         setSelectedVideo(null);
                       }}
-                      className="bg-[#FFB4AB]/10 text-[#FFB4AB] border border-[#FFB4AB]/30 hover:bg-[#FFB4AB]/20 font-bold px-5 py-2.5 rounded-lg text-xs hover:scale-105 active:scale-95 transition-all flex items-center gap-1.5 cursor-pointer font-mono"
+                      className="bg-[#FFB4AB]/10 text-[#FFB4AB] border border-[#FFB4AB]/30 hover:bg-[#FFB4AB]/20 font-bold px-4 py-2 rounded-lg text-[10px] hover:scale-105 active:scale-95 transition-all flex items-center gap-1 cursor-pointer font-mono"
                     >
-                      <X size={14} />
-                      <span>Reject Evidence</span>
+                      <X size={12} />
+                      <span>Reject</span>
                     </button>
                   </>
                 )}
                 <button
                   onClick={() => setSelectedVideo(null)}
-                  className="bg-[#333B33] text-[#DCE5D9] border border-[#3D4A3D] px-5 py-2.5 rounded-lg text-xs hover:bg-[#333B33]/80 transition-colors cursor-pointer font-mono"
+                  className="bg-[#333B33] text-[#DCE5D9] border border-[#3D4A3D] px-4 py-2 rounded-lg text-[10px] hover:bg-[#333B33]/80 transition-colors cursor-pointer font-mono"
                 >
                   Dismiss Console
                 </button>
