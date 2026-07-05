@@ -5,7 +5,8 @@ import { Users, Coins, X } from "lucide-react";
 export default function UserManagementTab({
   filteredUsers,
   handleAdjustPoints,
-  handleToggleUserRole
+  handleToggleUserRole,
+  showToast
 }) {
   // Local state for Points Adjustment Modal
   const [pointsModal, setPointsModal] = useState({
@@ -27,7 +28,11 @@ export default function UserManagementTab({
     e.preventDefault();
     const pointsChange = parseInt(pointsModal.amount);
     if (isNaN(pointsChange) || pointsChange === 0) {
-      alert("Please enter a valid non-zero points adjustment.");
+      if (showToast) {
+        showToast("Please enter a valid non-zero points adjustment.", "error");
+      } else {
+        alert("Please enter a valid non-zero points adjustment.");
+      }
       return;
     }
 

@@ -1,1 +1,82 @@
 @import "tailwindcss";
+
+@theme {
+  --color-on-surface: #dce5d9;
+  --color-on-surface-variant: #bccbb9;
+  --color-primary-fixed-dim: #4ae176;
+  --color-background: #0e150e;
+  --color-surface-container: #1a221a;
+  --color-surface-bright: #333b33;
+  --color-tertiary-fixed: #acf847;
+  --color-on-primary-fixed: #002109;
+  --color-error-container: #93000a;
+  --color-secondary: #8bd79b;
+  --color-on-secondary-container: #81cc90;
+  --color-on-secondary-fixed: #00210b;
+  --color-secondary-fixed: #a6f4b5;
+  --color-on-tertiary-fixed: #102000;
+  --color-tertiary-container: #78be00;
+  --color-on-secondary: #003918;
+  --color-surface-container-highest: #2f372e;
+  --color-on-primary-container: #004b1e;
+  --color-surface: #0e150e;
+  --color-surface-container-lowest: #091009;
+  --color-secondary-fixed-dim: #8bd79b;
+  --color-primary-fixed: #6bff8f;
+  --color-on-tertiary-fixed-variant: #304f00;
+  --color-on-tertiary: #1f3700;
+  --color-surface-tint: #4ae176;
+  --color-surface-container-high: #242c24;
+  --color-tertiary: #92db2a;
+  --color-on-primary: #003915;
+  --color-inverse-surface: #dce5d9;
+  --color-error: #ffb4ab;
+  --color-surface-dim: #0e150e;
+  --color-surface-variant: #2f372e;
+  --color-on-error-container: #ffdad6;
+  --color-secondary-container: #005829;
+  --color-on-primary-fixed-variant: #005321;
+  --color-inverse-on-surface: #2a322a;
+  --color-primary: #4be277;
+  --color-outline: #869585;
+  --color-on-background: #dce5d9;
+  --color-surface-container-low: #161d16;
+  --color-on-secondary-fixed-variant: #005226;
+  --color-inverse-primary: #006e2f;
+  --color-on-tertiary-container: #2a4700;
+  --color-outline-variant: #3d4a3d;
+  --color-tertiary-fixed-dim: #91db2a;
+  --color-on-error: #690005;
+  --color-primary-container: #22c55e;
+}
+
+/* Custom layout classes from DESIGN.md */
+.glass-card {
+  background: rgba(47, 55, 46, 0.4);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.scroll-hide::-webkit-scrollbar {
+  display: none;
+}
+.scroll-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(120%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.animate-slide-in {
+  animation: slideIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
