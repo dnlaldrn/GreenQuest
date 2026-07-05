@@ -1,0 +1,186 @@
+import React, { useState } from "react";
+import { Users, Coins, X } from "lucide-react";
+
+export default function UserManagementTab({
+  filteredUsers,
+  handleAdjustPoints,
+  handleToggleUserRole
+}) {
+  // Local state for Points Adjustment Modal
+  const [pointsModal, setPointsModal] = useState({
+    isOpen: false,
+    user: null,
+    amount: "",
+    reason: ""
+  });
+
+  const handleOpenPointsModal = (user) => {
+    setPointsModal({ isOpen: true, user, amount: "", reason: "" });
+  };
+
+  const handleClosePointsModal = () => {
+    setPointsModal({ isOpen: false, user: null, amount: "", reason: "" });
+  };
+
+  const onSubmitPoints = async (e) => {
+    e.preventDefault();
+    const pointsChange = parseInt(pointsModal.amount);
+    if (isNaN(pointsChange) || pointsChange === 0) {
+      alert("Please enter a valid non-zero points adjustment.");
+      return;
+    }
+
+    const success = await handleAdjustPoints(
+      pointsModal.user.id,
+      pointsChange,
+      pointsModal.reason
+    );
+
+    if (success) {
+      handleClosePointsModal();
+    }
+  };
+
+  return (
+    <section className="glass-card rounded-xl overflow-hidden border border-[#DCE5D9]/10">
+      <div className="p-6 border-b border-[#DCE5D9]/10">
+        <h3 className="text-lg font-bold text-[#DCE5D9]">Users Registry</h3>
+        <p className="text-xs text-[#BCCBB9]">Review role allocations, account creation dates, and reward balances.</p>
+      </div>
+
+      <div className="overflow-x-auto">
+        <table className="w-full text-left border-collapse">
+          <thead>
+            <tr className="bg-[#161D16] text-[#BCCBB9] font-mono text-[10px] uppercase tracking-wider border-b border-[#DCE5D9]/10">
+              <th className="px-6 py-4">User Details</th>
+              <th className="px-6 py-4">Email</th>
+              <th className="px-6 py-4">Role</th>
+              <th className="px-6 py-4">Points Balance</th>
+              <th className="px-6 py-4">Registration Date</th>
+              <th className="px-6 py-4 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-[#DCE5D9]/5">
+            {filteredUsers.length === 0 ? (
+              <tr>
+                <td colSpan="6" className="px-6 py-8 text-center text-xs text-[#BCCBB9] font-mono">
+                  No user accounts matched the query filter.
+                </td>
+              </tr>
+            ) : (
+              filteredUsers.map((u) => (
+                <tr key={u.id} className="hover:bg-[#333B33]/10 transition-colors">
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-full bg-[#333B33] flex items-center justify-center font-bold text-xs uppercase text-[#4BE277]">
+                        {u.username ? u.username.slice(0, 2) : "GQ"}
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold text-[#DCE5D9]">{u.username || "Unknown"}</p>
+                        <span className="text-[10px] text-[#BCCBB9] font-mono uppercase tracking-widest">
+                          ID: {u.id.slice(0, 8)}
+                        </span>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 text-xs font-mono text-[#BCCBB9]">
+                    {u.email || "no-email@greenquest.ai"}
+                  </td>
+                  <td className="px-6 py-4">
+                    <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase ${
+                      u.role === "admin"
+                        ? "bg-[#4BE277]/20 text-[#4BE277] border border-[#4BE277]/30"
+                        : "bg-[#333B33] text-[#BCCBB9]"
+                    }`}>
+                      {u.role || "user"}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 text-sm font-bold text-[#92DB2A] font-mono">
+                    {(u.total_points || 0).toLocaleString()} pts
+                  </td>
+                  <td className="px-6 py-4 text-xs text-[#BCCBB9] font-mono">
+                    {new Date(u.created_at || Date.now()).toLocaleDateString()}
+                  </td>
+                  <td className="px-6 py-4 text-right space-x-2">
+                    <button
+                      onClick={() => handleOpenPointsModal(u)}
+                      className="bg-[#92DB2A]/10 text-[#92DB2A] hover:bg-[#92DB2A]/20 transition-all font-mono text-[10px] px-3 py-1.5 rounded-lg font-bold border border-[#92DB2A]/30 active:scale-95 cursor-pointer"
+                    >
+                      Adjust Points
+                    </button>
+                    <button
+                      onClick={() => handleToggleUserRole(u)}
+                      className="bg-[#333B33] hover:bg-[#4BE277]/10 hover:text-[#4BE277] transition-all font-mono text-[10px] px-3 py-1.5 rounded-lg text-[#BCCBB9] cursor-pointer active:scale-95"
+                    >
+                      Toggle Role
+                    </button>
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Points Adjustment Modal */}
+      {pointsModal.isOpen && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50 animate-fade-in">
+          <form onSubmit={onSubmitPoints} className="glass-card max-w-sm w-full rounded-2xl p-6 space-y-4">
+            <div className="flex justify-between items-center border-b border-[#DCE5D9]/10 pb-2">
+              <h3 className="font-bold text-sm text-[#DCE5D9]">
+                Modify points for {pointsModal.user?.username}
+              </h3>
+              <button type="button" onClick={handleClosePointsModal} className="text-[#BCCBB9] hover:text-white">
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="space-y-3 text-xs">
+              <div>
+                <label className="block text-[#BCCBB9] mb-1 font-mono uppercase tracking-wider">
+                  Points Delta (Positive or Negative)
+                </label>
+                <input
+                  type="number"
+                  required
+                  placeholder="e.g. 500 or -200"
+                  value={pointsModal.amount}
+                  onChange={(e) => setPointsModal(prev => ({ ...prev, amount: e.target.value }))}
+                  className="w-full bg-[#161D16] border border-[#3D4A3D] rounded-lg p-2.5 text-[#DCE5D9] outline-none focus:border-[#4BE277] font-mono"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[#BCCBB9] mb-1 font-mono uppercase tracking-wider">Adjustment Reason</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Manual moderation review bonus"
+                  value={pointsModal.reason}
+                  onChange={(e) => setPointsModal(prev => ({ ...prev, reason: e.target.value }))}
+                  className="w-full bg-[#161D16] border border-[#3D4A3D] rounded-lg p-2.5 text-[#DCE5D9] outline-none focus:border-[#4BE277]"
+                />
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2 pt-4 border-t border-[#DCE5D9]/10">
+              <button
+                type="submit"
+                className="bg-[#4BE277] text-[#003915] font-bold px-5 py-2.5 rounded-lg text-xs hover:scale-105 active:scale-95 transition-all cursor-pointer font-mono"
+              >
+                Confirm Adjustment
+              </button>
+              <button
+                type="button"
+                onClick={handleClosePointsModal}
+                className="bg-[#333B33] text-[#DCE5D9] px-5 py-2.5 rounded-lg text-xs hover:bg-[#333B33]/80 transition-colors cursor-pointer"
+              >
+                Cancel
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+    </section>
+  );
+}
