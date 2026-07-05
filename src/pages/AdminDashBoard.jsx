@@ -23,8 +23,11 @@ import {
   Search,
   Bell,
   ShieldAlert,
-  Loader2
+  Loader2,
+  Sparkles,
+  X
 } from "lucide-react";
+import { createPortal } from "react-dom";
 
 export default function AdminDashBoard() {
   const navigate = useNavigate();
@@ -32,6 +35,17 @@ export default function AdminDashBoard() {
   const [loading, setLoading] = useState(true);
   const [isMocked, setIsMocked] = useState(false);
   const [isAdminBypassed, setIsAdminBypassed] = useState(false);
+
+  // Toast notifications state
+  const [toasts, setToasts] = useState([]);
+
+  const showToast = (message, type = "success") => {
+    const id = Date.now() + Math.random().toString(36).substr(2, 9);
+    setToasts(prev => [...prev, { id, message, type }]);
+    setTimeout(() => {
+      setToasts(prev => prev.filter(t => t.id !== id));
+    }, 3500);
+  };
 
   // Search filter
   const [searchQuery, setSearchQuery] = useState("");
@@ -250,7 +264,7 @@ export default function AdminDashBoard() {
           ...prev,
           pointsDistributed: prev.pointsDistributed + estPoints,
         }));
-        alert(`Approved submission in mock mode! Awarded ${estPoints} points.`);
+        showToast(`Approved submission in mock mode! Awarded ${estPoints} points.`, "success");
         return;
       }
 
@@ -272,11 +286,11 @@ export default function AdminDashBoard() {
 
       if (rpcError) throw rpcError;
 
-      alert(`Submission approved successfully and ${estPoints} points credited.`);
+      showToast(`Submission approved successfully and ${estPoints} points credited.`, "success");
       await loadAllData();
     } catch (err) {
       console.error("Failed to approve submission:", err);
-      alert("Error approving submission: " + err.message);
+      showToast("Error approving submission: " + err.message, "error");
     }
   };
 
@@ -286,7 +300,7 @@ export default function AdminDashBoard() {
         setSubmissions(prev =>
           prev.map(s => (s.id === subId ? { ...s, status: "rejected" } : s))
         );
-        alert("Rejected submission in mock mode.");
+        showToast("Rejected submission in mock mode.", "success");
         return;
       }
 
@@ -297,36 +311,36 @@ export default function AdminDashBoard() {
 
       if (error) throw error;
 
-      alert("Submission rejected successfully.");
+      showToast("Submission rejected successfully.", "success");
       await loadAllData();
     } catch (err) {
       console.error("Failed to reject submission:", err);
-      alert("Error rejecting submission: " + err.message);
+      showToast("Error rejecting submission: " + err.message, "error");
     }
   };
 
   const handleRecalculateAI = async (subId) => {
     try {
       if (isMocked) {
-        alert("AI Recalculation mocked! Score updated to 78%.");
+        showToast("AI Recalculation mocked! Score updated to 78%.", "success");
         setSubmissions(prev =>
           prev.map(s => (s.id === subId ? { ...s, ai_score: 78, status: "pending" } : s))
         );
         return;
       }
 
-      alert("Invoking validate-video Edge Function. Please wait...");
+      showToast("Invoking validate-video Edge Function. Please wait...", "warning");
       const { data, error } = await supabase.functions.invoke("validate-video", {
         body: { submissionId: subId }
       });
 
       if (error) throw error;
 
-      alert("Recalculation complete.");
+      showToast("Recalculation complete.", "success");
       await loadAllData();
     } catch (err) {
       console.error("AI recalculation failed:", err);
-      alert("Recalculation error: " + err.message);
+      showToast("Recalculation error: " + err.message, "error");
     }
   };
 
@@ -340,7 +354,7 @@ export default function AdminDashBoard() {
           const newR = { ...r, id: `rew-${Date.now()}` };
           setRewards(prev => [...prev, newR]);
         }
-        alert("Reward inventory saved in mock mode!");
+        showToast("Reward inventory saved in mock mode!", "success");
         return true;
       }
 
@@ -375,12 +389,12 @@ export default function AdminDashBoard() {
       }
 
       if (error) throw error;
-      alert("Reward saved successfully.");
+      showToast("Reward saved successfully.", "success");
       await loadAllData();
       return true;
     } catch (err) {
       console.error("Failed to save reward:", err);
-      alert("Error saving reward: " + err.message);
+      showToast("Error saving reward: " + err.message, "error");
       return false;
     }
   };
@@ -390,7 +404,7 @@ export default function AdminDashBoard() {
     try {
       if (isMocked) {
         setRewards(prev => prev.filter(r => r.id !== rewardId));
-        alert("Deleted reward item in mock mode.");
+        showToast("Deleted reward item in mock mode.", "success");
         return;
       }
 
@@ -400,11 +414,11 @@ export default function AdminDashBoard() {
         .eq("id", rewardId);
 
       if (error) throw error;
-      alert("Reward deleted successfully.");
+      showToast("Reward deleted successfully.", "success");
       await loadAllData();
     } catch (err) {
       console.error("Failed to delete reward:", err);
-      alert("Error deleting reward: " + err.message);
+      showToast("Error deleting reward: " + err.message, "error");
     }
   };
 
@@ -419,7 +433,7 @@ export default function AdminDashBoard() {
           ...prev,
           pointsDistributed: prev.pointsDistributed + pointsChange
         }));
-        alert(`Adjusted points by ${pointsChange} in mock mode.`);
+        showToast(`Adjusted points by ${pointsChange} in mock mode.`, "success");
         return true;
       }
 
@@ -431,12 +445,12 @@ export default function AdminDashBoard() {
 
       if (error) throw error;
 
-      alert(`Successfully adjusted points.`);
+      showToast(`Successfully adjusted points.`, "success");
       await loadAllData();
       return true;
     } catch (err) {
       console.error("Failed to adjust points:", err);
-      alert("Error adjusting points: " + err.message);
+      showToast("Error adjusting points: " + err.message, "error");
       return false;
     }
   };
@@ -450,7 +464,7 @@ export default function AdminDashBoard() {
         setUsers(prev =>
           prev.map(u => (u.id === user.id ? { ...u, role: newRole } : u))
         );
-        alert(`User role updated to ${newRole} in mock mode.`);
+        showToast(`User role updated to ${newRole} in mock mode.`, "success");
         return;
       }
 
@@ -461,11 +475,11 @@ export default function AdminDashBoard() {
 
       if (error) throw error;
 
-      alert("User role updated successfully.");
+      showToast("User role updated successfully.", "success");
       await loadAllData();
     } catch (err) {
       console.error("Failed to update user role:", err);
-      alert("Error updating user role: " + err.message);
+      showToast("Error updating user role: " + err.message, "error");
     }
   };
 
@@ -679,6 +693,7 @@ export default function AdminDashBoard() {
             filteredUsers={filteredUsers}
             handleAdjustPoints={handleAdjustPoints}
             handleToggleUserRole={handleToggleUserRole}
+            showToast={showToast}
           />
         )}
 
@@ -688,6 +703,7 @@ export default function AdminDashBoard() {
             handleApprove={handleApprove}
             handleReject={handleReject}
             handleRecalculateAI={handleRecalculateAI}
+            showToast={showToast}
           />
         )}
 
@@ -696,6 +712,7 @@ export default function AdminDashBoard() {
             rewards={rewards}
             handleSaveReward={handleSaveReward}
             handleDeleteReward={handleDeleteReward}
+            showToast={showToast}
           />
         )}
 
@@ -708,6 +725,42 @@ export default function AdminDashBoard() {
         )}
 
       </main>
+
+      {/* Floating Toasts container */}
+      {toasts.length > 0 && createPortal(
+        <div className="fixed top-5 right-5 z-[9999] flex flex-col gap-3 max-w-sm w-full pointer-events-none">
+          {toasts.map(t => (
+            <div
+              key={t.id}
+              className={`p-4 rounded-xl border bg-[#161D16]/95 backdrop-blur-md shadow-2xl flex items-start gap-3 transition-all duration-300 pointer-events-auto animate-slide-in ${
+                t.type === "error"
+                  ? "border-[#FFB4AB] text-[#FFB4AB] shadow-[0_0_20px_rgba(255,180,171,0.15)]"
+                  : t.type === "warning"
+                  ? "border-[#92DB2A] text-[#92DB2A]"
+                  : "border-[#4BE277] text-[#4BE277] shadow-[0_0_20px_rgba(74,225,118,0.15)]"
+              }`}
+            >
+              {t.type === "error" ? (
+                <ShieldAlert size={18} className="shrink-0 mt-0.5" />
+              ) : t.type === "warning" ? (
+                <ShieldAlert size={18} className="shrink-0 mt-0.5" />
+              ) : (
+                <Sparkles size={18} className="shrink-0 mt-0.5" />
+              )}
+              <div className="text-xs font-mono font-medium leading-normal flex-grow">
+                {t.message}
+              </div>
+              <button
+                onClick={() => setToasts(prev => prev.filter(item => item.id !== t.id))}
+                className="text-[#BCCBB9] hover:text-white transition-colors cursor-pointer shrink-0"
+              >
+                <X size={14} />
+              </button>
+            </div>
+          ))}
+        </div>,
+        document.body
+      )}
     </div>
   );
 }
