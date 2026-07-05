@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { Users, Coins, X } from "lucide-react";
 
@@ -23,6 +23,20 @@ export default function UserManagementTab({
   const handleClosePointsModal = () => {
     setPointsModal({ isOpen: false, user: null, amount: "", reason: "" });
   };
+
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape") {
+        handleClosePointsModal();
+      }
+    };
+    if (pointsModal.isOpen) {
+      window.addEventListener("keydown", handleKeyDown);
+    }
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [pointsModal.isOpen]);
 
   const onSubmitPoints = async (e) => {
     e.preventDefault();

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { Play, Check, X, RefreshCw, X as CloseIcon } from "lucide-react";
 
@@ -10,6 +10,20 @@ export default function VideoReviewTab({
 }) {
   // Local state for Video Player Modal
   const [selectedVideo, setSelectedVideo] = useState(null);
+
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape") {
+        setSelectedVideo(null);
+      }
+    };
+    if (selectedVideo) {
+      window.addEventListener("keydown", handleKeyDown);
+    }
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [selectedVideo]);
 
   return (
     <section className="glass-card rounded-xl overflow-hidden border border-[#DCE5D9]/10">
