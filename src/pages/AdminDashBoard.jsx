@@ -47,6 +47,40 @@ export default function AdminDashBoard() {
     }, 3500);
   };
 
+  // Custom Confirmation Modal state
+  const [confirmModal, setConfirmModal] = useState({
+    isOpen: false,
+    title: "",
+    message: "",
+    onConfirm: null,
+  });
+
+  const requestConfirm = (title, message, onConfirm) => {
+    setConfirmModal({
+      isOpen: true,
+      title,
+      message,
+      onConfirm: () => {
+        onConfirm();
+        setConfirmModal(prev => ({ ...prev, isOpen: false }));
+      }
+    });
+  };
+
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape") {
+        setConfirmModal(prev => ({ ...prev, isOpen: false }));
+      }
+    };
+    if (confirmModal.isOpen) {
+      window.addEventListener("keydown", handleKeyDown);
+    }
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [confirmModal.isOpen]);
+
   // Search filter
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -399,27 +433,32 @@ export default function AdminDashBoard() {
     }
   };
 
-  const handleDeleteReward = async (rewardId) => {
-    if (!window.confirm("Are you sure you want to delete this reward?")) return;
-    try {
-      if (isMocked) {
-        setRewards(prev => prev.filter(r => r.id !== rewardId));
-        showToast("Deleted reward item in mock mode.", "success");
-        return;
+  const handleDeleteReward = (rewardId) => {
+    requestConfirm(
+      "Confirm Deletion",
+      "Are you sure you want to delete this reward catalog item? This action is permanent.",
+      async () => {
+        try {
+          if (isMocked) {
+            setRewards(prev => prev.filter(r => r.id !== rewardId));
+            showToast("Deleted reward item in mock mode.", "success");
+            return;
+          }
+
+          const { error } = await supabase
+            .from("rewards")
+            .delete()
+            .eq("id", rewardId);
+
+          if (error) throw error;
+          showToast("Reward deleted successfully.", "success");
+          await loadAllData();
+        } catch (err) {
+          console.error("Failed to delete reward:", err);
+          showToast("Error deleting reward: " + err.message, "error");
+        }
       }
-
-      const { error } = await supabase
-        .from("rewards")
-        .delete()
-        .eq("id", rewardId);
-
-      if (error) throw error;
-      showToast("Reward deleted successfully.", "success");
-      await loadAllData();
-    } catch (err) {
-      console.error("Failed to delete reward:", err);
-      showToast("Error deleting reward: " + err.message, "error");
-    }
+    );
   };
 
   // User details & points adjust handlers
@@ -455,32 +494,36 @@ export default function AdminDashBoard() {
     }
   };
 
-  const handleToggleUserRole = async (user) => {
+  const handleToggleUserRole = (user) => {
     const newRole = user.role === "admin" ? "user" : "admin";
-    if (!window.confirm(`Change role of ${user.username} to ${newRole}?`)) return;
+    requestConfirm(
+      "Change User Role",
+      `Are you sure you want to update the role of user ${user.username} to ${newRole}?`,
+      async () => {
+        try {
+          if (isMocked) {
+            setUsers(prev =>
+              prev.map(u => (u.id === user.id ? { ...u, role: newRole } : u))
+            );
+            showToast(`User role updated to ${newRole} in mock mode.`, "success");
+            return;
+          }
 
-    try {
-      if (isMocked) {
-        setUsers(prev =>
-          prev.map(u => (u.id === user.id ? { ...u, role: newRole } : u))
-        );
-        showToast(`User role updated to ${newRole} in mock mode.`, "success");
-        return;
+          const { error } = await supabase
+            .from("profiles")
+            .update({ role: newRole })
+            .eq("id", user.id);
+
+          if (error) throw error;
+
+          showToast("User role updated successfully.", "success");
+          await loadAllData();
+        } catch (err) {
+          console.error("Failed to update user role:", err);
+          showToast("Error updating user role: " + err.message, "error");
+        }
       }
-
-      const { error } = await supabase
-        .from("profiles")
-        .update({ role: newRole })
-        .eq("id", user.id);
-
-      if (error) throw error;
-
-      showToast("User role updated successfully.", "success");
-      await loadAllData();
-    } catch (err) {
-      console.error("Failed to update user role:", err);
-      showToast("Error updating user role: " + err.message, "error");
-    }
+    );
   };
 
   // Rendering screen loading
@@ -758,6 +801,47 @@ export default function AdminDashBoard() {
               </button>
             </div>
           ))}
+        </div>,
+        document.body
+      )}
+
+      {/* Premium Custom Confirm Dialog Modal */}
+      {confirmModal.isOpen && createPortal(
+        <div className="fixed inset-0 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 z-[10000] animate-fade-in">
+          <div className="bg-[#161D16] border border-[#FFB4AB]/30 shadow-[0_0_50px_rgba(255,180,171,0.1)] max-w-sm w-full rounded-2xl p-5 space-y-4 font-mono text-xs">
+            
+            {/* Modal Header */}
+            <div className="flex items-center gap-2 text-[#FFB4AB] border-b border-[#DCE5D9]/10 pb-2">
+              <ShieldAlert size={18} className="shrink-0" />
+              <h3 className="font-bold text-sm text-[#DCE5D9] uppercase tracking-wider">
+                {confirmModal.title}
+              </h3>
+            </div>
+
+            {/* Modal Body */}
+            <p className="text-[#BCCBB9] leading-relaxed text-left">
+              {confirmModal.message}
+            </p>
+
+            {/* Modal Actions */}
+            <div className="flex justify-end gap-2 pt-2">
+              <button
+                type="button"
+                onClick={confirmModal.onConfirm}
+                className="bg-[#FFB4AB]/15 text-[#FFB4AB] border border-[#FFB4AB]/30 hover:bg-[#FFB4AB]/25 font-bold px-4 py-2 rounded-lg hover:scale-105 active:scale-95 transition-all cursor-pointer font-mono"
+              >
+                Confirm Action
+              </button>
+              <button
+                type="button"
+                onClick={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
+                className="bg-[#333B33] text-[#DCE5D9] border border-[#3D4A3D] px-4 py-2 rounded-lg hover:bg-[#333B33]/85 transition-colors cursor-pointer font-mono"
+              >
+                Dismiss
+              </button>
+            </div>
+            
+          </div>
         </div>,
         document.body
       )}
