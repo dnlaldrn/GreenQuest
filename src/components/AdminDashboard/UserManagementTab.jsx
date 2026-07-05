@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { createPortal } from "react-dom";
 import { Users, Coins, X } from "lucide-react";
 
 export default function UserManagementTab({
@@ -123,7 +124,7 @@ export default function UserManagementTab({
       </div>
 
       {/* Points Adjustment Modal */}
-      {pointsModal.isOpen && (
+      {pointsModal.isOpen && createPortal(
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50 animate-fade-in">
           <form onSubmit={onSubmitPoints} className="glass-card max-w-sm w-full rounded-2xl p-6 space-y-4">
             <div className="flex justify-between items-center border-b border-[#DCE5D9]/10 pb-2">
@@ -179,7 +180,8 @@ export default function UserManagementTab({
               </button>
             </div>
           </form>
-        </div>
+        </div>,
+        document.body
       )}
     </section>
   );

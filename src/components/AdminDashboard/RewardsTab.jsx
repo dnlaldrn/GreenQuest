@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { createPortal } from "react-dom";
 import { Plus, Edit2, Trash2, Ticket, X } from "lucide-react";
 
 export default function RewardsTab({
@@ -112,7 +113,7 @@ export default function RewardsTab({
       </div>
 
       {/* Rewards Form Modal */}
-      {rewardModal.isOpen && (
+      {rewardModal.isOpen && createPortal(
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50 animate-fade-in">
           <form onSubmit={onSubmitReward} className="glass-card max-w-md w-full rounded-2xl p-6 space-y-4">
             <div className="flex justify-between items-center border-b border-[#DCE5D9]/10 pb-2">
@@ -211,7 +212,8 @@ export default function RewardsTab({
               </button>
             </div>
           </form>
-        </div>
+        </div>,
+        document.body
       )}
     </section>
   );
