@@ -1,0 +1,218 @@
+import React, { useState } from "react";
+import { Plus, Edit2, Trash2, Ticket, X } from "lucide-react";
+
+export default function RewardsTab({
+  rewards,
+  handleSaveReward,
+  handleDeleteReward
+}) {
+  // Local state for Reward Modal (Add/Edit)
+  const [rewardModal, setRewardModal] = useState({
+    isOpen: false,
+    reward: null
+  });
+
+  const handleOpenRewardModal = (reward = null) => {
+    if (reward) {
+      setRewardModal({ isOpen: true, reward: { ...reward } });
+    } else {
+      setRewardModal({
+        isOpen: true,
+        reward: {
+          name: "",
+          description: "",
+          points_cost: 1000,
+          stock: 10,
+          image_url: "",
+          active: true
+        }
+      });
+    }
+  };
+
+  const handleCloseRewardModal = () => {
+    setRewardModal({ isOpen: false, reward: null });
+  };
+
+  const onSubmitReward = async (e) => {
+    e.preventDefault();
+    const success = await handleSaveReward(rewardModal.reward);
+    if (success) {
+      handleCloseRewardModal();
+    }
+  };
+
+  return (
+    <section className="space-y-6">
+      <div className="flex justify-between items-center border-b border-[#DCE5D9]/5 pb-4">
+        <div>
+          <h3 className="text-lg font-bold text-[#DCE5D9]">Eco Rewards Catalog</h3>
+          <p className="text-xs text-[#BCCBB9]">Configure incentive items, adjust point valuations, and audit stock allocations.</p>
+        </div>
+        <button
+          onClick={() => handleOpenRewardModal()}
+          className="flex items-center gap-2 bg-[#92DB2A] text-[#1F3700] px-5 py-2.5 rounded-full font-bold hover:shadow-[0_0_20px_rgba(146,219,42,0.4)] transition-all hover:scale-105 active:scale-95 text-xs uppercase font-mono cursor-pointer"
+        >
+          <Plus size={14} />
+          <span>Add New Reward</span>
+        </button>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+        {rewards.map((r) => (
+          <div
+            key={r.id}
+            className={`glass-card rounded-xl p-5 flex flex-col justify-between group border-l-4 transition-all hover:border-[#4BE277]/50 ${
+              r.active ? "border-[#4BE277]" : "border-[#FFB4AB] opacity-60"
+            }`}
+          >
+            <div className="flex gap-4">
+              <div className="w-20 h-20 rounded-lg bg-[#161D16] flex items-center justify-center border border-[#3D4A3D] overflow-hidden shrink-0">
+                {r.image_url ? (
+                  <img src={r.image_url} alt={r.name} className="w-full h-full object-cover" />
+                ) : (
+                  <Ticket className="text-[#4BE277] text-3xl" size={32} />
+                )}
+              </div>
+              <div className="flex-grow min-w-0">
+                <h4 className="font-bold text-sm text-[#DCE5D9] truncate" title={r.name}>
+                  {r.name}
+                </h4>
+                <p className="text-xs text-[#BCCBB9] mt-0.5 line-clamp-2" title={r.description}>
+                  {r.description}
+                </p>
+
+                <div className="flex items-center justify-between mt-3 font-mono text-[10px]">
+                  <span className="text-[#92DB2A] font-bold text-xs">{(r.points_cost || 0).toLocaleString()} pts</span>
+                  <span className={`px-2 py-0.5 rounded text-white ${r.stock > 0 ? "bg-[#333B33]" : "bg-[#FFB4AB]/20 text-[#FFB4AB]"}`}>
+                    Stock: {r.stock || 0}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-5 pt-4 border-t border-[#3D4A3D] flex gap-2">
+              <button
+                onClick={() => handleOpenRewardModal(r)}
+                className="flex-grow bg-[#333B33] hover:bg-[#4BE277]/20 hover:text-[#4BE277] py-2 rounded-lg text-xs font-semibold text-[#DCE5D9] transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+              >
+                <Edit2 size={12} />
+                <span>Edit Item</span>
+              </button>
+              <button
+                onClick={() => handleDeleteReward(r.id)}
+                className="w-10 bg-[#FFB4AB]/10 text-[#FFB4AB] hover:bg-[#FFB4AB]/20 rounded-lg flex items-center justify-center transition-colors active:scale-95 cursor-pointer"
+                title="Delete Reward"
+              >
+                <Trash2 size={16} />
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Rewards Form Modal */}
+      {rewardModal.isOpen && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50 animate-fade-in">
+          <form onSubmit={onSubmitReward} className="glass-card max-w-md w-full rounded-2xl p-6 space-y-4">
+            <div className="flex justify-between items-center border-b border-[#DCE5D9]/10 pb-2">
+              <h3 className="font-bold text-sm text-[#DCE5D9]">
+                {rewardModal.reward.id ? "Edit Reward Catalog Item" : "Create New Reward Catalog Item"}
+              </h3>
+              <button type="button" onClick={handleCloseRewardModal} className="text-[#BCCBB9] hover:text-white">
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="space-y-3 text-xs">
+              <div>
+                <label className="block text-[#BCCBB9] mb-1 font-mono uppercase tracking-wider">Item Name</label>
+                <input
+                  type="text"
+                  required
+                  value={rewardModal.reward.name}
+                  onChange={(e) => setRewardModal(prev => ({ ...prev, reward: { ...prev.reward, name: e.target.value } }))}
+                  className="w-full bg-[#161D16] border border-[#3D4A3D] rounded-lg p-2.5 text-[#DCE5D9] outline-none focus:border-[#4BE277]"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[#BCCBB9] mb-1 font-mono uppercase tracking-wider">Description</label>
+                <textarea
+                  value={rewardModal.reward.description}
+                  onChange={(e) => setRewardModal(prev => ({ ...prev, reward: { ...prev.reward, description: e.target.value } }))}
+                  className="w-full bg-[#161D16] border border-[#3D4A3D] rounded-lg p-2.5 text-[#DCE5D9] outline-none focus:border-[#4BE277] h-20 resize-none"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-[#BCCBB9] mb-1 font-mono uppercase tracking-wider">Point Cost</label>
+                  <input
+                    type="number"
+                    min="1"
+                    required
+                    value={rewardModal.reward.points_cost}
+                    onChange={(e) => setRewardModal(prev => ({ ...prev, reward: { ...prev.reward, points_cost: e.target.value } }))}
+                    className="w-full bg-[#161D16] border border-[#3D4A3D] rounded-lg p-2.5 text-[#DCE5D9] outline-none focus:border-[#4BE277] font-mono"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[#BCCBB9] mb-1 font-mono uppercase tracking-wider">Stock Allocation</label>
+                  <input
+                    type="number"
+                    min="0"
+                    required
+                    value={rewardModal.reward.stock}
+                    onChange={(e) => setRewardModal(prev => ({ ...prev, reward: { ...prev.reward, stock: e.target.value } }))}
+                    className="w-full bg-[#161D16] border border-[#3D4A3D] rounded-lg p-2.5 text-[#DCE5D9] outline-none focus:border-[#4BE277] font-mono"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-[#BCCBB9] mb-1 font-mono uppercase tracking-wider">Product Photo URL</label>
+                <input
+                  type="text"
+                  placeholder="https://..."
+                  value={rewardModal.reward.image_url}
+                  onChange={(e) => setRewardModal(prev => ({ ...prev, reward: { ...prev.reward, image_url: e.target.value } }))}
+                  className="w-full bg-[#161D16] border border-[#3D4A3D] rounded-lg p-2.5 text-[#DCE5D9] outline-none focus:border-[#4BE277] font-mono"
+                />
+              </div>
+
+              <div className="flex items-center gap-2 pt-2">
+                <input
+                  type="checkbox"
+                  id="activeCheck"
+                  checked={rewardModal.reward.active}
+                  onChange={(e) => setRewardModal(prev => ({ ...prev, reward: { ...prev.reward, active: e.target.checked } }))}
+                  className="rounded bg-[#161D16] border-[#3D4A3D] text-[#4BE277] focus:ring-0"
+                />
+                <label htmlFor="activeCheck" className="text-[#BCCBB9] font-mono uppercase tracking-wider select-none cursor-pointer">
+                  Activate and Show in store
+                </label>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2 pt-4 border-t border-[#DCE5D9]/10">
+              <button
+                type="submit"
+                className="bg-[#92DB2A] text-[#1F3700] font-bold px-5 py-2.5 rounded-lg text-xs hover:scale-105 active:scale-95 transition-all cursor-pointer font-mono"
+              >
+                Save Item
+              </button>
+              <button
+                type="button"
+                onClick={handleCloseRewardModal}
+                className="bg-[#333B33] text-[#DCE5D9] px-5 py-2.5 rounded-lg text-xs hover:bg-[#333B33]/85 transition-colors cursor-pointer"
+              >
+                Cancel
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+    </section>
+  );
+}
