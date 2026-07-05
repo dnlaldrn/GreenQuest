@@ -12,10 +12,17 @@ import {
   CheckCircle2,
   Clock
 } from 'lucide-react';
-
-import {signOut} from '../services/authService'
+import { signOut } from '../services/authService';
+import { useNavigate } from 'react-router-dom';
 
 export default function GreenQuestDashboard() {
+  const navigate = useNavigate();
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate('/login');
+  };
+
   return (
     <div className="min-h-screen bg-[#0B120F] text-slate-200 font-sans flex text-xs md:text-sm selection:bg-[#10B981] selection:text-black">
       
@@ -92,7 +99,7 @@ export default function GreenQuestDashboard() {
                 <div className="text-[10px] text-slate-400 font-mono">Level 24 Guardian</div>
               </div>
             </div>
-            <button className="text-slate-400 hover:text-red-400 p-1.5 rounded-lg transition-colors" onClick={signOut()}>
+            <button className="text-slate-400 hover:text-red-400 p-1.5 rounded-lg transition-colors" onClick={handleSignOut}>
               <LogOut size={16} />
             </button>
           </div>
