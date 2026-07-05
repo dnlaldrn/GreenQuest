@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { Plus, Edit2, Trash2, Ticket, X } from "lucide-react";
 
@@ -34,6 +34,20 @@ export default function RewardsTab({
   const handleCloseRewardModal = () => {
     setRewardModal({ isOpen: false, reward: null });
   };
+
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape") {
+        handleCloseRewardModal();
+      }
+    };
+    if (rewardModal.isOpen) {
+      window.addEventListener("keydown", handleKeyDown);
+    }
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [rewardModal.isOpen]);
 
   const onSubmitReward = async (e) => {
     e.preventDefault();
