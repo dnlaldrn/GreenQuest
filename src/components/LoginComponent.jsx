@@ -2,7 +2,8 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 // Using lucide-react for the custom icons layout
-import { Leaf, AtSign, Lock, ArrowRight, ShieldCheck } from "lucide-react";
+import { Leaf, AtSign, Lock, ArrowRight, ShieldCheck, ArrowLeft  } from "lucide-react";
+import { Link } from "react-router-dom";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -67,12 +68,14 @@ export default function Login() {
 
   return (
     <div className="min-h-screen bg-[#060b08] text-white flex items-center justify-center font-mono p-4 selection:bg-[#22c55e]/30">
+   
       
       {/* Main Container Card Split into Two Sections */}
       <div className="w-full max-w-[840px] bg-[#0d1310] border border-[#1b2520] rounded-2xl overflow-hidden shadow-2xl grid grid-cols-1 md:grid-cols-2">
-        
+         
         {/* Left Side: Eco-Intelligence Graphic Section */}
         <div className="relative bg-gradient-to-b from-[#111a15] to-[#0a100d] p-10 flex flex-col items-center justify-between border-b md:border-b-0 md:border-r border-[#1b2520]">
+            <Link to="/"><ArrowLeft className="items-start"/></Link>
           {/* Subtle Ambient Radial Glow */}
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(46,204,113,0.08)_0%,transparent_70%)] pointer-events-none" />
           
