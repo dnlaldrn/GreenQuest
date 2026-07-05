@@ -25,8 +25,8 @@ export async function signIn(email, password) {
 
 export async function AdminsignIn(adminemail, adminpassword) {
   const { data, error } = await supabase.auth.signInWithPassword({
-    adminemail,
-    adminpassword,
+    email: adminemail,
+    password: adminpassword,
   });
 
   return { data, error };
