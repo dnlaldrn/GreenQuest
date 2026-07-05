@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { createPortal } from "react-dom";
 import { Play, Check, X, RefreshCw, X as CloseIcon } from "lucide-react";
 
 export default function VideoReviewTab({
@@ -134,68 +135,121 @@ export default function VideoReviewTab({
       </div>
 
       {/* Video Player Modal */}
-      {selectedVideo && (
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50 animate-fade-in">
-          <div className="glass-card max-w-2xl w-full rounded-2xl overflow-hidden p-6 space-y-4">
-            <div className="flex justify-between items-center border-b border-[#DCE5D9]/10 pb-2">
-              <h3 className="font-bold text-sm text-[#DCE5D9]">Evidence Video Preview</h3>
-              <button onClick={() => setSelectedVideo(null)} className="text-[#BCCBB9] hover:text-white cursor-pointer">
+      {selectedVideo && createPortal(
+        <div className="fixed inset-0 bg-black/75 backdrop-blur-md flex items-center justify-center p-4 z-50 animate-fade-in">
+          <div className="bg-[#161D16] border border-[#4BE277]/30 shadow-[0_0_50px_rgba(74,225,118,0.15)] max-w-3xl w-full rounded-2xl overflow-hidden p-6 space-y-5">
+            
+            {/* Modal Header */}
+            <div className="flex justify-between items-center border-b border-[#DCE5D9]/10 pb-3">
+              <div className="flex items-center gap-2">
+                <span className="w-2.5 h-2.5 rounded-full bg-[#4BE277] animate-pulse"></span>
+                <h3 className="font-bold text-sm text-[#DCE5D9] uppercase tracking-wider font-mono">
+                  Evidence Verification Console
+                </h3>
+              </div>
+              <button
+                onClick={() => setSelectedVideo(null)}
+                className="text-[#BCCBB9] hover:text-[#FFB4AB] hover:bg-[#FFB4AB]/10 p-1.5 rounded-lg transition-all cursor-pointer"
+              >
                 <CloseIcon size={20} />
               </button>
             </div>
             
-            <div className="aspect-video bg-black rounded-lg overflow-hidden border border-[#3D4A3D]">
-              <video src={selectedVideo.video_url} controls autoPlay className="w-full h-full object-contain" />
+            {/* Sleek Cinematic Video Box */}
+            <div className="aspect-video bg-black/90 rounded-xl overflow-hidden border border-[#3D4A3D] shadow-inner relative flex items-center justify-center">
+              <video
+                src={selectedVideo.video_url}
+                controls
+                autoPlay
+                className="w-full h-full object-contain"
+              />
             </div>
 
-            <div className="text-xs space-y-1 font-mono">
-              <p className="text-[#DCE5D9]">
-                <span className="font-semibold text-[#BCCBB9]">Description:</span> {selectedVideo.description}
-              </p>
-              <p className="text-[#DCE5D9]">
-                <span className="font-semibold text-[#BCCBB9]">Estimated Points:</span> {selectedVideo.points_awarded || 150} pts
-              </p>
-              {selectedVideo.ai_feedback && (
-                <p className="text-[#FFB4AB]">
-                  <span className="font-semibold text-[#BCCBB9]">AI Feedback:</span> {selectedVideo.ai_feedback}
-                </p>
-              )}
+            {/* Structured Metadata Box */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-black/30 border border-[#3D4A3D]/50 p-4 rounded-xl font-mono text-xs text-[#BCCBB9]">
+              <div className="space-y-2">
+                <div>
+                  <span className="text-[#4BE277]/70 font-semibold uppercase block text-[10px] tracking-wider">
+                    Participant
+                  </span>
+                  <p className="text-sm font-semibold text-[#DCE5D9]">
+                    {selectedVideo.profiles?.username || "Eco Participant"}
+                  </p>
+                </div>
+                <div>
+                  <span className="text-[#4BE277]/70 font-semibold uppercase block text-[10px] tracking-wider">
+                    Estimated Points
+                  </span>
+                  <p className="text-sm font-bold text-[#92DB2A]">
+                    +{selectedVideo.points_awarded || 150} pts
+                  </p>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <div>
+                  <span className="text-[#4BE277]/70 font-semibold uppercase block text-[10px] tracking-wider">
+                    Evidence Description
+                  </span>
+                  <p className="text-xs text-[#DCE5D9] leading-relaxed">
+                    {selectedVideo.description || "No description provided."}
+                  </p>
+                </div>
+                {selectedVideo.ai_feedback && (
+                  <div>
+                    <span className="text-[#FFB4AB]/70 font-semibold uppercase block text-[10px] tracking-wider">
+                      AI Feedback & Diagnostics
+                    </span>
+                    <p className="text-[11px] text-[#FFB4AB] leading-relaxed">
+                      {selectedVideo.ai_feedback}
+                    </p>
+                  </div>
+                )}
+              </div>
             </div>
 
-            <div className="flex justify-end gap-2 pt-4 border-t border-[#DCE5D9]/10">
-              {selectedVideo.status !== "approved" && selectedVideo.status !== "rejected" && (
-                <>
-                  <button
-                    onClick={() => {
-                      handleApprove(selectedVideo.id, selectedVideo.user_id, selectedVideo.points_awarded || 150);
-                      setSelectedVideo(null);
-                    }}
-                    className="bg-[#4BE277] text-[#003915] font-bold px-4 py-2 rounded-lg text-xs hover:scale-105 active:scale-95 transition-all flex items-center gap-1 cursor-pointer font-mono"
-                  >
-                    <Check size={14} />
-                    <span>Approve</span>
-                  </button>
-                  <button
-                    onClick={() => {
-                      handleReject(selectedVideo.id);
-                      setSelectedVideo(null);
-                    }}
-                    className="bg-[#FFB4AB] text-[#690005] font-bold px-4 py-2 rounded-lg text-xs hover:scale-105 active:scale-95 transition-all flex items-center gap-1 cursor-pointer font-mono"
-                  >
-                    <X size={14} />
-                    <span>Reject</span>
-                  </button>
-                </>
-              )}
-              <button
-                onClick={() => setSelectedVideo(null)}
-                className="bg-[#333B33] text-[#DCE5D9] px-4 py-2 rounded-lg text-xs hover:bg-[#333B33]/85 transition-colors cursor-pointer"
-              >
-                Close
-              </button>
+            {/* Modal Actions */}
+            <div className="flex justify-between items-center pt-4 border-t border-[#DCE5D9]/10">
+              <div className="text-[10px] text-[#BCCBB9] font-mono">
+                Status: <span className="uppercase text-[#FFB4AB]">{selectedVideo.status}</span>
+              </div>
+              <div className="flex gap-2">
+                {selectedVideo.status !== "approved" && selectedVideo.status !== "rejected" && (
+                  <>
+                    <button
+                      onClick={() => {
+                        handleApprove(selectedVideo.id, selectedVideo.user_id, selectedVideo.points_awarded || 150);
+                        setSelectedVideo(null);
+                      }}
+                      className="bg-[#4BE277] text-[#003915] font-bold px-5 py-2.5 rounded-lg text-xs hover:scale-105 active:scale-95 transition-all flex items-center gap-1.5 cursor-pointer font-mono shadow-[0_0_15px_rgba(75,226,119,0.2)]"
+                    >
+                      <Check size={14} />
+                      <span>Approve Submission</span>
+                    </button>
+                    <button
+                      onClick={() => {
+                        handleReject(selectedVideo.id);
+                        setSelectedVideo(null);
+                      }}
+                      className="bg-[#FFB4AB]/10 text-[#FFB4AB] border border-[#FFB4AB]/30 hover:bg-[#FFB4AB]/20 font-bold px-5 py-2.5 rounded-lg text-xs hover:scale-105 active:scale-95 transition-all flex items-center gap-1.5 cursor-pointer font-mono"
+                    >
+                      <X size={14} />
+                      <span>Reject Evidence</span>
+                    </button>
+                  </>
+                )}
+                <button
+                  onClick={() => setSelectedVideo(null)}
+                  className="bg-[#333B33] text-[#DCE5D9] border border-[#3D4A3D] px-5 py-2.5 rounded-lg text-xs hover:bg-[#333B33]/80 transition-colors cursor-pointer font-mono"
+                >
+                  Dismiss Console
+                </button>
+              </div>
             </div>
+            
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </section>
   );
