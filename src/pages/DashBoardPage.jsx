@@ -12,16 +12,47 @@ import {
   CheckCircle2,
   Clock
 } from 'lucide-react';
-import { signOut } from '../services/authService';
-import { useNavigate } from 'react-router-dom';
+
+
+import LoadingSpinner from "../components/LoadingSpinner";
+import { useState } from 'react';
+import { supabase } from "../lib/supabase";
 
 export default function GreenQuestDashboard() {
-  const navigate = useNavigate();
 
-  const handleSignOut = async () => {
-    await signOut();
-    navigate('/login');
-  };
+ const [loading, setLoading] = useState(false);
+const [error, setError] = useState(null);
+
+async function signOut() {
+  try {
+    setLoading(true);
+
+    const { error } = await supabase.auth.signOut();
+
+    if (error) {
+      throw error;
+    }
+
+    // If you navigate away after sign out,
+    // you usually don't need setLoading(false)
+  } catch (err) {
+    setError(err.message);
+  } finally {
+    setLoading(false);
+  }
+}
+
+// React renders this based on state
+if (loading) {
+  return <LoadingSpinner size="lg" />;
+}
+ 
+ 
+ 
+
+  
+  
+
 
   return (
     <div className="min-h-screen bg-[#0B120F] text-slate-200 font-sans flex text-xs md:text-sm selection:bg-[#10B981] selection:text-black">
@@ -99,8 +130,8 @@ export default function GreenQuestDashboard() {
                 <div className="text-[10px] text-slate-400 font-mono">Level 24 Guardian</div>
               </div>
             </div>
-            <button className="text-slate-400 hover:text-red-400 p-1.5 rounded-lg transition-colors" onClick={handleSignOut}>
-              <LogOut size={16} />
+            <button className="text-slate-400 hover:text-red-400 p-1.5 rounded-lg transition-colors" onClick={signOut()}>
+              <LogOut size={16} onClick={signOut()} />
             </button>
           </div>
         </div>
