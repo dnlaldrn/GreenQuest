@@ -284,7 +284,7 @@ export default function HeroSection() {
                   d="M12 4v16m8-8H4"
                 />
               </svg>
-              <Link to="/userDasboard">Upload Video</Link>
+              <Link to="/login">Upload Video</Link>
             </button>
 
             <button className="border border-emerald-500/30 hover:border-emerald-400 bg-emerald-950/20 hover:bg-emerald-950/40 text-emerald-400 px-6 py-3 rounded-lg font-semibold tracking-wide transition-all duration-200">
