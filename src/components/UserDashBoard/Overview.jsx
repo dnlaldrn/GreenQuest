@@ -15,9 +15,20 @@ import {
   Loader2,
   X,
 } from "lucide-react";
+import { useState } from "react";
 export default function OverviewTab() {
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+      const [activeTab, setActiveTab] = useState("overview");
   return (
     <main className="flex-1 flex flex-col min-w-0 h-screen overflow-y-auto">
+      
+      {/* MOBILE OVERLAY BACKGROUND */}
+      {isSidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 md:hidden"
+          onClick={() => setIsSidebarOpen(false)}
+        />
+      )}
       {/* TOP BAR */}
       <header className="h-16 border-b border-[#14231C] px-4 md:px-6 flex items-center justify-between shrink-0 bg-[#0B120F]/80 backdrop-blur sticky top-0 z-30">
         <div className="flex items-center gap-3">
@@ -28,6 +39,66 @@ export default function OverviewTab() {
           >
             <Menu size={18} />
           </button>
+
+          {isSidebarOpen && (
+             <nav className="space-y-1 md:hidden">
+            <button
+              onClick={() => setActiveTab("overview")}
+              className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm transition-all whitespace-nowrap active:translate-x-0.5 cursor-pointer w-full ${
+                activeTab === "overview"
+                  ? "bg-[#4BE277]/10 text-[#4BE277] border-l-4 border-[#4BE277]"
+                  : "text-[#BCCBB9] hover:bg-[#333B33]/20"
+              }`}
+            >
+              <LayoutDashboard size={18} />
+              <span>Overview</span>
+            </button>
+            <button
+              onClick={() => setActiveTab("upload-video")}
+              className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm transition-all whitespace-nowrap active:translate-x-0.5 cursor-pointer w-full ${
+                activeTab === "upload-video"
+                  ? "bg-[#4BE277]/10 text-[#4BE277] border-l-4 border-[#4BE277]"
+                  : "text-[#BCCBB9] hover:bg-[#333B33]/20"
+              }`}
+            >
+              <UploadCloud size={18} />
+              <span>Upload Video</span>
+            </button>
+            <button
+              onClick={() => setActiveTab("impact-hub")}
+              className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm transition-all whitespace-nowrap active:translate-x-0.5 cursor-pointer w-full ${
+                activeTab === "impact-hub"
+                  ? "bg-[#4BE277]/10 text-[#4BE277] border-l-4 border-[#4BE277]"
+                  : "text-[#BCCBB9] hover:bg-[#333B33]/20"
+              }`}
+            >
+              <Globe size={18} />
+              <span>Impact Hub</span>
+            </button>
+            <button
+              onClick={() => setActiveTab("quests")}
+              className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm transition-all whitespace-nowrap active:translate-x-0.5 cursor-pointer w-full ${
+                activeTab === "quests"
+                  ? "bg-[#4BE277]/10 text-[#4BE277] border-l-4 border-[#4BE277]"
+                  : "text-[#BCCBB9] hover:bg-[#333B33]/20"
+              }`}
+            >
+              <Award size={18} />
+              <span>Quests</span>
+            </button>
+            <button
+              onClick={() => setActiveTab("leaderboard")}
+              className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm transition-all whitespace-nowrap active:translate-x-0.5 cursor-pointer w-full ${
+                activeTab === "leaderboard"
+                  ? "bg-[#4BE277]/10 text-[#4BE277] border-l-4 border-[#4BE277]"
+                  : "text-[#BCCBB9] hover:bg-[#333B33]/20"
+              }`}
+            >
+              <Trophy size={18} />
+              <span>Leaderboard</span>
+            </button>
+          </nav>
+          )}
 
           <div>
             <h2 className="text-base md:text-lg font-bold text-white tracking-tight">
