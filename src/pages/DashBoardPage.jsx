@@ -36,13 +36,7 @@ export default function GreenQuestDashboard() {
 
   return (
     <div className="min-h-screen bg-[#0B120F] text-slate-200 font-sans flex flex-col md:flex-row text-xs md:text-sm selection:bg-[#10B981] selection:text-black relative overflow-x-hidden">
-      {/* MOBILE OVERLAY BACKGROUND */}
-      {isSidebarOpen && (
-        <div
-          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 md:hidden"
-          onClick={() => setIsSidebarOpen(false)}
-        />
-      )}
+      
 
       {/* SIDEBAR */}
       <aside
@@ -67,6 +61,7 @@ export default function GreenQuestDashboard() {
                   Impact Dashboard
                 </span>
               </div>
+              
             </div>
 
             {/* Close sidebar on mobile */}
@@ -188,9 +183,9 @@ export default function GreenQuestDashboard() {
             </div>
             <button
               className="text-slate-400 hover:text-red-400 p-1.5 rounded-lg transition-colors"
-              onClick={signOut()}
+              onClick={handleSignOut}
             >
-              <LogOut size={16} onClick={signOut()} />
+              <LogOut size={16} />
             </button>
           </div>
         </div>
