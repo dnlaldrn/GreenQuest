@@ -25,7 +25,10 @@ import {
   ShieldAlert,
   Loader2,
   Sparkles,
-  X
+  X,
+  Menu,
+  ChevronLeft,
+  ChevronRight
 } from "lucide-react";
 import { createPortal } from "react-dom";
 
@@ -35,6 +38,17 @@ export default function AdminDashBoard() {
   const [loading, setLoading] = useState(true);
   const [isMocked, setIsMocked] = useState(false);
   const [isAdminBypassed, setIsAdminBypassed] = useState(false);
+
+  // Mobile drawer state
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
+  // Desktop sidebar collapse state
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+
+  const handleTabChange = (tabName) => {
+    setActiveTab(tabName);
+    setIsSidebarOpen(false);
+  };
 
   // Toast notifications state
   const [toasts, setToasts] = useState([]);
@@ -46,6 +60,70 @@ export default function AdminDashBoard() {
       setToasts(prev => prev.filter(t => t.id !== id));
     }, 3500);
   };
+
+  // Notifications state
+  const [isNotifOpen, setIsNotifOpen] = useState(false);
+  const [notifications, setNotifications] = useState([
+    {
+      id: 1,
+      title: "New Video Submission",
+      description: "Elena J. uploaded a video for review ('Tree Planting Initiative').",
+      time: "5 mins ago",
+      read: false,
+      type: "video"
+    },
+    {
+      id: 2,
+      title: "System Integrity Log",
+      description: "Database sandbox synchronization completed successfully.",
+      time: "1 hour ago",
+      read: false,
+      type: "system"
+    },
+    {
+      id: 3,
+      title: "New User Registered",
+      description: "Marcus Aurelius created an eco-account.",
+      time: "3 hours ago",
+      read: true,
+      type: "user"
+    },
+    {
+      id: 4,
+      title: "AI Auto-Verification",
+      description: "AI system automatically approved submission #1049.",
+      time: "5 hours ago",
+      read: true,
+      type: "ai"
+    }
+  ]);
+
+  const handleMarkAllRead = () => {
+    setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+    showToast("All notifications marked as read.", "success");
+  };
+
+  const handleClearAllNotifs = () => {
+    setNotifications([]);
+    showToast("Notifications cleared.", "warning");
+  };
+
+  const handleToggleRead = (id) => {
+    setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: !n.read } : n));
+  };
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      const bellContainer = document.getElementById("bell-notif-container");
+      if (isNotifOpen && bellContainer && !bellContainer.contains(e.target)) {
+        setIsNotifOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isNotifOpen]);
 
   // Custom Confirmation Modal state
   const [confirmModal, setConfirmModal] = useState({
@@ -278,9 +356,15 @@ export default function AdminDashBoard() {
   };
 
   // Sign out handler
-  const handleSignOut = async () => {
-    await signOut();
-    navigate("/login");
+  const handleSignOut = () => {
+    requestConfirm(
+      "Confirm Logout",
+      "Are you sure you want to log out of the GreenQuest Admin Panel?",
+      async () => {
+        await signOut();
+        navigate("/login");
+      }
+    );
   };
 
   // Video review handlers
@@ -526,12 +610,84 @@ export default function AdminDashBoard() {
     );
   };
 
-  // Rendering screen loading
+  // Rendering screen loading skeleton
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#0E150E] flex flex-col items-center justify-center text-[#DCE5D9]">
-        <Loader2 className="animate-spin text-[#4BE277] mb-4" size={40} />
-        <p className="font-mono text-sm tracking-widest text-[#BCCBB9] uppercase">Initializing GreenQuest Admin Panel...</p>
+      <div className="min-h-screen bg-[#0E150E] text-[#DCE5D9] font-sans flex flex-col md:flex-row antialiased overflow-x-hidden">
+        
+        {/* Skeleton Sidebar */}
+        <aside className="w-full md:w-64 bg-[#161D16]/30 border-b md:border-b-0 md:border-r border-[#DCE5D9]/10 flex flex-col p-4 gap-6 shrink-0">
+          <div className="flex items-center gap-3 px-2">
+            <div className="w-10 h-10 rounded-full bg-[#161D16] skeleton-shimmer shrink-0" />
+            <div className="space-y-1.5 flex-grow">
+              <div className="h-4 bg-[#161D16] skeleton-shimmer rounded w-3/4" />
+              <div className="h-2.5 bg-[#161D16] skeleton-shimmer rounded w-1/2" />
+            </div>
+          </div>
+          
+          <nav className="flex flex-row md:flex-col gap-2 overflow-x-auto md:overflow-x-visible pb-2 md:pb-0 flex-grow">
+            {[1, 2, 3, 4, 5, 6].map(i => (
+              <div key={i} className="h-10 bg-[#161D16] skeleton-shimmer rounded-lg w-28 md:w-full shrink-0" />
+            ))}
+          </nav>
+
+          <div className="pt-4 border-t border-[#3D4A3D]/40 space-y-2">
+            <div className="h-6 bg-[#161D16] skeleton-shimmer rounded w-2/3" />
+            <div className="h-6 bg-[#161D16] skeleton-shimmer rounded w-1/2" />
+          </div>
+        </aside>
+
+        {/* Skeleton Main content */}
+        <main className="flex-grow p-4 md:p-8 space-y-6">
+          {/* Skeleton Header */}
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-[#DCE5D9]/5 pb-4">
+            <div className="space-y-2 flex-grow">
+              <div className="h-7 bg-[#161D16] skeleton-shimmer rounded w-48" />
+              <div className="h-3 bg-[#161D16] skeleton-shimmer rounded w-72" />
+            </div>
+            <div className="flex items-center gap-3 w-full md:w-auto shrink-0">
+              <div className="h-9 bg-[#161D16] skeleton-shimmer rounded-lg w-full md:w-44" />
+              <div className="h-9 bg-[#161D16] skeleton-shimmer rounded-lg w-9" />
+              <div className="h-9 bg-[#161D16] skeleton-shimmer rounded-full w-24" />
+            </div>
+          </div>
+
+          {/* Skeleton Bento Grid (4 stats cards) */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {[1, 2, 3, 4].map(i => (
+              <div key={i} className="bg-[#161D16]/20 border border-[#DCE5D9]/5 rounded-xl p-5 space-y-3">
+                <div className="flex justify-between">
+                  <div className="h-3 bg-[#161D16] skeleton-shimmer rounded w-24" />
+                  <div className="h-5 bg-[#161D16] skeleton-shimmer rounded-full w-5" />
+                </div>
+                <div className="h-8 bg-[#161D16] skeleton-shimmer rounded w-20" />
+                <div className="h-3.5 bg-[#161D16] skeleton-shimmer rounded w-32" />
+              </div>
+            ))}
+          </div>
+
+          {/* Skeleton Charts Section */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-2 bg-[#161D16]/20 border border-[#DCE5D9]/5 rounded-xl p-5 space-y-4">
+              <div className="h-5 bg-[#161D16] skeleton-shimmer rounded w-44" />
+              <div className="h-[220px] bg-[#161D16]/10 skeleton-shimmer rounded-lg w-full" />
+            </div>
+            <div className="bg-[#161D16]/20 border border-[#DCE5D9]/5 rounded-xl p-5 space-y-4">
+              <div className="h-5 bg-[#161D16] skeleton-shimmer rounded w-36" />
+              <div className="h-[220px] bg-[#161D16]/10 skeleton-shimmer rounded-lg w-full" />
+            </div>
+          </div>
+
+          {/* Skeleton Table Section */}
+          <div className="bg-[#161D16]/20 border border-[#DCE5D9]/5 rounded-xl p-5 space-y-4">
+            <div className="h-5 bg-[#161D16] skeleton-shimmer rounded w-44" />
+            <div className="space-y-2">
+              {[1, 2, 3].map(i => (
+                <div key={i} className="h-10 bg-[#161D16] skeleton-shimmer rounded-lg w-full" />
+              ))}
+            </div>
+          </div>
+        </main>
       </div>
     );
   }
@@ -548,95 +704,153 @@ export default function AdminDashBoard() {
   return (
     <div className="min-h-screen bg-[#0E150E] text-[#DCE5D9] font-sans selection:bg-[#4BE277]/30 flex flex-col md:flex-row antialiased overflow-x-hidden">
       
+      {/* Mobile sidebar backdrop overlay */}
+      {isSidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 md:hidden"
+          onClick={() => setIsSidebarOpen(false)}
+        />
+      )}
+
       {/* Side Navigation Bar */}
-      <aside className="w-full md:w-64 bg-[#161D16]/50 backdrop-blur-2xl border-b md:border-b-0 md:border-r border-[#DCE5D9]/10 shadow-xl flex flex-col p-4 gap-6 shrink-0 z-45">
-        <div className="flex items-center gap-3 px-2">
-          <div className="w-10 h-10 rounded-full bg-[#4BE277] flex items-center justify-center text-[#003915]">
-            <BrainCircuit size={20} className="animate-pulse" />
+      <aside className={`
+        fixed inset-y-0 left-0 bg-[#161D16] border-r border-[#DCE5D9]/10 shadow-xl flex flex-col z-50
+        transition-all duration-300 transform md:translate-x-0 md:static md:bg-[#161D16]/50 md:backdrop-blur-2xl
+        ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"}
+        w-64 p-4 ${isSidebarCollapsed ? "md:w-20 md:p-3" : "md:w-64 md:p-4"}
+      `}>
+        <div className={`flex w-full items-center justify-between px-2 ${isSidebarCollapsed ? "md:flex-col md:items-center md:gap-4 md:px-0" : ""}`}>
+          <div className={`flex items-center gap-3 overflow-hidden ${isSidebarCollapsed ? "md:justify-center" : ""}`}>
+            <div className="w-10 h-10 rounded-full bg-[#4BE277] flex items-center justify-center text-[#003915] shrink-0">
+              <BrainCircuit size={20} className="animate-pulse" />
+            </div>
+            <div className={`transition-all duration-300 whitespace-nowrap ${isSidebarCollapsed ? "md:hidden md:opacity-0" : "block opacity-100"}`}>
+              <h1 className="text-xl font-bold tracking-tight text-[#4BE277]">GreenQuest</h1>
+              <p className="text-[10px] text-[#BCCBB9] uppercase tracking-widest font-mono">Admin Panel</p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-xl font-bold tracking-tight text-[#4BE277]">GreenQuest</h1>
-            <p className="text-[10px] text-[#BCCBB9] uppercase tracking-widest font-mono">Admin Panel</p>
+          
+          {/* Collapse/Close Buttons wrapper */}
+          <div className={`flex items-center gap-1 ${isSidebarCollapsed ? "md:flex-col md:items-center md:w-full" : ""}`}>
+            {/* Collapse button - Hidden on mobile, visible on desktop */}
+            <button
+              onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+              className="hidden md:flex p-1.5 text-[#BCCBB9] hover:text-[#4BE277] hover:bg-[#4BE277]/10 rounded-lg transition-colors cursor-pointer shrink-0"
+              title={isSidebarCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
+            >
+              {isSidebarCollapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
+            </button>
+
+            {/* Mobile close button */}
+            <button
+              onClick={() => setIsSidebarOpen(false)}
+              className="md:hidden p-1.5 text-[#BCCBB9] hover:text-[#FFB4AB] hover:bg-[#FFB4AB]/10 rounded-lg transition-colors cursor-pointer"
+            >
+              <X size={20} />
+            </button>
           </div>
         </div>
 
         {/* Sidebar Tabs */}
-        <nav className="flex flex-row md:flex-col gap-1 overflow-x-auto md:overflow-x-visible pb-2 md:pb-0 scroll-hide flex-grow">
+        <nav className="flex flex-col gap-1 flex-grow">
           <button
-            onClick={() => setActiveTab("analytics")}
+            onClick={() => handleTabChange("analytics")}
             className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm transition-all whitespace-nowrap active:translate-x-0.5 cursor-pointer ${
+              isSidebarCollapsed ? "md:justify-center md:px-0" : ""
+            } ${
               activeTab === "analytics"
                 ? "bg-[#4BE277]/10 text-[#4BE277] border-l-4 border-[#4BE277]"
                 : "text-[#BCCBB9] hover:bg-[#333B33]/20"
             }`}
+            title={isSidebarCollapsed ? "Analytics" : undefined}
           >
-            <LayoutDashboard size={18} />
-            <span>Analytics</span>
+            <LayoutDashboard size={18} className="shrink-0" />
+            <span className={`transition-all duration-300 opacity-100 ${isSidebarCollapsed ? "md:hidden" : "block"}`}>Analytics</span>
           </button>
 
           <button
-            onClick={() => setActiveTab("users")}
+            onClick={() => handleTabChange("users")}
             className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm transition-all whitespace-nowrap active:translate-x-0.5 cursor-pointer ${
+              isSidebarCollapsed ? "md:justify-center md:px-0" : ""
+            } ${
               activeTab === "users"
                 ? "bg-[#4BE277]/10 text-[#4BE277] border-l-4 border-[#4BE277]"
                 : "text-[#BCCBB9] hover:bg-[#333B33]/20"
             }`}
+            title={isSidebarCollapsed ? "User Management" : undefined}
           >
-            <Users size={18} />
-            <span>User Management</span>
+            <Users size={18} className="shrink-0" />
+            <span className={`transition-all duration-300 opacity-100 ${isSidebarCollapsed ? "md:hidden" : "block"}`}>User Management</span>
           </button>
 
           <button
-            onClick={() => setActiveTab("moderation")}
-            className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm transition-all whitespace-nowrap active:translate-x-0.5 cursor-pointer ${
+            onClick={() => handleTabChange("moderation")}
+            className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm transition-all whitespace-nowrap active:translate-x-0.5 cursor-pointer relative ${
+              isSidebarCollapsed ? "md:justify-center md:px-0" : ""
+            } ${
               activeTab === "moderation"
                 ? "bg-[#4BE277]/10 text-[#4BE277] border-l-4 border-[#4BE277]"
                 : "text-[#BCCBB9] hover:bg-[#333B33]/20"
             }`}
+            title={isSidebarCollapsed ? "Video Review" : undefined}
           >
-            <Video size={18} />
-            <span>Video Review</span>
+            <Video size={18} className="shrink-0" />
+            <span className={`transition-all duration-300 opacity-100 ${isSidebarCollapsed ? "md:hidden" : "block"}`}>Video Review</span>
+            
             {submissions.filter(s => s.status === "pending" || s.status === "manual_review").length > 0 && (
-              <span className="ml-auto bg-[#FFB4AB] text-[#690005] font-bold text-[10px] px-2 py-0.5 rounded-full font-mono">
+              <span className={`bg-[#FFB4AB] text-[#690005] font-bold font-mono ${
+                isSidebarCollapsed
+                  ? "md:absolute md:-top-1 md:-right-1 md:text-[9px] md:w-4 md:h-4 md:flex md:items-center md:justify-center md:rounded-full"
+                  : "ml-auto text-[10px] px-2 py-0.5 rounded-full"
+              }`}>
                 {submissions.filter(s => s.status === "pending" || s.status === "manual_review").length}
               </span>
             )}
           </button>
 
           <button
-            onClick={() => setActiveTab("rewards")}
+            onClick={() => handleTabChange("rewards")}
             className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm transition-all whitespace-nowrap active:translate-x-0.5 cursor-pointer ${
+              isSidebarCollapsed ? "md:justify-center md:px-0" : ""
+            } ${
               activeTab === "rewards"
                 ? "bg-[#4BE277]/10 text-[#4BE277] border-l-4 border-[#4BE277]"
                 : "text-[#BCCBB9] hover:bg-[#333B33]/20"
             }`}
+            title={isSidebarCollapsed ? "Rewards Management" : undefined}
           >
-            <Gift size={18} />
-            <span>Rewards Management</span>
+            <Gift size={18} className="shrink-0" />
+            <span className={`transition-all duration-300 opacity-100 ${isSidebarCollapsed ? "md:hidden" : "block"}`}>Rewards Management</span>
           </button>
 
           <button
-            onClick={() => setActiveTab("ai-logs")}
+            onClick={() => handleTabChange("ai-logs")}
             className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm transition-all whitespace-nowrap active:translate-x-0.5 cursor-pointer ${
+              isSidebarCollapsed ? "md:justify-center md:px-0" : ""
+            } ${
               activeTab === "ai-logs"
                 ? "bg-[#4BE277]/10 text-[#4BE277] border-l-4 border-[#4BE277]"
                 : "text-[#BCCBB9] hover:bg-[#333B33]/20"
             }`}
+            title={isSidebarCollapsed ? "AI logs" : undefined}
           >
-            <BrainCircuit size={18} />
-            <span>AI logs</span>
+            <BrainCircuit size={18} className="shrink-0" />
+            <span className={`transition-all duration-300 opacity-100 ${isSidebarCollapsed ? "md:hidden" : "block"}`}>AI logs</span>
           </button>
 
           <button
-            onClick={() => setActiveTab("reports")}
+            onClick={() => handleTabChange("reports")}
             className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm transition-all whitespace-nowrap active:translate-x-0.5 cursor-pointer ${
+              isSidebarCollapsed ? "md:justify-center md:px-0" : ""
+            } ${
               activeTab === "reports"
                 ? "bg-[#4BE277]/10 text-[#4BE277] border-l-4 border-[#4BE277]"
                 : "text-[#BCCBB9] hover:bg-[#333B33]/20"
             }`}
+            title={isSidebarCollapsed ? "Reports" : undefined}
           >
-            <BarChart3 size={18} />
-            <span>Reports</span>
+            <BarChart3 size={18} className="shrink-0" />
+            <span className={`transition-all duration-300 opacity-100 ${isSidebarCollapsed ? "md:hidden" : "block"}`}>Reports</span>
           </button>
         </nav>
 
@@ -646,17 +860,23 @@ export default function AdminDashBoard() {
             href="https://supabase.com"
             target="_blank"
             rel="noreferrer"
-            className="flex items-center gap-3 px-4 py-2 text-xs text-[#BCCBB9] hover:text-[#92DB2A] transition-all"
+            className={`flex items-center gap-3 px-4 py-2 text-xs text-[#BCCBB9] hover:text-[#92DB2A] transition-all ${
+              isSidebarCollapsed ? "md:justify-center md:px-0" : ""
+            }`}
+            title={isSidebarCollapsed ? "Help Center" : undefined}
           >
-            <HelpCircle size={14} />
-            <span className="font-mono uppercase tracking-wider">Help Center</span>
+            <HelpCircle size={14} className="shrink-0" />
+            <span className={`font-mono uppercase tracking-wider ${isSidebarCollapsed ? "md:hidden" : "block"}`}>Help Center</span>
           </a>
           <button
             onClick={handleSignOut}
-            className="flex items-center gap-3 px-4 py-2 text-xs text-[#BCCBB9] hover:text-[#FFB4AB] transition-all w-full text-left cursor-pointer font-mono"
+            className={`flex items-center gap-3 px-4 py-2 text-xs text-[#BCCBB9] hover:text-[#FFB4AB] transition-all w-full text-left cursor-pointer font-mono ${
+              isSidebarCollapsed ? "md:justify-center md:px-0" : ""
+            }`}
+            title={isSidebarCollapsed ? "Logout" : undefined}
           >
-            <LogOut size={14} />
-            <span className="font-mono uppercase tracking-wider">Logout</span>
+            <LogOut size={14} className="shrink-0" />
+            <span className={`font-mono uppercase tracking-wider ${isSidebarCollapsed ? "md:hidden" : "block"}`}>Logout</span>
           </button>
         </div>
       </aside>
@@ -687,10 +907,19 @@ export default function AdminDashBoard() {
         )}
 
         {/* Top Header */}
-        <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-[#DCE5D9]/5 pb-4">
-          <div>
-            <h2 className="text-2xl font-bold tracking-tight text-[#DCE5D9] capitalize">{activeTab} Panel</h2>
-            <p className="text-xs text-[#BCCBB9]">GreenQuest system administrator controls and ecological statistics.</p>
+        <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-[#DCE5D9]/5 pb-4 w-full">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setIsSidebarOpen(true)}
+              className="md:hidden p-2 bg-[#161D16] border border-[#3D4A3D] text-[#BCCBB9] hover:text-white rounded-lg cursor-pointer active:scale-95 shrink-0"
+              title="Open Navigation"
+            >
+              <Menu size={20} />
+            </button>
+            <div>
+              <h2 className="text-2xl font-bold tracking-tight text-[#DCE5D9] capitalize">{activeTab} Panel</h2>
+              <p className="text-xs text-[#BCCBB9]">GreenQuest system administrator controls and ecological statistics.</p>
+            </div>
           </div>
           
           <div className="flex items-center gap-3 w-full md:w-auto">
@@ -707,9 +936,106 @@ export default function AdminDashBoard() {
             </div>
 
             {/* Notification Button */}
-            <button className="w-10 h-10 rounded-lg glass-card flex items-center justify-center hover:bg-[#333B33]/40 transition-colors text-[#BCCBB9]">
-              <Bell size={18} />
-            </button>
+            <div id="bell-notif-container" className="relative">
+              <button 
+                onClick={() => setIsNotifOpen(!isNotifOpen)}
+                className="w-10 h-10 rounded-lg glass-card flex items-center justify-center hover:bg-[#333B33]/40 transition-colors text-[#BCCBB9] relative cursor-pointer"
+                title="View Notifications"
+              >
+                <Bell size={18} />
+                {notifications.some(n => !n.read) && (
+                  <span className="absolute top-2 right-2 w-2.5 h-2.5 rounded-full bg-[#FFB4AB] border border-[#0E150E] shadow-[0_0_10px_#FFB4AB] animate-pulse" />
+                )}
+              </button>
+
+              {isNotifOpen && (
+                <div className="absolute right-0 top-12 mt-1 w-80 bg-[#0E150E]/95 border border-[#4BE277]/20 shadow-[0_10px_40px_rgba(0,0,0,0.6)] rounded-2xl p-4 z-[9999] space-y-3 text-left font-sans animate-fade-in backdrop-blur-md">
+                  
+                  {/* Dropdown Header */}
+                  <div className="flex items-center justify-between border-b border-[#DCE5D9]/10 pb-2">
+                    <div className="flex items-center gap-2">
+                      <h4 className="font-bold text-xs text-[#DCE5D9] uppercase tracking-wider">Notifications</h4>
+                      {notifications.filter(n => !n.read).length > 0 && (
+                        <span className="bg-[#4BE277]/15 text-[#4BE277] text-[9px] px-1.5 py-0.5 rounded-full font-mono font-bold">
+                          {notifications.filter(n => !n.read).length} new
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex gap-2">
+                      {notifications.length > 0 && (
+                        <>
+                          <button 
+                            onClick={handleMarkAllRead}
+                            className="text-[9px] text-[#4BE277] hover:underline cursor-pointer font-mono uppercase bg-transparent border-0 outline-none"
+                          >
+                            Mark All Read
+                          </button>
+                          <span className="text-[#3D4A3D] text-[9px]">|</span>
+                          <button 
+                            onClick={handleClearAllNotifs}
+                            className="text-[9px] text-[#FFB4AB] hover:underline cursor-pointer font-mono uppercase bg-transparent border-0 outline-none"
+                          >
+                            Clear
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Dropdown Content */}
+                  <div className="max-h-60 overflow-y-auto divide-y divide-[#DCE5D9]/5 scroll-hide space-y-2">
+                    {notifications.length === 0 ? (
+                      <div className="py-8 text-center text-xs text-[#BCCBB9] font-mono">
+                        No notifications found.
+                      </div>
+                    ) : (
+                      notifications.map(n => (
+                        <div 
+                          key={n.id} 
+                          onClick={() => handleToggleRead(n.id)}
+                          className={`pt-2 pb-1 space-y-1 cursor-pointer transition-colors group ${n.read ? "opacity-60 hover:opacity-100" : ""}`}
+                        >
+                          <div className="flex items-start gap-2.5">
+                            <div className={`mt-0.5 w-6 h-6 rounded-full flex items-center justify-center shrink-0 ${
+                              n.type === "video" 
+                                ? "bg-[#4BE277]/15 text-[#4BE277]" 
+                                : n.type === "system" 
+                                ? "bg-[#92DB2A]/15 text-[#92DB2A]"
+                                : n.type === "user"
+                                ? "bg-[#4BE277]/15 text-[#4BE277]"
+                                : "bg-[#acf847]/15 text-[#acf847]"
+                            }`}>
+                              {n.type === "video" && <Video size={12} />}
+                              {n.type === "system" && <BrainCircuit size={12} />}
+                              {n.type === "user" && <Users size={12} />}
+                              {n.type === "ai" && <Sparkles size={12} />}
+                            </div>
+
+                            <div className="flex-grow min-w-0">
+                              <div className="flex items-center justify-between gap-1">
+                                <span className={`text-[11px] font-bold truncate block ${n.read ? "text-slate-300" : "text-[#DCE5D9] group-hover:text-[#4BE277]"}`}>
+                                  {n.title}
+                                </span>
+                                {!n.read && (
+                                  <span className="w-1.5 h-1.5 rounded-full bg-[#4BE277] shrink-0" />
+                                )}
+                              </div>
+                              <p className="text-[10px] text-[#BCCBB9] leading-normal mt-0.5 line-clamp-2">
+                                {n.description}
+                              </p>
+                              <span className="text-[9px] text-[#BCCBB9]/50 font-mono block mt-1">
+                                {n.time}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+
+                </div>
+              )}
+            </div>
 
             {/* Profile Avatar */}
             <div className="flex items-center gap-2 pl-3 border-l border-[#DCE5D9]/10">
