@@ -80,3 +80,18 @@
 .animate-slide-in {
   animation: slideIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.skeleton-shimmer {
+  background: linear-gradient(90deg, #161d16 25%, #253325 50%, #161d16 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.6s infinite linear;
+}
