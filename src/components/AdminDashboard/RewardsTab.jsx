@@ -59,14 +59,14 @@ export default function RewardsTab({
 
   return (
     <section className="space-y-6">
-      <div className="flex justify-between items-center border-b border-[#DCE5D9]/5 pb-4">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-[#DCE5D9]/5 pb-4 gap-4 w-full">
         <div>
           <h3 className="text-lg font-bold text-[#DCE5D9]">Eco Rewards Catalog</h3>
           <p className="text-xs text-[#BCCBB9]">Configure incentive items, adjust point valuations, and audit stock allocations.</p>
         </div>
         <button
           onClick={() => handleOpenRewardModal()}
-          className="flex items-center gap-2 bg-[#92DB2A] text-[#1F3700] px-5 py-2.5 rounded-full font-bold hover:shadow-[0_0_20px_rgba(146,219,42,0.4)] transition-all hover:scale-105 active:scale-95 text-xs uppercase font-mono cursor-pointer"
+          className="flex items-center justify-center gap-2 bg-[#92DB2A] text-[#1F3700] px-5 py-2.5 rounded-full font-bold hover:shadow-[0_0_20px_rgba(146,219,42,0.4)] transition-all hover:scale-105 active:scale-95 text-xs uppercase font-mono cursor-pointer w-full sm:w-auto shrink-0"
         >
           <Plus size={14} />
           <span>Add New Reward</span>
