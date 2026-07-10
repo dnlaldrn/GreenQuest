@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   LayoutDashboard,
   UploadCloud,
@@ -9,11 +9,17 @@ import {
   LogOut,
   Search,
   Bell,
+  MoreHorizontal,
+  CheckCircle2,
+  Clock,
   Menu,
+  Loader2,
   X,
+  ShieldAlert,
 } from "lucide-react";
 import { signOut } from "../services/authService";
 import { useNavigate } from "react-router-dom";
+import { createPortal } from "react-dom";
 import OverviewTab from "../components/UserDashBoard/Overview";
 import UploadVideoTab from "../components/UserDashBoard/UploadVideotab";
 import ImpactHubTab from "../components/UserDashBoard/Impacthub";
@@ -25,25 +31,68 @@ export default function GreenQuestDashboard() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("overview");
 
-  const handleSignOut = async () => {
-    await signOut();
-    navigate("/login");
+  // Custom Confirmation Modal state
+  const [confirmModal, setConfirmModal] = useState({
+    isOpen: false,
+    title: "",
+    message: "",
+    onConfirm: null,
+  });
+
+  const requestConfirm = (title, message, onConfirm) => {
+    setConfirmModal({
+      isOpen: true,
+      title,
+      message,
+      onConfirm: () => {
+        onConfirm();
+        setConfirmModal(prev => ({ ...prev, isOpen: false }));
+      }
+    });
   };
 
-  const handleNav = (value, bool) => {
-    setActiveTab(value);
-    setIsSidebarOpen(bool);
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape") {
+        setConfirmModal(prev => ({ ...prev, isOpen: false }));
+      }
+    };
+    if (confirmModal.isOpen) {
+      window.addEventListener("keydown", handleKeyDown);
+    }
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [confirmModal.isOpen]);
+
+  const handleSignOut = () => {
+    requestConfirm(
+      "Confirm Logout",
+      "Are you sure you want to log out of your GreenQuest Dashboard?",
+      async () => {
+        await signOut();
+        navigate("/login");
+      }
+    );
   };
 
   return (
-    <div className="min-h-screen bg-[#0B120F] text-slate-200 font-sans flex flex-col md:flex-row text-xs md:text-sm selection:bg-[#10B981] selection:text-black relative overflow-hidden">
+    <div className="min-h-screen bg-[#0B120F] text-slate-200 font-sans flex flex-col md:flex-row text-xs md:text-sm selection:bg-[#10B981] selection:text-black relative overflow-x-hidden">
+      {/* MOBILE OVERLAY BACKGROUND */}
+      {isSidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 md:hidden"
+          onClick={() => setIsSidebarOpen(false)}
+        />
+      )}
+
       {/* SIDEBAR */}
       <aside
         className={`
-          fixed inset-y-0 left-0 w-64 bg-[#080D0B] border-r border-[#14231C] p-4 flex flex-col justify-between shrink-0 z-50
-          transition-transform duration-300 transform md:translate-x-0 md:static
-          ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"}
-        `}
+        fixed inset-y-0 left-0 w-64 bg-[#080D0B] border-r border-[#14231C] p-4 flex flex-col justify-between shrink-0 z-50
+        transition-transform duration-300 transform md:translate-x-0 md:static
+        ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"}
+      `}
       >
         <div>
           {/* Logo & Close Button */}
@@ -74,7 +123,7 @@ export default function GreenQuestDashboard() {
           {/* Navigation Links */}
           <nav className="space-y-1">
             <button
-              onClick={() => handleNav("overview", false)}
+              onClick={() => setActiveTab("overview")}
               className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm transition-all whitespace-nowrap active:translate-x-0.5 cursor-pointer w-full ${
                 activeTab === "overview"
                   ? "bg-[#4BE277]/10 text-[#4BE277] border-l-4 border-[#4BE277]"
@@ -85,7 +134,7 @@ export default function GreenQuestDashboard() {
               <span>Overview</span>
             </button>
             <button
-              onClick={() => handleNav("upload-video", false)}
+              onClick={() => setActiveTab("upload-video")}
               className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm transition-all whitespace-nowrap active:translate-x-0.5 cursor-pointer w-full ${
                 activeTab === "upload-video"
                   ? "bg-[#4BE277]/10 text-[#4BE277] border-l-4 border-[#4BE277]"
@@ -96,7 +145,7 @@ export default function GreenQuestDashboard() {
               <span>Upload Video</span>
             </button>
             <button
-              onClick={() => handleNav("impact-hub", false)}
+              onClick={() => setActiveTab("impact-hub")}
               className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm transition-all whitespace-nowrap active:translate-x-0.5 cursor-pointer w-full ${
                 activeTab === "impact-hub"
                   ? "bg-[#4BE277]/10 text-[#4BE277] border-l-4 border-[#4BE277]"
@@ -107,7 +156,7 @@ export default function GreenQuestDashboard() {
               <span>Impact Hub</span>
             </button>
             <button
-              onClick={() => handleNav("quests", false)}
+              onClick={() => setActiveTab("quests")}
               className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm transition-all whitespace-nowrap active:translate-x-0.5 cursor-pointer w-full ${
                 activeTab === "quests"
                   ? "bg-[#4BE277]/10 text-[#4BE277] border-l-4 border-[#4BE277]"
@@ -118,7 +167,7 @@ export default function GreenQuestDashboard() {
               <span>Quests</span>
             </button>
             <button
-              onClick={() => handleNav("leaderboard", false)}
+              onClick={() => setActiveTab("leaderboard")}
               className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm transition-all whitespace-nowrap active:translate-x-0.5 cursor-pointer w-full ${
                 activeTab === "leaderboard"
                   ? "bg-[#4BE277]/10 text-[#4BE277] border-l-4 border-[#4BE277]"
@@ -181,77 +230,65 @@ export default function GreenQuestDashboard() {
             </div>
             <button
               className="text-slate-400 hover:text-red-400 p-1.5 rounded-lg transition-colors"
-              onClick={handleSignOut}
+              onClick={signOut()}
             >
-              <LogOut size={16} />
+              <LogOut size={16} onClick={signOut()} />
             </button>
           </div>
         </div>
       </aside>
 
-      {/* RIGHT CONTAINER: Flex setup allows header to claim remaining screen width */}
-      <div className="flex-1 flex flex-col h-screen min-w-0 overflow-hidden relative">
-        <header className="h-16 w-full border-b border-[#14231C] px-4 md:px-6 flex items-center justify-between bg-[#0B120F]/80 backdrop-blur sticky top-0 z-30 shrink-0">
-          <div className="flex items-center gap-3">
-            {/* Hamburger Menu Icon for Mobile */}
-            <button
-              className="md:hidden p-2 bg-[#111A16] border border-[#14231C] rounded-lg text-slate-400 hover:text-white"
-              onClick={() => setIsSidebarOpen(true)}
-            >
-              <Menu size={18} />
-            </button>
+      {/* MAIN CONTENT AREA */}
+      {activeTab == "overview" && <OverviewTab />}
 
-            {/* Title Block */}
-            <div>
-              <h2 className="text-base md:text-lg font-bold text-white tracking-tight capitalize">
-                {activeTab.replace("-", " ")}
-              </h2>
-              <p className="hidden sm:block text-[11px] md:text-xs text-slate-400">
-                Welcome back, Guardian Alex. Your impact is growing.
-              </p>
-            </div>
-          </div>
+      {activeTab == "upload-video" && <UploadVideoTab />}
 
-          <div className="flex items-center gap-2 md:gap-4">
-            {/* Search Bar */}
-            <div className="relative w-40 lg:w-64 hidden sm:block">
-              <Search
-                className="absolute left-3 top-2.5 text-slate-500"
-                size={16}
-              />
-              <input
-                type="text"
-                placeholder="Search quests..."
-                className="w-full bg-[#111A16] border border-[#14231C] rounded-lg pl-9 pr-4 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-[#10B981] transition-colors placeholder:text-slate-600"
-              />
+      {activeTab == "impact-hub" && <ImpactHubTab />}
+
+      {activeTab == "quests" && <QuestsTab />}
+
+      {activeTab == "leaderboard" && <LeaderboardsTab />}
+
+      {/* Premium Confirmation Dialog Modal */}
+      {confirmModal.isOpen && createPortal(
+        <div className="fixed inset-0 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 z-[10000] animate-fade-in">
+          <div className="bg-[#0B120F] border border-[#10B981]/30 shadow-[0_0_50px_rgba(16,185,129,0.1)] max-w-sm w-full rounded-2xl p-5 space-y-4 font-mono text-xs">
+            
+            {/* Modal Header */}
+            <div className="flex items-center gap-2 text-[#10B981] border-b border-[#14231C] pb-2">
+              <ShieldAlert size={18} className="shrink-0" />
+              <h3 className="font-bold text-sm text-[#BCCBB9] uppercase tracking-wider">
+                {confirmModal.title}
+              </h3>
             </div>
 
-            {/* Notifications */}
-            <button className="p-2 bg-[#111A16] border border-[#14231C] text-slate-400 hover:text-white rounded-lg relative transition-colors">
-              <Bell size={16} />
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-[#10B981] rounded-full animate-pulse"></span>
-            </button>
+            {/* Modal Body */}
+            <p className="text-slate-400 leading-relaxed text-left">
+              {confirmModal.message}
+            </p>
 
-            {/* Upload Action Button */}
-            <button
-              onClick={() => setActiveTab("upload-video")}
-              className="bg-[#10B981] hover:bg-[#0ea5e9] text-[#0B120F] font-bold px-3 md:px-4 py-1.5 rounded-lg flex items-center gap-2 transition-colors shadow-[0_4px_12px_rgba(16,185,129,0.2)]"
-            >
-              <UploadCloud size={16} />
-              <span className="hidden xs:inline">Upload Video</span>
-            </button>
+            {/* Modal Actions */}
+            <div className="flex justify-end gap-2 pt-2">
+              <button
+                type="button"
+                onClick={confirmModal.onConfirm}
+                className="bg-[#10B981]/15 text-[#10B981] border border-[#10B981]/30 hover:bg-[#10B981]/25 font-bold px-4 py-2 rounded-lg hover:scale-105 active:scale-95 transition-all cursor-pointer font-mono"
+              >
+                Confirm Action
+              </button>
+              <button
+                type="button"
+                onClick={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
+                className="bg-[#1D2924] text-slate-300 border border-[#10B981]/10 px-4 py-2 rounded-lg hover:bg-[#1D2924]/85 transition-colors cursor-pointer font-mono"
+              >
+                Dismiss
+              </button>
+            </div>
+            
           </div>
-        </header>
-
-        {/* MAIN CONTENT AREA */}
-        <main className="flex-1 overflow-y-auto bg-[#0B120F]">
-          {activeTab === "overview" && <OverviewTab />}
-          {activeTab === "upload-video" && <UploadVideoTab />}
-          {activeTab === "impact-hub" && <ImpactHubTab />}
-          {activeTab === "quests" && <QuestsTab />}
-          {activeTab === "leaderboard" && <LeaderboardsTab />}
-        </main>
-      </div>
+        </div>,
+        document.body
+      )}
     </div>
   );
 }
