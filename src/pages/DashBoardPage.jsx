@@ -9,11 +9,7 @@ import {
   LogOut,
   Search,
   Bell,
-  MoreHorizontal,
-  CheckCircle2,
-  Clock,
   Menu,
-  Loader2,
   X,
 } from "lucide-react";
 import { signOut } from "../services/authService";
@@ -34,17 +30,20 @@ export default function GreenQuestDashboard() {
     navigate("/login");
   };
 
-  return (
-    <div className="min-h-screen bg-[#0B120F] text-slate-200 font-sans flex flex-col md:flex-row text-xs md:text-sm selection:bg-[#10B981] selection:text-black relative overflow-x-hidden">
-      
+  const handleNav = (value, bool) => {
+    setActiveTab(value);
+    setIsSidebarOpen(bool);
+  };
 
+  return (
+    <div className="min-h-screen bg-[#0B120F] text-slate-200 font-sans flex flex-col md:flex-row text-xs md:text-sm selection:bg-[#10B981] selection:text-black relative overflow-hidden">
       {/* SIDEBAR */}
       <aside
         className={`
-        fixed inset-y-0 left-0 w-64 bg-[#080D0B] border-r border-[#14231C] p-4 flex flex-col justify-between shrink-0 z-50
-        transition-transform duration-300 transform md:translate-x-0 md:static
-        ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"}
-      `}
+          fixed inset-y-0 left-0 w-64 bg-[#080D0B] border-r border-[#14231C] p-4 flex flex-col justify-between shrink-0 z-50
+          transition-transform duration-300 transform md:translate-x-0 md:static
+          ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"}
+        `}
       >
         <div>
           {/* Logo & Close Button */}
@@ -61,7 +60,6 @@ export default function GreenQuestDashboard() {
                   Impact Dashboard
                 </span>
               </div>
-              
             </div>
 
             {/* Close sidebar on mobile */}
@@ -76,7 +74,7 @@ export default function GreenQuestDashboard() {
           {/* Navigation Links */}
           <nav className="space-y-1">
             <button
-              onClick={() => setActiveTab("overview")}
+              onClick={() => handleNav("overview", false)}
               className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm transition-all whitespace-nowrap active:translate-x-0.5 cursor-pointer w-full ${
                 activeTab === "overview"
                   ? "bg-[#4BE277]/10 text-[#4BE277] border-l-4 border-[#4BE277]"
@@ -87,7 +85,7 @@ export default function GreenQuestDashboard() {
               <span>Overview</span>
             </button>
             <button
-              onClick={() => setActiveTab("upload-video")}
+              onClick={() => handleNav("upload-video", false)}
               className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm transition-all whitespace-nowrap active:translate-x-0.5 cursor-pointer w-full ${
                 activeTab === "upload-video"
                   ? "bg-[#4BE277]/10 text-[#4BE277] border-l-4 border-[#4BE277]"
@@ -98,7 +96,7 @@ export default function GreenQuestDashboard() {
               <span>Upload Video</span>
             </button>
             <button
-              onClick={() => setActiveTab("impact-hub")}
+              onClick={() => handleNav("impact-hub", false)}
               className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm transition-all whitespace-nowrap active:translate-x-0.5 cursor-pointer w-full ${
                 activeTab === "impact-hub"
                   ? "bg-[#4BE277]/10 text-[#4BE277] border-l-4 border-[#4BE277]"
@@ -109,7 +107,7 @@ export default function GreenQuestDashboard() {
               <span>Impact Hub</span>
             </button>
             <button
-              onClick={() => setActiveTab("quests")}
+              onClick={() => handleNav("quests", false)}
               className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm transition-all whitespace-nowrap active:translate-x-0.5 cursor-pointer w-full ${
                 activeTab === "quests"
                   ? "bg-[#4BE277]/10 text-[#4BE277] border-l-4 border-[#4BE277]"
@@ -120,7 +118,7 @@ export default function GreenQuestDashboard() {
               <span>Quests</span>
             </button>
             <button
-              onClick={() => setActiveTab("leaderboard")}
+              onClick={() => handleNav("leaderboard", false)}
               className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm transition-all whitespace-nowrap active:translate-x-0.5 cursor-pointer w-full ${
                 activeTab === "leaderboard"
                   ? "bg-[#4BE277]/10 text-[#4BE277] border-l-4 border-[#4BE277]"
@@ -191,16 +189,69 @@ export default function GreenQuestDashboard() {
         </div>
       </aside>
 
-      {/* MAIN CONTENT AREA */}
-      {activeTab == "overview" && <OverviewTab />}
+      {/* RIGHT CONTAINER: Flex setup allows header to claim remaining screen width */}
+      <div className="flex-1 flex flex-col h-screen min-w-0 overflow-hidden relative">
+        <header className="h-16 w-full border-b border-[#14231C] px-4 md:px-6 flex items-center justify-between bg-[#0B120F]/80 backdrop-blur sticky top-0 z-30 shrink-0">
+          <div className="flex items-center gap-3">
+            {/* Hamburger Menu Icon for Mobile */}
+            <button
+              className="md:hidden p-2 bg-[#111A16] border border-[#14231C] rounded-lg text-slate-400 hover:text-white"
+              onClick={() => setIsSidebarOpen(true)}
+            >
+              <Menu size={18} />
+            </button>
 
-      {activeTab == "upload-video" && <UploadVideoTab />}
+            {/* Title Block */}
+            <div>
+              <h2 className="text-base md:text-lg font-bold text-white tracking-tight capitalize">
+                {activeTab.replace("-", " ")}
+              </h2>
+              <p className="hidden sm:block text-[11px] md:text-xs text-slate-400">
+                Welcome back, Guardian Alex. Your impact is growing.
+              </p>
+            </div>
+          </div>
 
-      {activeTab == "impact-hub" && <ImpactHubTab />}
+          <div className="flex items-center gap-2 md:gap-4">
+            {/* Search Bar */}
+            <div className="relative w-40 lg:w-64 hidden sm:block">
+              <Search
+                className="absolute left-3 top-2.5 text-slate-500"
+                size={16}
+              />
+              <input
+                type="text"
+                placeholder="Search quests..."
+                className="w-full bg-[#111A16] border border-[#14231C] rounded-lg pl-9 pr-4 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-[#10B981] transition-colors placeholder:text-slate-600"
+              />
+            </div>
 
-      {activeTab == "quests" && <QuestsTab />}
+            {/* Notifications */}
+            <button className="p-2 bg-[#111A16] border border-[#14231C] text-slate-400 hover:text-white rounded-lg relative transition-colors">
+              <Bell size={16} />
+              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-[#10B981] rounded-full animate-pulse"></span>
+            </button>
 
-      {activeTab == "leaderboard" && <LeaderboardsTab />}
+            {/* Upload Action Button */}
+            <button
+              onClick={() => setActiveTab("upload-video")}
+              className="bg-[#10B981] hover:bg-[#0ea5e9] text-[#0B120F] font-bold px-3 md:px-4 py-1.5 rounded-lg flex items-center gap-2 transition-colors shadow-[0_4px_12px_rgba(16,185,129,0.2)]"
+            >
+              <UploadCloud size={16} />
+              <span className="hidden xs:inline">Upload Video</span>
+            </button>
+          </div>
+        </header>
+
+        {/* MAIN CONTENT AREA */}
+        <main className="flex-1 overflow-y-auto bg-[#0B120F]">
+          {activeTab === "overview" && <OverviewTab />}
+          {activeTab === "upload-video" && <UploadVideoTab />}
+          {activeTab === "impact-hub" && <ImpactHubTab />}
+          {activeTab === "quests" && <QuestsTab />}
+          {activeTab === "leaderboard" && <LeaderboardsTab />}
+        </main>
+      </div>
     </div>
   );
 }
