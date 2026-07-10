@@ -17,11 +17,10 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 export default function OverviewTab() {
-    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-      const [activeTab, setActiveTab] = useState("overview");
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState("overview");
   return (
-    <main className="flex-1 flex flex-col min-w-0 h-screen overflow-y-auto">
-      
+    <main className="w-full p-4 md:p-6 space-y-6">
       {/* MOBILE OVERLAY BACKGROUND */}
       {isSidebarOpen && (
         <div
@@ -30,113 +29,6 @@ export default function OverviewTab() {
         />
       )}
       {/* TOP BAR */}
-      <header className="h-16 border-b border-[#14231C] px-4 md:px-6 flex items-center justify-between shrink-0 bg-[#0B120F]/80 backdrop-blur sticky top-0 z-30">
-        <div className="flex items-center gap-3">
-          {/* Hamburger Menu Icon for Mobile */}
-          <button
-            className="md:hidden p-2 bg-[#111A16] border border-[#14231C] rounded-lg text-slate-400 hover:text-white"
-            onClick={() => setIsSidebarOpen(true)}
-          >
-            <Menu size={18} />
-          </button>
-
-          {isSidebarOpen && (
-             <nav className="space-y-1 md:hidden">
-            <button
-              onClick={() => setActiveTab("overview")}
-              className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm transition-all whitespace-nowrap active:translate-x-0.5 cursor-pointer w-full ${
-                activeTab === "overview"
-                  ? "bg-[#4BE277]/10 text-[#4BE277] border-l-4 border-[#4BE277]"
-                  : "text-[#BCCBB9] hover:bg-[#333B33]/20"
-              }`}
-            >
-              <LayoutDashboard size={18} />
-              <span>Overview</span>
-            </button>
-            <button
-              onClick={() => setActiveTab("upload-video")}
-              className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm transition-all whitespace-nowrap active:translate-x-0.5 cursor-pointer w-full ${
-                activeTab === "upload-video"
-                  ? "bg-[#4BE277]/10 text-[#4BE277] border-l-4 border-[#4BE277]"
-                  : "text-[#BCCBB9] hover:bg-[#333B33]/20"
-              }`}
-            >
-              <UploadCloud size={18} />
-              <span>Upload Video</span>
-            </button>
-            <button
-              onClick={() => setActiveTab("impact-hub")}
-              className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm transition-all whitespace-nowrap active:translate-x-0.5 cursor-pointer w-full ${
-                activeTab === "impact-hub"
-                  ? "bg-[#4BE277]/10 text-[#4BE277] border-l-4 border-[#4BE277]"
-                  : "text-[#BCCBB9] hover:bg-[#333B33]/20"
-              }`}
-            >
-              <Globe size={18} />
-              <span>Impact Hub</span>
-            </button>
-            <button
-              onClick={() => setActiveTab("quests")}
-              className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm transition-all whitespace-nowrap active:translate-x-0.5 cursor-pointer w-full ${
-                activeTab === "quests"
-                  ? "bg-[#4BE277]/10 text-[#4BE277] border-l-4 border-[#4BE277]"
-                  : "text-[#BCCBB9] hover:bg-[#333B33]/20"
-              }`}
-            >
-              <Award size={18} />
-              <span>Quests</span>
-            </button>
-            <button
-              onClick={() => setActiveTab("leaderboard")}
-              className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm transition-all whitespace-nowrap active:translate-x-0.5 cursor-pointer w-full ${
-                activeTab === "leaderboard"
-                  ? "bg-[#4BE277]/10 text-[#4BE277] border-l-4 border-[#4BE277]"
-                  : "text-[#BCCBB9] hover:bg-[#333B33]/20"
-              }`}
-            >
-              <Trophy size={18} />
-              <span>Leaderboard</span>
-            </button>
-          </nav>
-          )}
-
-          <div>
-            <h2 className="text-base md:text-lg font-bold text-white tracking-tight">
-              Overview
-            </h2>
-            <p className="hidden sm:block text-[11px] md:text-xs text-slate-400">
-              Welcome back, Guardian Alex. Your impact is growing.
-            </p>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-2 md:gap-4">
-          {/* Search Bar (Hidden on small screens) */}
-          <div className="relative w-40 lg:w-64 hidden sm:block">
-            <Search
-              className="absolute left-3 top-2.5 text-slate-500"
-              size={16}
-            />
-            <input
-              type="text"
-              placeholder="Search quests..."
-              className="w-full bg-[#111A16] border border-[#14231C] rounded-lg pl-9 pr-4 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-[#10B981] transition-colors placeholder:text-slate-600"
-            />
-          </div>
-
-          {/* Notifications */}
-          <button className="p-2 bg-[#111A16] border border-[#14231C] text-slate-400 hover:text-white rounded-lg relative transition-colors">
-            <Bell size={16} />
-            <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-[#10B981] rounded-full animate-pulse"></span>
-          </button>
-
-          {/* Upload Action Button */}
-          <button className="bg-[#10B981] hover:bg-[#0ea5e9] text-[#0B120F] font-bold px-3 md:px-4 py-1.5 rounded-lg flex items-center gap-2 transition-colors shadow-[0_4px_12px_rgba(16,185,129,0.2)]">
-            <UploadCloud size={16} />
-            <span className="hidden xs:inline">Upload Video</span>
-          </button>
-        </div>
-      </header>
 
       {/* DASHBOARD CONTENT GRID */}
       <div className="flex-1 p-4 md:p-6 space-y-6">
@@ -380,84 +272,148 @@ export default function OverviewTab() {
             </a>
           </div>
 
-          <div className="overflow-x-auto whitespace-nowrap">
-            <table className="w-full text-left border-collapse min-w-[600px]">
-              <thead>
-                <tr className="border-b border-[#14231C] text-[10px] font-mono uppercase text-slate-500 tracking-wider">
-                  <th className="p-4 font-medium">Submission</th>
-                  <th className="p-4 font-medium">Category</th>
-                  <th className="p-4 font-medium">Points</th>
-                  <th className="p-4 font-medium">Date</th>
-                  <th className="p-4 font-medium">Status</th>
-                  <th className="p-4 font-medium text-right">Action</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-[#14231C]/60 text-xs text-slate-300">
-                {/* Row 1 */}
-                <tr className="hover:bg-[#14281E]/20 transition-colors">
-                  <td className="p-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-8 rounded bg-[#1A2E24] overflow-hidden border border-[#14231C] shrink-0">
-                        <img
-                          src="https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?w=80&auto=format&fit=crop&q=60"
-                          alt="thumbnail"
-                          className="w-full h-full object-cover grayscale brightness-75"
-                        />
-                      </div>
-                      <span className="font-semibold text-white">
+          <div>
+            {/* MOBILE VIEW: Cards stacked vertically (Hidden on desktop) */}
+            <div className="grid grid-cols-1 divide-y divide-[#14231C]/60 md:hidden">
+              {/* Card 1 */}
+              <div className="p-4 space-y-3 hover:bg-[#14281E]/10 transition-colors">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-8 rounded bg-[#1A2E24] overflow-hidden border border-[#14231C] shrink-0">
+                      <img
+                        src="https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?w=80&auto=format&fit=crop&q=60"
+                        alt="thumbnail"
+                        className="w-full h-full object-cover grayscale brightness-75"
+                      />
+                    </div>
+                    <div>
+                      <span className="font-semibold text-white block text-sm">
                         Waste Sorting #22
                       </span>
-                    </div>
-                  </td>
-                  <td className="p-4 font-mono text-slate-400">Recycling</td>
-                  <td className="p-4 font-mono text-[#10B981] font-bold">
-                    +45 pts
-                  </td>
-                  <td className="p-4 font-mono text-slate-400">Oct 12, 2024</td>
-                  <td className="p-4">
-                    <span className="px-2 py-0.5 rounded text-[10px] font-bold font-mono uppercase bg-[#142E24] text-[#10B981] border border-[#10B981]/20">
-                      Approved
-                    </span>
-                  </td>
-                  <td className="p-4 text-right">
-                    <button className="text-slate-500 hover:text-white transition-colors">
-                      <MoreHorizontal size={16} />
-                    </button>
-                  </td>
-                </tr>
-
-                {/* Row 2 */}
-                <tr className="hover:bg-[#14281E]/20 transition-colors">
-                  <td className="p-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-8 rounded bg-[#1A2E24] overflow-hidden border border-[#14231C] shrink-0">
-                        <img
-                          src="https://images.unsplash.com/photo-1473341304170-971dccb5ac1e?w=80&auto=format&fit=crop&q=60"
-                          alt="thumbnail"
-                          className="w-full h-full object-cover grayscale brightness-75"
-                        />
-                      </div>
-                      <span className="font-semibold text-white">
-                        HVAC Optimization
+                      <span className="font-mono text-[11px] text-slate-400">
+                        Recycling
                       </span>
                     </div>
-                  </td>
-                  <td className="p-4 font-mono text-slate-400">Energy</td>
-                  <td className="p-4 font-mono text-slate-500">Pending</td>
-                  <td className="p-4 font-mono text-slate-400">Oct 14, 2024</td>
-                  <td className="p-4">
-                    <span className="px-2 py-0.5 rounded text-[10px] font-bold font-mono uppercase bg-amber-950/40 text-amber-500 border border-amber-500/20">
-                      Reviewing
-                    </span>
-                  </td>
-                  <td className="p-4 text-right">
-                    <button className="text-slate-500 hover:text-white transition-colors">
-                      <MoreHorizontal size={16} />
-                    </button>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between text-[11px] font-mono pt-1">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[#10B981] font-bold">+45 pts</span>
+                    <span className="text-slate-500">•</span>
+                    <span className="text-slate-400">Oct 12, 2024</span>
+                  </div>
+                  <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-[#142E24] text-[#10B981] border border-[#10B981]/20">
+                    Approved
+                  </span>
+                </div>
+              </div>
+
+              {/* Card 2 */}
+              <div className="p-4 space-y-3 hover:bg-[#14281E]/10 transition-colors">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-8 rounded bg-[#1A2E24] overflow-hidden border border-[#14231C] shrink-0">
+                      <img
+                        src="https://images.unsplash.com/photo-1473341304170-971dccb5ac1e?w=80&auto=format&fit=crop&q=60"
+                        alt="thumbnail"
+                        className="w-full h-full object-cover grayscale brightness-75"
+                      />
+                    </div>
+                    <div>
+                      <span className="font-semibold text-white block text-sm">
+                        HVAC Optimization
+                      </span>
+                      <span className="font-mono text-[11px] text-slate-400">
+                        Energy
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between text-[11px] font-mono pt-1">
+                  <div className="flex items-center gap-2">
+                    <span className="text-slate-500 font-bold">Pending</span>
+                    <span className="text-slate-500">•</span>
+                    <span className="text-slate-400">Oct 14, 2024</span>
+                  </div>
+                  <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-amber-950/40 text-amber-500 border border-amber-500/20">
+                    Reviewing
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* DESKTOP VIEW: Standard layout grid (Hidden on mobile) */}
+            <div className="hidden md:block w-full">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="border-b border-[#14231C] text-[10px] font-mono uppercase text-slate-500 tracking-wider">
+                    <th className="p-4 font-medium">Submission</th>
+                    <th className="p-4 font-medium">Category</th>
+                    <th className="p-4 font-medium">Points</th>
+                    <th className="p-4 font-medium">Date</th>
+                    <th className="p-4 font-medium">Status</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[#14231C]/60 text-xs text-slate-300">
+                  <tr className="hover:bg-[#14281E]/20 transition-colors">
+                    <td className="p-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-8 rounded bg-[#1A2E24] overflow-hidden border border-[#14231C] shrink-0">
+                          <img
+                            src="https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?w=80&auto=format&fit=crop&q=60"
+                            alt="thumbnail"
+                            className="w-full h-full object-cover grayscale brightness-75"
+                          />
+                        </div>
+                        <span className="font-semibold text-white">
+                          Waste Sorting #22
+                        </span>
+                      </div>
+                    </td>
+                    <td className="p-4 font-mono text-slate-400">Recycling</td>
+                    <td className="p-4 font-mono text-[#10B981] font-bold">
+                      +45 pts
+                    </td>
+                    <td className="p-4 font-mono text-slate-400">
+                      Oct 12, 2024
+                    </td>
+                    <td className="p-4">
+                      <span className="px-2 py-0.5 rounded text-[10px] font-bold font-mono uppercase bg-[#142E24] text-[#10B981] border border-[#10B981]/20">
+                        Approved
+                      </span>
+                    </td>
+                  </tr>
+                  <tr className="hover:bg-[#14281E]/20 transition-colors">
+                    <td className="p-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-8 rounded bg-[#1A2E24] overflow-hidden border border-[#14231C] shrink-0">
+                          <img
+                            src="https://images.unsplash.com/photo-1473341304170-971dccb5ac1e?w=80&auto=format&fit=crop&q=60"
+                            alt="thumbnail"
+                            className="w-full h-full object-cover grayscale brightness-75"
+                          />
+                        </div>
+                        <span className="font-semibold text-white">
+                          HVAC Optimization
+                        </span>
+                      </div>
+                    </td>
+                    <td className="p-4 font-mono text-slate-400">Energy</td>
+                    <td className="p-4 font-mono text-slate-500">Pending</td>
+                    <td className="p-4 font-mono text-slate-400">
+                      Oct 14, 2024
+                    </td>
+                    <td className="p-4">
+                      <span className="px-2 py-0.5 rounded text-[10px] font-bold font-mono uppercase bg-amber-950/40 text-amber-500 border border-amber-500/20">
+                        Reviewing
+                      </span>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       </div>
