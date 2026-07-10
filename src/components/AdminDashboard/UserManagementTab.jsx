@@ -68,7 +68,8 @@ export default function UserManagementTab({
         <p className="text-xs text-[#BCCBB9]">Review role allocations, account creation dates, and reward balances.</p>
       </div>
 
-      <div className="overflow-x-auto">
+      {/* Desktop view: Table */}
+      <div className="hidden md:block overflow-x-auto">
         <table className="w-full text-left border-collapse">
           <thead>
             <tr className="bg-[#161D16] text-[#BCCBB9] font-mono text-[10px] uppercase tracking-wider border-b border-[#DCE5D9]/10">
@@ -140,6 +141,75 @@ export default function UserManagementTab({
             )}
           </tbody>
         </table>
+      </div>
+
+      {/* Mobile view: Card stack */}
+      <div className="block md:hidden divide-y divide-[#DCE5D9]/5">
+        {filteredUsers.length === 0 ? (
+          <div className="px-6 py-8 text-center text-xs text-[#BCCBB9] font-mono">
+            No user accounts matched the query filter.
+          </div>
+        ) : (
+          filteredUsers.map((u) => (
+            <div key={u.id} className="p-4 space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-full bg-[#333B33] flex items-center justify-center font-bold text-xs uppercase text-[#4BE277]">
+                    {u.username ? u.username.slice(0, 2) : "GQ"}
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-semibold text-[#DCE5D9]">{u.username || "Unknown"}</h4>
+                    <span className="text-[9px] text-[#BCCBB9] font-mono uppercase tracking-widest block">
+                      ID: {u.id.slice(0, 8)}
+                    </span>
+                  </div>
+                </div>
+                
+                <span className={`inline-flex items-center px-2 py-0.5 rounded text-[9px] font-mono font-bold uppercase ${
+                  u.role === "admin"
+                    ? "bg-[#4BE277]/20 text-[#4BE277] border border-[#4BE277]/30"
+                    : "bg-[#333B33] text-[#BCCBB9]"
+                }`}>
+                  {u.role || "user"}
+                </span>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2 bg-[#161D16]/40 p-3 rounded-lg border border-[#DCE5D9]/5 font-mono text-[10px]">
+                <div>
+                  <span className="text-[#BCCBB9] block text-[9px] uppercase tracking-wider mb-0.5">Points Balance</span>
+                  <span className="text-sm font-bold text-[#92DB2A]">
+                    {(u.total_points || 0).toLocaleString()} pts
+                  </span>
+                </div>
+                <div>
+                  <span className="text-[#BCCBB9] block text-[9px] uppercase tracking-wider mb-0.5">Registered</span>
+                  <span className="text-slate-300">
+                    {new Date(u.created_at || Date.now()).toLocaleDateString()}
+                  </span>
+                </div>
+                <div className="col-span-2 mt-1 pt-1 border-t border-[#DCE5D9]/5">
+                  <span className="text-[#BCCBB9] block text-[9px] uppercase tracking-wider mb-0.5">Email Address</span>
+                  <span className="text-slate-300 text-[10px] break-all">{u.email || "no-email@greenquest.ai"}</span>
+                </div>
+              </div>
+
+              <div className="flex gap-2 w-full">
+                <button
+                  onClick={() => handleOpenPointsModal(u)}
+                  className="flex-grow bg-[#92DB2A]/10 text-[#92DB2A] hover:bg-[#92DB2A]/20 transition-all font-mono text-[10px] py-2 rounded-lg font-bold border border-[#92DB2A]/30 active:scale-95 cursor-pointer text-center"
+                >
+                  Adjust Points
+                </button>
+                <button
+                  onClick={() => handleToggleUserRole(u)}
+                  className="flex-grow bg-[#333B33] hover:bg-[#4BE277]/10 hover:text-[#4BE277] transition-all font-mono text-[10px] py-2 rounded-lg text-[#BCCBB9] cursor-pointer active:scale-95 text-center"
+                >
+                  Toggle Role
+                </button>
+              </div>
+            </div>
+          ))
+        )}
       </div>
 
       {/* Points Adjustment Modal */}
