@@ -928,9 +928,15 @@ export default function AdminDashBoard() {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[#BCCBB9]" size={16} />
               <input
                 type="text"
+                maxLength={40}
                 placeholder="Search lists..."
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  if (val.length <= 40) {
+                    setSearchQuery(val.replace(/[^a-zA-Z0-9\s\-.]/g, ""));
+                  }
+                }}
                 className="w-full md:w-60 bg-[#161D16] border border-[#3D4A3D] rounded-lg pl-9 pr-4 py-2 text-xs text-[#DCE5D9] placeholder-[#BCCBB9]/40 focus:border-[#4BE277] focus:ring-1 focus:ring-[#4BE277] outline-none transition-all"
               />
             </div>
