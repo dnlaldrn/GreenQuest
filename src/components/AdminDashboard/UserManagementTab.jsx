@@ -38,22 +38,57 @@ export default function UserManagementTab({
     };
   }, [pointsModal.isOpen]);
 
+  const validateTextSpam = (text) => {
+    if (!text || text.trim().length < 3) return "Input must be at least 3 characters long.";
+    if (text.length > 80) return "Input must not exceed 80 characters.";
+    if (/\d/.test(text)) return "Letters only. Numbers/digits are not allowed.";
+    if (/(.)\1{4,}/.test(text)) return "Repeating characters spam detected.";
+    if (/(.{2,4})\1{3,}/i.test(text)) return "Repetitive syllables/words spam detected.";
+    if (!/[a-zA-Z]/.test(text)) return "Input must contain alphabetical characters.";
+    return null;
+  };
+
+  const validatePointsDelta = (amount) => {
+    const pointsChange = parseInt(amount);
+    if (isNaN(pointsChange) || pointsChange === 0) {
+      return "Please enter a valid non-zero points adjustment.";
+    }
+    if (pointsChange > 999999 || pointsChange < -999999) {
+      return "Points adjustment delta must be between -999,999 and 999,999.";
+    }
+    if (!/^-?\d+$/.test(amount)) {
+      return "Points must be a whole integer without decimal points or exponent symbols.";
+    }
+    return null;
+  };
+
   const onSubmitPoints = async (e) => {
     e.preventDefault();
-    const pointsChange = parseInt(pointsModal.amount);
-    if (isNaN(pointsChange) || pointsChange === 0) {
+
+    const pointsError = validatePointsDelta(pointsModal.amount);
+    if (pointsError) {
       if (showToast) {
-        showToast("Please enter a valid non-zero points adjustment.", "error");
+        showToast(pointsError, "error");
       } else {
-        alert("Please enter a valid non-zero points adjustment.");
+        alert(pointsError);
+      }
+      return;
+    }
+
+    const textError = validateTextSpam(pointsModal.reason);
+    if (textError) {
+      if (showToast) {
+        showToast(`Reason error: ${textError}`, "error");
+      } else {
+        alert(`Reason error: ${textError}`);
       }
       return;
     }
 
     const success = await handleAdjustPoints(
       pointsModal.user.id,
-      pointsChange,
-      pointsModal.reason
+      parseInt(pointsModal.amount),
+      pointsModal.reason.trim()
     );
 
     if (success) {
@@ -233,9 +268,17 @@ export default function UserManagementTab({
                 <input
                   type="number"
                   required
+                  min="-999999"
+                  max="999999"
+                  maxLength={7}
                   placeholder="e.g. 500 or -200"
                   value={pointsModal.amount}
-                  onChange={(e) => setPointsModal(prev => ({ ...prev, amount: e.target.value }))}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (val.length <= 8) {
+                      setPointsModal(prev => ({ ...prev, amount: val }));
+                    }
+                  }}
                   className="w-full bg-[#161D16] border border-[#3D4A3D] rounded-lg p-2.5 text-[#DCE5D9] outline-none focus:border-[#4BE277] font-mono"
                 />
               </div>
@@ -245,9 +288,15 @@ export default function UserManagementTab({
                 <input
                   type="text"
                   required
+                  maxLength={80}
                   placeholder="e.g. Manual moderation review bonus"
                   value={pointsModal.reason}
-                  onChange={(e) => setPointsModal(prev => ({ ...prev, reason: e.target.value }))}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (val.length <= 80) {
+                      setPointsModal(prev => ({ ...prev, reason: val }));
+                    }
+                  }}
                   className="w-full bg-[#161D16] border border-[#3D4A3D] rounded-lg p-2.5 text-[#DCE5D9] outline-none focus:border-[#4BE277]"
                 />
               </div>
