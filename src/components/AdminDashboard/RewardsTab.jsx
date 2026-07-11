@@ -49,9 +49,75 @@ export default function RewardsTab({
     };
   }, [rewardModal.isOpen]);
 
+  const validateTextSpam = (text, maxLength, allowPunctuation = false) => {
+    if (!text || text.trim().length < 3) return "Input must be at least 3 characters long.";
+    if (text.length > maxLength) return `Input must not exceed ${maxLength} characters.`;
+    
+    const pattern = allowPunctuation 
+      ? /^[a-zA-Z\s\-.,'()!]+$/ 
+      : /^[a-zA-Z\s\-]+$/;
+      
+    if (!pattern.test(text)) {
+      return "Letters only. Numbers/digits are not allowed.";
+    }
+
+    if (/(.)\1{4,}/.test(text)) return "Repeating characters spam detected.";
+    if (/(.{2,4})\1{3,}/i.test(text)) return "Repetitive syllables/words spam detected.";
+    return null;
+  };
+
+  const validateUrl = (url) => {
+    if (!url) return null;
+    if (url.length > 200) return "URL must not exceed 200 characters.";
+    if (!/^https?:\/\/[^\s/$.?#].[^\s]*$/i.test(url)) {
+      return "Please enter a valid HTTP/HTTPS URL.";
+    }
+    return null;
+  };
+
   const onSubmitReward = async (e) => {
     e.preventDefault();
-    const success = await handleSaveReward(rewardModal.reward);
+
+    const nameError = validateTextSpam(rewardModal.reward.name, 40, false);
+    if (nameError) {
+      alert(`Name Error: ${nameError}`);
+      return;
+    }
+
+    const descError = validateTextSpam(rewardModal.reward.description, 120, true);
+    if (descError) {
+      alert(`Description Error: ${descError}`);
+      return;
+    }
+
+    const cost = parseInt(rewardModal.reward.points_cost);
+    if (isNaN(cost) || cost < 1 || cost > 1000000) {
+      alert("Point cost must be an integer between 1 and 1,000,000.");
+      return;
+    }
+
+    const stock = parseInt(rewardModal.reward.stock);
+    if (isNaN(stock) || stock < 0 || stock > 99999) {
+      alert("Stock allocation must be an integer between 0 and 99,999.");
+      return;
+    }
+
+    const urlError = validateUrl(rewardModal.reward.image_url);
+    if (urlError) {
+      alert(`Photo URL Error: ${urlError}`);
+      return;
+    }
+
+    const cleanedReward = {
+      ...rewardModal.reward,
+      name: rewardModal.reward.name.trim(),
+      description: rewardModal.reward.description.trim(),
+      points_cost: cost,
+      stock: stock,
+      image_url: rewardModal.reward.image_url ? rewardModal.reward.image_url.trim() : ""
+    };
+
+    const success = await handleSaveReward(cleanedReward);
     if (success) {
       handleCloseRewardModal();
     }
@@ -98,18 +164,22 @@ export default function RewardsTab({
                 </p>
 
                 <div className="flex items-center justify-between mt-3 font-mono text-[10px]">
-                  <span className="text-[#92DB2A] font-bold text-xs">{(r.points_cost || 0).toLocaleString()} pts</span>
-                  <span className={`px-2 py-0.5 rounded text-white ${r.stock > 0 ? "bg-[#333B33]" : "bg-[#FFB4AB]/20 text-[#FFB4AB]"}`}>
-                    Stock: {r.stock || 0}
-                  </span>
+                  <div>
+                    <span className="text-[#BCCBB9] block text-[9px] uppercase tracking-wider">Point Value</span>
+                    <span className="text-[#92DB2A] font-bold text-xs">{(r.points_cost || 0).toLocaleString()} pts</span>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-[#BCCBB9] block text-[9px] uppercase tracking-wider">In Stock</span>
+                    <span className="text-[#DCE5D9] font-bold text-xs">{r.stock} units</span>
+                  </div>
                 </div>
               </div>
             </div>
 
-            <div className="mt-5 pt-4 border-t border-[#3D4A3D] flex gap-2">
+            <div className="flex gap-2 mt-4 pt-4 border-t border-[#DCE5D9]/5">
               <button
                 onClick={() => handleOpenRewardModal(r)}
-                className="flex-grow bg-[#333B33] hover:bg-[#4BE277]/20 hover:text-[#4BE277] py-2 rounded-lg text-xs font-semibold text-[#DCE5D9] transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+                className="flex-grow bg-[#333B33] hover:bg-[#4BE277]/10 hover:text-[#4BE277] transition-all font-mono text-[10px] py-2 rounded-lg text-[#BCCBB9] active:scale-95 flex items-center justify-center gap-2 cursor-pointer"
               >
                 <Edit2 size={12} />
                 <span>Edit Item</span>
@@ -145,8 +215,14 @@ export default function RewardsTab({
                 <input
                   type="text"
                   required
+                  maxLength={40}
                   value={rewardModal.reward.name}
-                  onChange={(e) => setRewardModal(prev => ({ ...prev, reward: { ...prev.reward, name: e.target.value } }))}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (val.length <= 40) {
+                      setRewardModal(prev => ({ ...prev, reward: { ...prev.reward, name: val } }));
+                    }
+                  }}
                   className="w-full bg-[#161D16] border border-[#3D4A3D] rounded-lg p-2.5 text-[#DCE5D9] outline-none focus:border-[#4BE277]"
                 />
               </div>
@@ -154,8 +230,15 @@ export default function RewardsTab({
               <div>
                 <label className="block text-[#BCCBB9] mb-1 font-mono uppercase tracking-wider">Description</label>
                 <textarea
+                  required
+                  maxLength={120}
                   value={rewardModal.reward.description}
-                  onChange={(e) => setRewardModal(prev => ({ ...prev, reward: { ...prev.reward, description: e.target.value } }))}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (val.length <= 120) {
+                      setRewardModal(prev => ({ ...prev, reward: { ...prev.reward, description: val } }));
+                    }
+                  }}
                   className="w-full bg-[#161D16] border border-[#3D4A3D] rounded-lg p-2.5 text-[#DCE5D9] outline-none focus:border-[#4BE277] h-20 resize-none"
                 />
               </div>
@@ -166,9 +249,15 @@ export default function RewardsTab({
                   <input
                     type="number"
                     min="1"
+                    max="1000000"
                     required
                     value={rewardModal.reward.points_cost}
-                    onChange={(e) => setRewardModal(prev => ({ ...prev, reward: { ...prev.reward, points_cost: e.target.value } }))}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (val.length <= 7) {
+                        setRewardModal(prev => ({ ...prev, reward: { ...prev.reward, points_cost: val } }));
+                      }
+                    }}
                     className="w-full bg-[#161D16] border border-[#3D4A3D] rounded-lg p-2.5 text-[#DCE5D9] outline-none focus:border-[#4BE277] font-mono"
                   />
                 </div>
@@ -177,9 +266,15 @@ export default function RewardsTab({
                   <input
                     type="number"
                     min="0"
+                    max="99999"
                     required
                     value={rewardModal.reward.stock}
-                    onChange={(e) => setRewardModal(prev => ({ ...prev, reward: { ...prev.reward, stock: e.target.value } }))}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (val.length <= 6) {
+                        setRewardModal(prev => ({ ...prev, reward: { ...prev.reward, stock: val } }));
+                      }
+                    }}
                     className="w-full bg-[#161D16] border border-[#3D4A3D] rounded-lg p-2.5 text-[#DCE5D9] outline-none focus:border-[#4BE277] font-mono"
                   />
                 </div>
@@ -190,8 +285,14 @@ export default function RewardsTab({
                 <input
                   type="text"
                   placeholder="https://..."
+                  maxLength={200}
                   value={rewardModal.reward.image_url}
-                  onChange={(e) => setRewardModal(prev => ({ ...prev, reward: { ...prev.reward, image_url: e.target.value } }))}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (val.length <= 200) {
+                      setRewardModal(prev => ({ ...prev, reward: { ...prev.reward, image_url: val } }));
+                    }
+                  }}
                   className="w-full bg-[#161D16] border border-[#3D4A3D] rounded-lg p-2.5 text-[#DCE5D9] outline-none focus:border-[#4BE277] font-mono"
                 />
               </div>
