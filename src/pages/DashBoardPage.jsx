@@ -33,6 +33,20 @@ function Bone({ className = "" }) {
   );
 }
 
+// Skeleton for the sidebar logo block (icon + title + subtitle).
+// Mirrors the real logo's layout: w-8 h-8 icon, title line, subtitle line.
+function LogoSkeleton() {
+  return (
+    <div className="flex items-center gap-3">
+      <Bone className="w-8 h-8 rounded-lg shrink-0" />
+      <div className="space-y-1.5">
+        <Bone className="h-4 w-28" />
+        <Bone className="h-2.5 w-20" />
+      </div>
+    </div>
+  );
+}
+
 // Skeleton for the sidebar nav links list (Overview, Upload Video, etc.)
 function SidebarNavSkeleton() {
   return (
@@ -73,10 +87,15 @@ function SidebarFooterSkeleton() {
 // Skeleton for the header title block + search bar.
 function HeaderSkeleton() {
   return (
-    <div className="flex items-center gap-3">
-      <div className="space-y-2">
+    <div className="flex items-center justify-between gap-3">
+      <div className="space-y-2 p-3">
         <Bone className="h-4 w-32" />
         <Bone className="hidden sm:block h-2.5 w-56" />
+      </div>
+      <div className="space-y-2 p-3 flex">
+        <Bone className="h-8 w-50 mr-3 "/>
+        <Bone className="h-8 w-13 mr-3 "/>
+        <Bone className="h-8 w-13 mr-3 "/>
       </div>
     </div>
   );
@@ -108,7 +127,7 @@ function MainContentSkeleton() {
           <Bone className="h-4 w-40" />
           <Bone className="h-4 w-20" />
         </div>
-        {Array.from({ length: 5 }).map((_, i) => (
+        {Array.from({ length: 6 }).map((_, i) => (
           <div key={i} className="flex items-center gap-4">
             <Bone className="w-10 h-10 rounded-lg shrink-0" />
             <div className="flex-1 space-y-2">
@@ -208,19 +227,23 @@ export default function GreenQuestDashboard() {
         <div>
           {/* Logo & Close Button */}
           <div className="flex items-center justify-between px-2 py-4 mb-6">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-[#10B981] flex items-center justify-center shadow-[0_0_15px_rgba(16,185,129,0.3)]">
-                <span className="text-[#0B120F] font-black text-xl">Q</span>
+            {isShellLoading ? (
+              <LogoSkeleton />
+            ) : (
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-lg bg-[#10B981] flex items-center justify-center shadow-[0_0_15px_rgba(16,185,129,0.3)]">
+                  <span className="text-[#0B120F] font-black text-xl">Q</span>
+                </div>
+                <div>
+                  <h1 className="font-bold text-white tracking-wide text-base leading-none">
+                    GreenQuest
+                  </h1>
+                  <span className="text-[10px] text-[#10B981] font-mono uppercase tracking-widest">
+                    Impact Dashboard
+                  </span>
+                </div>
               </div>
-              <div>
-                <h1 className="font-bold text-white tracking-wide text-base leading-none">
-                  GreenQuest
-                </h1>
-                <span className="text-[10px] text-[#10B981] font-mono uppercase tracking-widest">
-                  Impact Dashboard
-                </span>
-              </div>
-            </div>
+            )}
 
             {/* Close sidebar on mobile */}
             <button
@@ -291,10 +314,8 @@ export default function GreenQuestDashboard() {
                 <Trophy size={18} />
                 <span>Leaderboard</span>
               </button>
-            </nav>
-          )}
 
-          <hr className="border-[#14231C] my-6" />
+               <hr className="border-[#14231C] my-6" />
 
           {/* Settings */}
           <a
@@ -304,6 +325,10 @@ export default function GreenQuestDashboard() {
             <Settings size={18} />
             <span>Settings</span>
           </a>
+            </nav>
+          )}
+
+         
         </div>
 
         {/* Sidebar Footer Widgets */}
@@ -359,6 +384,9 @@ export default function GreenQuestDashboard() {
 
       {/* RIGHT CONTAINER: Flex setup allows header to claim remaining screen width */}
       <div className="gq-scrollbar flex-1 flex flex-col h-screen min-w-0 overflow-auto relative">
+         {isShellLoading ? (
+              <HeaderSkeleton />
+            ) : (
         <header className="h-16 w-full border-b border-[#14231C] px-4 md:px-6 flex items-center justify-between bg-[#0B120F]/80 backdrop-blur top-0 z-30 shrink-0">
           <div className="flex items-center gap-3">
             {/* Hamburger Menu Icon for Mobile */}
@@ -370,9 +398,7 @@ export default function GreenQuestDashboard() {
             </button>
 
             {/* Title Block */}
-            {isShellLoading ? (
-              <HeaderSkeleton />
-            ) : (
+           
               <div>
                 <h2 className="text-base md:text-lg font-bold text-white tracking-tight capitalize">
                   {activeTab.replace("-", " ")}
@@ -381,7 +407,7 @@ export default function GreenQuestDashboard() {
                   Welcome back, Guardian Alex. Your impact is growing.
                 </p>
               </div>
-            )}
+           
           </div>
 
           <div className="flex items-center gap-2 md:gap-4">
@@ -414,6 +440,7 @@ export default function GreenQuestDashboard() {
             </button>
           </div>
         </header>
+         )}
 
         {/* MAIN CONTENT AREA */}
         <main className="flex-1 bg-[#0B120F]">
