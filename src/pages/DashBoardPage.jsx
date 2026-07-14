@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import {
   LayoutDashboard,
   UploadCloud,
@@ -11,6 +12,7 @@ import {
   Bell,
   Menu,
   X,
+  ShieldAlert,
 } from "lucide-react";
 import { signOut } from "../services/authService";
 import { useNavigate } from "react-router-dom";
@@ -201,15 +203,55 @@ export default function GreenQuestDashboard() {
     return () => clearTimeout(timer);
   }, [activeTab]);
 
-  const handleSignOut = async () => {
-    await signOut();
-    navigate("/login");
-  };
+ const handleSignOut = () => {
+  requestConfirm(
+    "Confirm Log Out",
+    "Are you sure you want to sign out of GreenQuest? You'll need to log back in to continue tracking your impact.",
+    async () => {
+      await signOut();
+      navigate("/login");
+    }
+  );
+};
 
   const handleNav = (value, bool) => {
     setActiveTab(value);
     setIsSidebarOpen(bool);
   };
+
+    const [confirmModal, setConfirmModal] = useState({
+      isOpen: false,
+      title: "",
+      message: "",
+      onConfirm: null,
+    });
+
+    const requestConfirm = (title, message, onConfirm) => {
+        setConfirmModal({
+          isOpen: true,
+          title,
+          message,
+          onConfirm: () => {
+            onConfirm();
+            setConfirmModal(prev => ({ ...prev, isOpen: false }));
+          }
+        });
+      };
+    
+      useEffect(() => {
+        const handleKeyDown = (e) => {
+          if (e.key === "Escape") {
+            setConfirmModal(prev => ({ ...prev, isOpen: false }));
+          }
+        };
+        if (confirmModal.isOpen) {
+          window.addEventListener("keydown", handleKeyDown);
+        }
+        return () => {
+          window.removeEventListener("keydown", handleKeyDown);
+        };
+      }, [confirmModal.isOpen]);
+    
 
   return (
     <div className="min-h-screen bg-[#0B120F] text-slate-200 font-sans flex flex-col md:flex-row text-xs md:text-sm selection:bg-[#10B981] selection:text-black relative overflow-hidden">
@@ -457,6 +499,45 @@ export default function GreenQuestDashboard() {
           )}
         </main>
       </div>
+      {confirmModal.isOpen && createPortal(
+              <div className="fixed inset-0 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 z-[10000] animate-fade-in">
+                <div className="bg-[#161D16] border border-[#FFB4AB]/30 shadow-[0_0_50px_rgba(255,180,171,0.1)] max-w-sm w-full rounded-2xl p-5 space-y-4 font-mono text-xs">
+                  
+                  {/* Modal Header */}
+                  <div className="flex items-center gap-2 text-[#FFB4AB] border-b border-[#DCE5D9]/10 pb-2">
+                    <ShieldAlert size={18} className="shrink-0" />
+                    <h3 className="font-bold text-sm text-[#DCE5D9] uppercase tracking-wider">
+                      {confirmModal.title}
+                    </h3>
+                  </div>
+      
+                  {/* Modal Body */}
+                  <p className="text-[#BCCBB9] leading-relaxed text-left">
+                    {confirmModal.message}
+                  </p>
+      
+                  {/* Modal Actions */}
+                  <div className="flex justify-end gap-2 pt-2">
+                    <button
+                      type="button"
+                      onClick={confirmModal.onConfirm}
+                      className="bg-[#FFB4AB]/15 text-[#FFB4AB] border border-[#FFB4AB]/30 hover:bg-[#FFB4AB]/25 font-bold px-4 py-2 rounded-lg hover:scale-105 active:scale-95 transition-all cursor-pointer font-mono"
+                    >
+                      Confirm Action
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
+                      className="bg-[#333B33] text-[#DCE5D9] border border-[#3D4A3D] px-4 py-2 rounded-lg hover:bg-[#333B33]/85 transition-colors cursor-pointer font-mono"
+                    >
+                      Dismiss
+                    </button>
+                  </div>
+                  
+                </div>
+              </div>,
+              document.body
+            )}
     </div>
   );
 }
