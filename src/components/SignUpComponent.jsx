@@ -1,9 +1,9 @@
-import { useState } from 'react';
-import { signUp } from '../services/authService';
+import { useState } from "react";
+import { signUp } from "../services/authService";
 import { useNavigate } from "react-router-dom";
-import { supabase } from '../lib/supabase';
+import { supabase } from "../lib/supabase";
 // Using lucide-react for matching layout icons (User, Mail, Lock, ArrowRight, plus tag icons)
-import { User, Mail, Lock, ArrowRight, Leaf, Recycle, Zap } from 'lucide-react';
+import { User, Mail, Lock, ArrowRight, Leaf, Recycle, Zap } from "lucide-react";
 
 export default function SignUpComponent() {
   const navigate = useNavigate();
@@ -12,13 +12,13 @@ export default function SignUpComponent() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
-  
+
   // State to manage the clickable interest tags
   const [selectedInterests, setSelectedInterests] = useState([]);
 
   const toggleInterest = (interest) => {
     if (selectedInterests.includes(interest)) {
-      setSelectedInterests(selectedInterests.filter(i => i !== interest));
+      setSelectedInterests(selectedInterests.filter((i) => i !== interest));
     } else {
       setSelectedInterests([...selectedInterests, interest]);
     }
@@ -48,7 +48,7 @@ export default function SignUpComponent() {
         });
       }
 
-      navigate('/login');
+      navigate("/login");
     } catch (err) {
       setError(err.message);
     } finally {
@@ -58,17 +58,9 @@ export default function SignUpComponent() {
 
   return (
     <div className="min-h-screen bg-[#0a0f0d] text-white flex flex-col justify-between font-mono p-6 selection:bg-[#22c55e]/30">
-      
-      {/* Top Header Logo */}
-      <header className="flex items-center gap-2 max-w-7xl mx-auto w-full pt-4">
-        <Leaf className="w-5 h-5 text-[#2ecc71] fill-[#2ecc71]" />
-        <span className="font-semibold text-sm text-[#e0e0e0] tracking-tight">GreenQuest</span>
-      </header>
-
       {/* Main Form Section */}
       <main className="flex-1 flex items-center justify-center py-12">
         <div className="w-full max-w-[460px] bg-[#121815] border border-[#1f2924] rounded-2xl p-8 shadow-2xl flex flex-col items-center">
-          
           <h2 className="text-[28px] font-bold text-center text-[#e8ece9] tracking-tight mb-1">
             Join the Green Quest
           </h2>
@@ -83,7 +75,6 @@ export default function SignUpComponent() {
           )}
 
           <form onSubmit={handleSignUp} className="w-full flex flex-col gap-5">
-            
             {/* Full Name Input */}
             <div className="flex flex-col gap-2">
               <label className="text-[11px] font-bold tracking-wider text-gray-400 uppercase">
@@ -153,11 +144,11 @@ export default function SignUpComponent() {
                 {/* Recycling Tag */}
                 <button
                   type="button"
-                  onClick={() => toggleInterest('recycling')}
+                  onClick={() => toggleInterest("recycling")}
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs transition cursor-pointer ${
-                    selectedInterests.includes('recycling')
-                      ? 'bg-[#2ecc71]/20 border-[#2ecc71] text-[#2ecc71]'
-                      : 'bg-[#17201c] border-[#23322b] text-gray-400 hover:border-gray-600'
+                    selectedInterests.includes("recycling")
+                      ? "bg-[#2ecc71]/20 border-[#2ecc71] text-[#2ecc71]"
+                      : "bg-[#17201c] border-[#23322b] text-gray-400 hover:border-gray-600"
                   }`}
                 >
                   <Recycle className="w-3.5 h-3.5" />
@@ -167,11 +158,11 @@ export default function SignUpComponent() {
                 {/* Renewable Energy Tag */}
                 <button
                   type="button"
-                  onClick={() => toggleInterest('renewable_energy')}
+                  onClick={() => toggleInterest("renewable_energy")}
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs transition cursor-pointer ${
-                    selectedInterests.includes('renewable_energy')
-                      ? 'bg-[#2ecc71]/20 border-[#2ecc71] text-[#2ecc71]'
-                      : 'bg-[#17201c] border-[#23322b] text-gray-400 hover:border-gray-600'
+                    selectedInterests.includes("renewable_energy")
+                      ? "bg-[#2ecc71]/20 border-[#2ecc71] text-[#2ecc71]"
+                      : "bg-[#17201c] border-[#23322b] text-gray-400 hover:border-gray-600"
                   }`}
                 >
                   <Zap className="w-3.5 h-3.5" />
@@ -181,11 +172,11 @@ export default function SignUpComponent() {
                 {/* Reforestation Tag */}
                 <button
                   type="button"
-                  onClick={() => toggleInterest('reforestation')}
+                  onClick={() => toggleInterest("reforestation")}
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs transition cursor-pointer ${
-                    selectedInterests.includes('reforestation')
-                      ? 'bg-[#2ecc71]/20 border-[#2ecc71] text-[#2ecc71]'
-                      : 'bg-[#17201c] border-[#23322b] text-gray-400 hover:border-gray-600'
+                    selectedInterests.includes("reforestation")
+                      ? "bg-[#2ecc71]/20 border-[#2ecc71] text-[#2ecc71]"
+                      : "bg-[#17201c] border-[#23322b] text-gray-400 hover:border-gray-600"
                   }`}
                 >
                   <Leaf className="w-3.5 h-3.5" />
@@ -201,15 +192,17 @@ export default function SignUpComponent() {
               className="w-full bg-[#2ecc71] hover:bg-[#27ae60] active:scale-[0.99] text-black font-semibold rounded-xl py-3.5 flex items-center justify-center gap-2 transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed mt-2 text-sm"
             >
               <span>{loading ? "Creating..." : "Create Account"}</span>
-              {!loading && <ArrowRight className="w-4 h-4 text-black stroke-[2.5]" />}
+              {!loading && (
+                <ArrowRight className="w-4 h-4 text-black stroke-[2.5]" />
+              )}
             </button>
           </form>
 
           {/* Bottom Login Link */}
           <div className="mt-6 text-xs text-gray-400">
-            Already have an account?{' '}
-            <button 
-              onClick={() => navigate('/login')} 
+            Already have an account?{" "}
+            <button
+              onClick={() => navigate("/login")}
               className="text-[#2ecc71] font-semibold hover:underline bg-transparent border-none p-0 cursor-pointer"
             >
               Log In
@@ -223,16 +216,28 @@ export default function SignUpComponent() {
         {/* Metric Stats Rows */}
         <div className="grid grid-cols-3 gap-12 sm:gap-24 text-center">
           <div>
-            <div className="text-[22px] font-bold text-[#2ecc71] tracking-tight">50k+</div>
-            <div className="text-[9px] text-gray-500 tracking-wider uppercase mt-0.5">Eco-Warriors</div>
+            <div className="text-[22px] font-bold text-[#2ecc71] tracking-tight">
+              50k+
+            </div>
+            <div className="text-[9px] text-gray-500 tracking-wider uppercase mt-0.5">
+              Eco-Warriors
+            </div>
           </div>
           <div>
-            <div className="text-[22px] font-bold text-[#2ecc71] tracking-tight">12M</div>
-            <div className="text-[9px] text-gray-500 tracking-wider uppercase mt-0.5">CO2 Reduced</div>
+            <div className="text-[22px] font-bold text-[#2ecc71] tracking-tight">
+              12M
+            </div>
+            <div className="text-[9px] text-gray-500 tracking-wider uppercase mt-0.5">
+              CO2 Reduced
+            </div>
           </div>
           <div>
-            <div className="text-[22px] font-bold text-[#2ecc71] tracking-tight">A+</div>
-            <div className="text-[9px] text-gray-500 tracking-wider uppercase mt-0.5">Impact Rating</div>
+            <div className="text-[22px] font-bold text-[#2ecc71] tracking-tight">
+              A+
+            </div>
+            <div className="text-[9px] text-gray-500 tracking-wider uppercase mt-0.5">
+              Impact Rating
+            </div>
           </div>
         </div>
 
@@ -240,13 +245,18 @@ export default function SignUpComponent() {
         <div className="w-full flex flex-col sm:flex-row items-center justify-between text-[10px] text-gray-500 gap-4 pt-4 border-t border-[#131a17]">
           <div>© 2024 GreenQuest AI. Accelerating the Global Goals.</div>
           <div className="flex gap-6">
-            <a href="#privacy" className="hover:text-gray-300 transition">Privacy Protocol</a>
-            <a href="#terms" className="hover:text-gray-300 transition">Terms of Service</a>
-            <a href="#status" className="hover:text-gray-300 transition">API Status</a>
+            <a href="#privacy" className="hover:text-gray-300 transition">
+              Privacy Protocol
+            </a>
+            <a href="#terms" className="hover:text-gray-300 transition">
+              Terms of Service
+            </a>
+            <a href="#status" className="hover:text-gray-300 transition">
+              API Status
+            </a>
           </div>
         </div>
       </footer>
-
     </div>
   );
 }
