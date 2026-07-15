@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import FloatingLines from "../components/FloatingLines/FloatingLines";
 
 export default function HeroSection() {
   const steps = [
@@ -245,104 +246,126 @@ export default function HeroSection() {
   return (
     <div className="min-h-screen bg-[#070b09] text-white font-sans overflow-hidden relative selection:bg-emerald-500 selection:text-black">
       {/* Background Decorative Waves (Simulated via gradients/blur) */}
+
       <div className="absolute inset-0 opacity-20 pointer-events-none mix-blend-screen overflow-hidden">
         <div className="absolute -top-[20%] -left-[10%] w-[80%] h-[60%] bg-gradient-to-br from-emerald-500/20 to-transparent blur-3xl transform rotate-12" />
+
         <div className="absolute top-[40%] -right-[10%] w-[70%] h-[70%] bg-gradient-to-tl from-green-500/10 via-emerald-600/5 to-transparent blur-3xl transform -rotate-12" />
       </div>
 
-      {/* --- HERO MAIN CONTENT --- */}
-      <main className="relative z-10 max-w-7xl mx-auto px-6 md:px-12 pt-16 pb-24 grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
-        {/* Left Side: Copy and Stats */}
-        <div className="lg:col-span-7 space-y-8">
-          <div className="space-y-4">
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-white leading-tight">
-              Turn Sustainable <br />
-              <span className=" text-[#22C55E] ">
-                Actions Into Rewards
-              </span>
-            </h1>
-            <p className="text-gray-400 text-base md:text-lg max-w-xl leading-relaxed">
-              Upload eco-friendly videos, let AI verify your impact, and earn
-              Green Points for a greener future. Join thousands making a real
-              difference.
-            </p>
+      {/* --- HERO WRAPPER: relative container that holds both the FloatingLines bg and the hero content --- */}
+
+      <div className="relative w-full">
+        {/* FloatingLines background — absolutely positioned behind everything in this section */}
+
+        <div className="absolute inset-0 z-0 pointer-events-none">
+          <FloatingLines
+            linesGradient={["#22C55E", "#166534", "#84CC16"]}
+            enabledWaves={["top", "middle", "bottom"]}
+            lineCount={6}
+            lineDistance={52}
+            bendRadius={8}
+            bendStrength={-2}
+            interactive
+            parallax={true}
+            animationSpeed={1}
+          />
+        </div>
+        <main className="relative z-10 max-w-7xl mx-auto px-6 md:px-12 pt-16 pb-24 grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+          {/* Left Side: Copy and Stats */}
+          <div className="lg:col-span-7 space-y-8">
+            <div className="space-y-4">
+              <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-white leading-tight">
+                Turn Sustainable <br />
+                <span className=" text-[#22C55E] ">Actions Into Rewards</span>
+              </h1>
+              <p className="text-white text-base md:text-lg max-w-xl leading-relaxed">
+                Upload eco-friendly videos, let AI verify your impact, and earn
+                Green Points for a greener future. Join thousands making a real
+                difference.
+              </p>
+            </div>
+
+            {/* Action Call to Buttons */}
+            <div className="flex flex-wrap items-center gap-4">
+              <button className="flex items-center space-x-2 bg-emerald-400 hover:bg-emerald-300 text-neutral-950 px-6 py-3 rounded-lg font-semibold tracking-wide shadow-lg shadow-emerald-400/20 transition-all duration-200">
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  strokeWidth="2.5"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M12 4v16m8-8H4"
+                  />
+                </svg>
+                <Link to="/login">Upload Video</Link>
+              </button>
+
+              <button className="border border-emerald-500/30 hover:border-emerald-400 bg-emerald-950/20 hover:bg-emerald-950/40 text-emerald-400 px-6 py-3 rounded-lg font-semibold tracking-wide transition-all duration-200">
+                Learn More
+              </button>
+            </div>
+
+            {/* Statistics Grid */}
+            <div className="grid grid-cols-3 gap-4 pt-4 max-w-2xl">
+              {/* Stat 1 */}
+              <div className="bg-[#101714]/60 border border-emerald-950/60 p-4 rounded-xl backdrop-blur-sm">
+                <span className="block text-[10px] uppercase font-bold tracking-widest text-emerald-500 mb-1">
+                  Total Points
+                </span>
+                <span className="text-2xl md:text-3xl font-extrabold tracking-tight text-neutral-100">
+                  1.2M+
+                </span>
+              </div>
+
+              {/* Stat 2 */}
+              <div className="bg-[#101714]/60 border border-emerald-950/60 p-4 rounded-xl backdrop-blur-sm">
+                <span className="block text-[10px] uppercase font-bold tracking-widest text-emerald-500 mb-1">
+                  Videos Analyzed
+                </span>
+                <span className="text-2xl md:text-3xl font-extrabold tracking-tight text-neutral-100">
+                  85k+
+                </span>
+              </div>
+
+              {/* Stat 3 */}
+              <div className="bg-[#101714]/60 border border-emerald-950/60 p-4 rounded-xl backdrop-blur-sm">
+                <span className="block text-[10px] uppercase font-bold tracking-widest text-emerald-500 mb-1">
+                  CO2 Saved
+                </span>
+                <span className="text-2xl md:text-3xl font-extrabold tracking-tight text-neutral-100">
+                  450{" "}
+                  <span className="text-xs font-normal text-gray-400">
+                    Tons
+                  </span>
+                </span>
+              </div>
+            </div>
           </div>
 
-          {/* Action Call to Buttons */}
-          <div className="flex flex-wrap items-center gap-4">
-            <button className="flex items-center space-x-2 bg-emerald-400 hover:bg-emerald-300 text-neutral-950 px-6 py-3 rounded-lg font-semibold tracking-wide shadow-lg shadow-emerald-400/20 transition-all duration-200">
-              <svg
-                className="w-5 h-5"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                strokeWidth="2.5"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M12 4v16m8-8H4"
+          {/* Right Side: AI Earth Image Card */}
+          <div className="lg:col-span-5 flex justify-center lg:justify-end">
+            <div className="relative group w-full max-w-[420px] aspect-square rounded-2xl p-1 bg-gradient-to-b from-emerald-950/50 to-emerald-900/10 border border-emerald-900/40 shadow-2xl shadow-emerald-950/50">
+              <div className="w-full h-full rounded-xl overflow-hidden bg-[#0d1210] flex items-center justify-center relative">
+                {/* Main AI / Mossy Sphere Image Place Holder */}
+                <img
+                  src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=600&q=80" // Replace this URL with your custom green AI graphic
+                  alt="AI Sustainability Hub"
+                  className="w-full h-full object-cover mix-blend-lighten opacity-80 group-hover:scale-105 transition-transform duration-500"
                 />
-              </svg>
-              <Link to="/login">Upload Video</Link>
-            </button>
-
-            <button className="border border-emerald-500/30 hover:border-emerald-400 bg-emerald-950/20 hover:bg-emerald-950/40 text-emerald-400 px-6 py-3 rounded-lg font-semibold tracking-wide transition-all duration-200">
-              Learn More
-            </button>
-          </div>
-
-          {/* Statistics Grid */}
-          <div className="grid grid-cols-3 gap-4 pt-4 max-w-2xl">
-            {/* Stat 1 */}
-            <div className="bg-[#101714]/60 border border-emerald-950/60 p-4 rounded-xl backdrop-blur-sm">
-              <span className="block text-[10px] uppercase font-bold tracking-widest text-emerald-500 mb-1">
-                Total Points
-              </span>
-              <span className="text-2xl md:text-3xl font-extrabold tracking-tight text-neutral-100">
-                1.2M+
-              </span>
-            </div>
-
-            {/* Stat 2 */}
-            <div className="bg-[#101714]/60 border border-emerald-950/60 p-4 rounded-xl backdrop-blur-sm">
-              <span className="block text-[10px] uppercase font-bold tracking-widest text-emerald-500 mb-1">
-                Videos Analyzed
-              </span>
-              <span className="text-2xl md:text-3xl font-extrabold tracking-tight text-neutral-100">
-                85k+
-              </span>
-            </div>
-
-            {/* Stat 3 */}
-            <div className="bg-[#101714]/60 border border-emerald-950/60 p-4 rounded-xl backdrop-blur-sm">
-              <span className="block text-[10px] uppercase font-bold tracking-widest text-emerald-500 mb-1">
-                CO2 Saved
-              </span>
-              <span className="text-2xl md:text-3xl font-extrabold tracking-tight text-neutral-100">
-                450{" "}
-                <span className="text-xs font-normal text-gray-400">Tons</span>
-              </span>
+                {/* Optional inner glow overlay */}
+                <div className="absolute inset-0 bg-gradient-to-t from-[#070b09] via-transparent to-transparent opacity-60" />
+              </div>
             </div>
           </div>
-        </div>
+        </main>
+      </div>
+      {/* --- HERO MAIN CONTENT --- */}
 
-        {/* Right Side: AI Earth Image Card */}
-        <div className="lg:col-span-5 flex justify-center lg:justify-end">
-          <div className="relative group w-full max-w-[420px] aspect-square rounded-2xl p-1 bg-gradient-to-b from-emerald-950/50 to-emerald-900/10 border border-emerald-900/40 shadow-2xl shadow-emerald-950/50">
-            <div className="w-full h-full rounded-xl overflow-hidden bg-[#0d1210] flex items-center justify-center relative">
-              {/* Main AI / Mossy Sphere Image Place Holder */}
-              <img
-                src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=600&q=80" // Replace this URL with your custom green AI graphic
-                alt="AI Sustainability Hub"
-                className="w-full h-full object-cover mix-blend-lighten opacity-80 group-hover:scale-105 transition-transform duration-500"
-              />
-              {/* Optional inner glow overlay */}
-              <div className="absolute inset-0 bg-gradient-to-t from-[#070b09] via-transparent to-transparent opacity-60" />
-            </div>
-          </div>
-        </div>
-      </main>
       <section className="bg-[#090f0c] text-white py-20 px-6 select-none relative overflow-hidden">
         {/* Top Header Group */}
         <div className="max-w-3xl mx-auto text-center mb-16 space-y-3">
