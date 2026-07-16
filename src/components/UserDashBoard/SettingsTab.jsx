@@ -1,0 +1,220 @@
+import  { useState } from "react";
+import { User, Mail, ShieldAlert, CheckCircle, ArrowRight } from "lucide-react";
+
+export default function ProfileTab() {
+  const [profile, setProfile] = useState({
+    name: "Alex Green",
+    email: "alex@greenquest.io",
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: "",
+  });
+
+  const [status, setStatus] = useState({ type: null, message: "" });
+  const [isSaving, setIsSaving] = useState(false);
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setProfile((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleSave = (e) => {
+    e.preventDefault();
+    setStatus({ type: null, message: "" });
+
+    // Simple validation
+    if (!profile.name || !profile.email) {
+      setStatus({ type: "error", message: "Name and email are required." });
+      return;
+    }
+
+    if (profile.newPassword && profile.newPassword !== profile.confirmPassword) {
+      setStatus({ type: "error", message: "New passwords do not match." });
+      return;
+    }
+
+    if (profile.newPassword && !profile.currentPassword) {
+      setStatus({ type: "error", message: "Please provide your current password to authorize changes." });
+      return;
+    }
+
+    // Simulate saving state
+    setIsSaving(true);
+    setTimeout(() => {
+      setIsSaving(false);
+      setStatus({ type: "success", message: "Profile updated successfully!" });
+      setProfile((prev) => ({
+        ...prev,
+        currentPassword: "",
+        newPassword: "",
+        confirmPassword: "",
+      }));
+    }, 1200);
+  };
+
+  return (
+    <div className="w-full p-4 md:p-6 space-y-6">
+      <div>
+        <h2 className="text-xl font-bold text-white mb-1">Account Settings</h2>
+        <p className="text-xs text-slate-400 font-mono">
+          Update your public profile, account details, and security credentials.
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Profile Card Summary */}
+        <div className="bg-[#111A16] border border-[#14231C] p-6 rounded-xl flex flex-col items-center justify-center text-center space-y-4">
+          <div className="relative group">
+            <div className="w-24 h-24 rounded-full bg-[#1A2E24] border-2 border-[#10B981] flex items-center justify-center text-3xl font-black text-[#10B981] shadow-[0_0_15px_rgba(16,185,129,0.2)]">
+              {profile.name ? profile.name.charAt(0).toUpperCase() : "U"}
+            </div>
+          </div>
+          <div>
+            <h3 className="font-bold text-white text-base">{profile.name}</h3>
+            <p className="text-xs font-mono text-slate-400">{profile.email}</p>
+          </div>
+          <div className="w-full bg-[#0B120F] border border-[#14231C] p-3 rounded-lg text-left">
+            <div className="text-[10px] font-mono text-slate-500 uppercase tracking-wider mb-1">
+              Quest Status
+            </div>
+            <div className="text-xs font-bold text-[#10B981] flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-[#10B981] animate-pulse"></span>
+              Level 14 Guardian
+            </div>
+          </div>
+        </div>
+
+        {/* Profile Edit Form */}
+        <div className="lg:col-span-2 bg-[#111A16] border border-[#14231C] rounded-xl overflow-hidden">
+          <form onSubmit={handleSave} className="p-5 md:p-6 space-y-6">
+            
+            {/* Notifications */}
+            {status.message && (
+              <div
+                className={`p-3.5 rounded-lg border text-xs font-mono flex items-start gap-2.5 ${
+                  status.type === "error"
+                    ? "bg-red-950/20 border-red-500/20 text-red-400"
+                    : "bg-[#142E24] border-[#10B981]/20 text-[#10B981]"
+                }`}
+              >
+                {status.type === "error" ? (
+                  <ShieldAlert size={16} className="shrink-0 mt-0.5" />
+                ) : (
+                  <CheckCircle size={16} className="shrink-0 mt-0.5" />
+                )}
+                <span>{status.message}</span>
+              </div>
+            )}
+
+            {/* Basic Info */}
+            <div className="space-y-4">
+              <h3 className="text-xs font-mono uppercase tracking-wider text-slate-500 border-b border-[#14231C] pb-2">
+                Personal Information
+              </h3>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-mono text-slate-400 uppercase">
+                    Full Name
+                  </label>
+                  <div className="relative">
+                    <User className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" size={15} />
+                    <input
+                      type="text"
+                      name="name"
+                      value={profile.name}
+                      onChange={handleChange}
+                      placeholder="Your full name"
+                      className="w-full bg-[#0B120F] border border-[#14231C] rounded-lg pl-10 pr-4 py-2.5 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-[#10B981]/40 transition-colors"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-mono text-slate-400 uppercase">
+                    Email Address
+                  </label>
+                  <div className="relative">
+                    <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" size={15} />
+                    <input
+                      type="email"
+                      name="email"
+                      value={profile.email}
+                      onChange={handleChange}
+                      placeholder="name@domain.com"
+                      className="w-full bg-[#0B120F] border border-[#14231C] rounded-lg pl-10 pr-4 py-2.5 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-[#10B981]/40 transition-colors"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Password Security Section */}
+            <div className="space-y-4">
+              <h3 className="text-xs font-mono uppercase tracking-wider text-slate-500 border-b border-[#14231C] pb-2">
+                Security & Passwords
+              </h3>
+
+              <div className="space-y-1.5">
+                <label className="text-[11px] font-mono text-slate-400 uppercase">
+                  Current Password
+                </label>
+                <input
+                  type="password"
+                  name="currentPassword"
+                  value={profile.currentPassword}
+                  onChange={handleChange}
+                  placeholder="••••••••"
+                  className="w-full bg-[#0B120F] border border-[#14231C] rounded-lg px-4 py-2.5 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-[#10B981]/40 transition-colors"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-mono text-slate-400 uppercase">
+                    New Password
+                  </label>
+                  <input
+                    type="password"
+                    name="newPassword"
+                    value={profile.newPassword}
+                    onChange={handleChange}
+                    placeholder="Min. 8 characters"
+                    className="w-full bg-[#0B120F] border border-[#14231C] rounded-lg px-4 py-2.5 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-[#10B981]/40 transition-colors"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-mono text-slate-400 uppercase">
+                    Confirm New Password
+                  </label>
+                  <input
+                    type="password"
+                    name="confirmPassword"
+                    value={profile.confirmPassword}
+                    onChange={handleChange}
+                    placeholder="Repeat new password"
+                    className="w-full bg-[#0B120F] border border-[#14231C] rounded-lg px-4 py-2.5 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-[#10B981]/40 transition-colors"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex items-center justify-end pt-2 border-t border-[#14231C]">
+              <button
+                type="submit"
+                disabled={isSaving}
+                className="bg-[#10B981] hover:bg-emerald-600 text-[#050B08] font-bold text-xs py-2.5 px-5 rounded-lg flex items-center gap-1.5 shadow-[0_0_12px_rgba(16,185,129,0.2)] disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+              >
+                {isSaving ? "Saving changes..." : "Save Profile"}
+                {!isSaving && <ArrowRight size={14} />}
+              </button>
+            </div>
+
+          </form>
+        </div>
+      </div>
+    </div>
+  );
+}

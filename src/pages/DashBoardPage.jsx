@@ -21,6 +21,7 @@ import UploadVideoTab from "../components/UserDashBoard/UploadVideotab";
 import ImpactHubTab from "../components/UserDashBoard/Impacthub";
 import LeaderboardsTab from "../components/UserDashBoard/Leaderboard";
 import QuestsTab from "../components/UserDashBoard/Quests";
+import ProfileTab from '../components/UserDashBoard/SettingsTab'
 
 /* ---------------------------------------------------------------- */
 /*  Skeleton primitives                                              */
@@ -360,13 +361,13 @@ export default function GreenQuestDashboard() {
                <hr className="border-[#14231C] my-6" />
 
           {/* Settings */}
-          <a
-            href="#settings"
+          <button onClick={()=> handleNav("settings",false)}
+          
             className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-400 hover:text-white hover:bg-[#111A16] transition-colors"
           >
             <Settings size={18} />
             <span>Settings</span>
-          </a>
+          </button>
             </nav>
           )}
 
@@ -495,6 +496,7 @@ export default function GreenQuestDashboard() {
               {activeTab === "impact-hub" && <ImpactHubTab />}
               {activeTab === "quests" && <QuestsTab />}
               {activeTab === "leaderboard" && <LeaderboardsTab />}
+              {activeTab === "settings" && <ProfileTab />}
             </>
           )}
         </main>
