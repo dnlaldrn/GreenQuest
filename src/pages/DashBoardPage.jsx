@@ -21,7 +21,11 @@ import UploadVideoTab from "../components/UserDashBoard/UploadVideotab";
 import ImpactHubTab from "../components/UserDashBoard/Impacthub";
 import LeaderboardsTab from "../components/UserDashBoard/Leaderboard";
 import QuestsTab from "../components/UserDashBoard/Quests";
+<<<<<<< Updated upstream
+=======
 import ProfileTab from '../components/UserDashBoard/SettingsTab'
+import {getCurrentUser} from '../services/authService'
+>>>>>>> Stashed changes
 
 /* ---------------------------------------------------------------- */
 /*  Skeleton primitives                                              */
@@ -35,6 +39,33 @@ function Bone({ className = "" }) {
     />
   );
 }
+async function getUser(){
+ try{
+  const {data, error} = await getCurrentUser();
+  
+  if(error){
+    console.error("Error fetching user:", error.message);
+    return;
+  }
+
+  const user = data?.user
+ if(user){
+  const email = user.email
+  const username = user.user_metadata?.username;
+  return;
+ }else{
+  console.log("nojdfisjfuish")
+ }
+
+  
+ }catch(err){
+  console.log(err)
+
+ }
+}
+getUser();
+
+
 
 // Skeleton for the sidebar logo block (icon + title + subtitle).
 // Mirrors the real logo's layout: w-8 h-8 icon, title line, subtitle line.
@@ -361,9 +392,19 @@ export default function GreenQuestDashboard() {
                <hr className="border-[#14231C] my-6" />
 
           {/* Settings */}
+<<<<<<< Updated upstream
+          <a
+            href="#settings"
+            className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-400 hover:text-white hover:bg-[#111A16] transition-colors"
+=======
           <button onClick={()=> handleNav("settings",false)}
           
-            className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-400 hover:text-white hover:bg-[#111A16] transition-colors"
+            className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm transition-all whitespace-nowrap active:translate-x-0.5 cursor-pointer w-full ${
+                  activeTab === "settings"
+                    ? "bg-[#4BE277]/10 text-[#4BE277] border-l-4 border-[#4BE277]"
+                    : "text-[#BCCBB9] hover:bg-[#333B33]/20"
+                }`}
+>>>>>>> Stashed changes
           >
             <Settings size={18} />
             <span>Settings</span>
@@ -407,7 +448,7 @@ export default function GreenQuestDashboard() {
                 </div>
                 <div>
                   <div className="font-bold text-white leading-tight text-xs">
-                    Alex Green
+                    {getUser()}
                   </div>
                   <div className="text-[10px] text-slate-400 font-mono">
                     Level 24 Guardian
