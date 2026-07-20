@@ -14,18 +14,14 @@ import {
   X,
   ShieldAlert,
 } from "lucide-react";
-import { signOut } from "../services/authService";
+import { signOut, getCurrentUser } from "../services/authService";
 import { useNavigate } from "react-router-dom";
 import OverviewTab from "../components/UserDashBoard/Overview";
 import UploadVideoTab from "../components/UserDashBoard/UploadVideotab";
 import ImpactHubTab from "../components/UserDashBoard/Impacthub";
 import LeaderboardsTab from "../components/UserDashBoard/Leaderboard";
 import QuestsTab from "../components/UserDashBoard/Quests";
-<<<<<<< Updated upstream
-=======
-import ProfileTab from '../components/UserDashBoard/SettingsTab'
-import {getCurrentUser} from '../services/authService'
->>>>>>> Stashed changes
+import ProfileTab from "../components/UserDashBoard/SettingsTab";
 
 /* ---------------------------------------------------------------- */
 /*  Skeleton primitives                                              */
@@ -39,33 +35,6 @@ function Bone({ className = "" }) {
     />
   );
 }
-async function getUser(){
- try{
-  const {data, error} = await getCurrentUser();
-  
-  if(error){
-    console.error("Error fetching user:", error.message);
-    return;
-  }
-
-  const user = data?.user
- if(user){
-  const email = user.email
-  const username = user.user_metadata?.username;
-  return;
- }else{
-  console.log("nojdfisjfuish")
- }
-
-  
- }catch(err){
-  console.log(err)
-
- }
-}
-getUser();
-
-
 
 // Skeleton for the sidebar logo block (icon + title + subtitle).
 // Mirrors the real logo's layout: w-8 h-8 icon, title line, subtitle line.
@@ -127,9 +96,9 @@ function HeaderSkeleton() {
         <Bone className="hidden sm:block h-2.5 w-56" />
       </div>
       <div className="space-y-2 p-3 flex">
-        <Bone className="h-8 w-50 mr-3 "/>
-        <Bone className="h-8 w-13 mr-3 "/>
-        <Bone className="h-8 w-13 mr-3 "/>
+        <Bone className="h-8 w-50 mr-3 " />
+        <Bone className="h-8 w-13 mr-3 " />
+        <Bone className="h-8 w-13 mr-3 " />
       </div>
     </div>
   );
@@ -210,6 +179,9 @@ export default function GreenQuestDashboard() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("overview");
 
+  // Logged-in user's data (email, name, etc.) fetched from authService.
+  const [userData, setUserData] = useState(null);
+
   // Two independent loading flags: the sidebar/profile data, and the
   // active tab's own content. Kept separate so switching tabs doesn't
   // re-flash the sidebar, and initial mount doesn't re-flash on tab change.
@@ -217,10 +189,32 @@ export default function GreenQuestDashboard() {
   const [isTabLoading, setIsTabLoading] = useState(true);
   const tabRequestId = useRef(0);
 
-  // Initial shell load (sidebar profile + weekly goal widgets).
+  // Initial shell load: fetch the current user, then reveal the sidebar.
+  // A minimum display time is enforced so the skeleton doesn't flash by
+  // instantly on very fast responses.
   useEffect(() => {
-    const timer = setTimeout(() => setIsShellLoading(false), MIN_SKELETON_MS);
-    return () => clearTimeout(timer);
+    let isMounted = true;
+    const start = Date.now();
+
+    async function fetchUser() {
+      try {
+        const data = await getCurrentUser();
+        if (isMounted) setUserData(data);
+      } catch (err) {
+        console.error("Failed to fetch current user:", err);
+      } finally {
+        const elapsed = Date.now() - start;
+        const remaining = Math.max(MIN_SKELETON_MS - elapsed, 0);
+        setTimeout(() => {
+          if (isMounted) setIsShellLoading(false);
+        }, remaining);
+      }
+    }
+
+    fetchUser();
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   // Simulate fetching whatever data the active tab needs. Replace the
@@ -235,55 +229,54 @@ export default function GreenQuestDashboard() {
     return () => clearTimeout(timer);
   }, [activeTab]);
 
- const handleSignOut = () => {
-  requestConfirm(
-    "Confirm Log Out",
-    "Are you sure you want to sign out of GreenQuest? You'll need to log back in to continue tracking your impact.",
-    async () => {
-      await signOut();
-      navigate("/login");
-    }
-  );
-};
+  const handleSignOut = () => {
+    requestConfirm(
+      "Confirm Log Out",
+      "Are you sure you want to sign out of GreenQuest? You'll need to log back in to continue tracking your impact.",
+      async () => {
+        await signOut();
+        navigate("/login");
+      }
+    );
+  };
 
   const handleNav = (value, bool) => {
     setActiveTab(value);
     setIsSidebarOpen(bool);
   };
 
-    const [confirmModal, setConfirmModal] = useState({
-      isOpen: false,
-      title: "",
-      message: "",
-      onConfirm: null,
-    });
+  const [confirmModal, setConfirmModal] = useState({
+    isOpen: false,
+    title: "",
+    message: "",
+    onConfirm: null,
+  });
 
-    const requestConfirm = (title, message, onConfirm) => {
-        setConfirmModal({
-          isOpen: true,
-          title,
-          message,
-          onConfirm: () => {
-            onConfirm();
-            setConfirmModal(prev => ({ ...prev, isOpen: false }));
-          }
-        });
-      };
-    
-      useEffect(() => {
-        const handleKeyDown = (e) => {
-          if (e.key === "Escape") {
-            setConfirmModal(prev => ({ ...prev, isOpen: false }));
-          }
-        };
-        if (confirmModal.isOpen) {
-          window.addEventListener("keydown", handleKeyDown);
-        }
-        return () => {
-          window.removeEventListener("keydown", handleKeyDown);
-        };
-      }, [confirmModal.isOpen]);
-    
+  const requestConfirm = (title, message, onConfirm) => {
+    setConfirmModal({
+      isOpen: true,
+      title,
+      message,
+      onConfirm: () => {
+        onConfirm();
+        setConfirmModal((prev) => ({ ...prev, isOpen: false }));
+      },
+    });
+  };
+
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape") {
+        setConfirmModal((prev) => ({ ...prev, isOpen: false }));
+      }
+    };
+    if (confirmModal.isOpen) {
+      window.addEventListener("keydown", handleKeyDown);
+    }
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [confirmModal.isOpen]);
 
   return (
     <div className="min-h-screen bg-[#0B120F] text-slate-200 font-sans flex flex-col md:flex-row text-xs md:text-sm selection:bg-[#10B981] selection:text-black relative overflow-hidden">
@@ -389,30 +382,22 @@ export default function GreenQuestDashboard() {
                 <span>Leaderboard</span>
               </button>
 
-               <hr className="border-[#14231C] my-6" />
+              <hr className="border-[#14231C] my-6" />
 
-          {/* Settings */}
-<<<<<<< Updated upstream
-          <a
-            href="#settings"
-            className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-400 hover:text-white hover:bg-[#111A16] transition-colors"
-=======
-          <button onClick={()=> handleNav("settings",false)}
-          
-            className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm transition-all whitespace-nowrap active:translate-x-0.5 cursor-pointer w-full ${
+              {/* Settings */}
+              <button
+                onClick={() => handleNav("settings", false)}
+                className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm transition-all whitespace-nowrap active:translate-x-0.5 cursor-pointer w-full ${
                   activeTab === "settings"
                     ? "bg-[#4BE277]/10 text-[#4BE277] border-l-4 border-[#4BE277]"
                     : "text-[#BCCBB9] hover:bg-[#333B33]/20"
                 }`}
->>>>>>> Stashed changes
-          >
-            <Settings size={18} />
-            <span>Settings</span>
-          </button>
+              >
+                <Settings size={18} />
+                <span>Settings</span>
+              </button>
             </nav>
           )}
-
-         
         </div>
 
         {/* Sidebar Footer Widgets */}
@@ -442,13 +427,13 @@ export default function GreenQuestDashboard() {
                 <div className="w-9 h-9 rounded-lg bg-[#142E24] overflow-hidden border border-[#10B981]/30">
                   <img
                     src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80"
-                    alt="Alex Green"
+                    alt={userData?.email || "User avatar"}
                     className="w-full h-full object-cover"
                   />
                 </div>
                 <div>
-                  <div className="font-bold text-white leading-tight text-xs">
-                    {getUser()}
+                  <div className="font-bold text-white leading-tight text-xs truncate max-w-[110px]">
+                    {userData?.email || "Loading..."}
                   </div>
                   <div className="text-[10px] text-slate-400 font-mono">
                     Level 24 Guardian
@@ -468,63 +453,62 @@ export default function GreenQuestDashboard() {
 
       {/* RIGHT CONTAINER: Flex setup allows header to claim remaining screen width */}
       <div className="gq-scrollbar flex-1 flex flex-col h-screen min-w-0 overflow-auto relative">
-         {isShellLoading ? (
-              <HeaderSkeleton />
-            ) : (
-        <header className="h-16 w-full border-b border-[#14231C] px-4 md:px-6 flex items-center justify-between bg-[#0B120F]/80 backdrop-blur top-0 z-30 shrink-0">
-          <div className="flex items-center gap-3">
-            {/* Hamburger Menu Icon for Mobile */}
-            <button
-              className="md:hidden p-2 bg-[#111A16] border border-[#14231C] rounded-lg text-slate-400 hover:text-white"
-              onClick={() => setIsSidebarOpen(true)}
-            >
-              <Menu size={18} />
-            </button>
+        {isShellLoading ? (
+          <HeaderSkeleton />
+        ) : (
+          <header className="h-16 w-full border-b border-[#14231C] px-4 md:px-6 flex items-center justify-between bg-[#0B120F]/80 backdrop-blur top-0 z-30 shrink-0">
+            <div className="flex items-center gap-3">
+              {/* Hamburger Menu Icon for Mobile */}
+              <button
+                className="md:hidden p-2 bg-[#111A16] border border-[#14231C] rounded-lg text-slate-400 hover:text-white"
+                onClick={() => setIsSidebarOpen(true)}
+              >
+                <Menu size={18} />
+              </button>
 
-            {/* Title Block */}
-           
+              {/* Title Block */}
               <div>
                 <h2 className="text-base md:text-lg font-bold text-white tracking-tight capitalize">
                   {activeTab.replace("-", " ")}
                 </h2>
                 <p className="hidden sm:block text-[11px] md:text-xs text-slate-400">
-                  Welcome back, Guardian Alex. Your impact is growing.
+                  Welcome back{userData?.email ? `, ${userData.email}` : ""}. Your
+                  impact is growing.
                 </p>
               </div>
-           
-          </div>
-
-          <div className="flex items-center gap-2 md:gap-4">
-            {/* Search Bar */}
-            <div className="relative w-40 lg:w-64 hidden sm:block">
-              <Search
-                className="absolute left-3 top-2.5 text-slate-500"
-                size={16}
-              />
-              <input
-                type="text"
-                placeholder="Search quests..."
-                className="w-full bg-[#111A16] border border-[#14231C] rounded-lg pl-9 pr-4 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-[#10B981] transition-colors placeholder:text-slate-600"
-              />
             </div>
 
-            {/* Notifications */}
-            <button className="p-2 bg-[#111A16] border border-[#14231C] text-slate-400 hover:text-white rounded-lg relative transition-colors">
-              <Bell size={16} />
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-[#10B981] rounded-full animate-pulse"></span>
-            </button>
+            <div className="flex items-center gap-2 md:gap-4">
+              {/* Search Bar */}
+              <div className="relative w-40 lg:w-64 hidden sm:block">
+                <Search
+                  className="absolute left-3 top-2.5 text-slate-500"
+                  size={16}
+                />
+                <input
+                  type="text"
+                  placeholder="Search quests..."
+                  className="w-full bg-[#111A16] border border-[#14231C] rounded-lg pl-9 pr-4 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-[#10B981] transition-colors placeholder:text-slate-600"
+                />
+              </div>
 
-            {/* Upload Action Button */}
-            <button
-              onClick={() => setActiveTab("upload-video")}
-              className="bg-[#10B981] hover:bg-[#0ea5e9] text-[#0B120F] font-bold px-3 md:px-4 py-1.5 rounded-lg flex items-center gap-2 transition-colors shadow-[0_4px_12px_rgba(16,185,129,0.2)]"
-            >
-              <UploadCloud size={16} />
-              <span className="hidden xs:inline">Upload Video</span>
-            </button>
-          </div>
-        </header>
-         )}
+              {/* Notifications */}
+              <button className="p-2 bg-[#111A16] border border-[#14231C] text-slate-400 hover:text-white rounded-lg relative transition-colors">
+                <Bell size={16} />
+                <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-[#10B981] rounded-full animate-pulse"></span>
+              </button>
+
+              {/* Upload Action Button */}
+              <button
+                onClick={() => setActiveTab("upload-video")}
+                className="bg-[#10B981] hover:bg-[#0ea5e9] text-[#0B120F] font-bold px-3 md:px-4 py-1.5 rounded-lg flex items-center gap-2 transition-colors shadow-[0_4px_12px_rgba(16,185,129,0.2)]"
+              >
+                <UploadCloud size={16} />
+                <span className="hidden xs:inline">Upload Video</span>
+              </button>
+            </div>
+          </header>
+        )}
 
         {/* MAIN CONTENT AREA */}
         <main className="flex-1 bg-[#0B120F]">
@@ -542,45 +526,46 @@ export default function GreenQuestDashboard() {
           )}
         </main>
       </div>
-      {confirmModal.isOpen && createPortal(
-              <div className="fixed inset-0 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 z-[10000] animate-fade-in">
-                <div className="bg-[#161D16] border border-[#FFB4AB]/30 shadow-[0_0_50px_rgba(255,180,171,0.1)] max-w-sm w-full rounded-2xl p-5 space-y-4 font-mono text-xs">
-                  
-                  {/* Modal Header */}
-                  <div className="flex items-center gap-2 text-[#FFB4AB] border-b border-[#DCE5D9]/10 pb-2">
-                    <ShieldAlert size={18} className="shrink-0" />
-                    <h3 className="font-bold text-sm text-[#DCE5D9] uppercase tracking-wider">
-                      {confirmModal.title}
-                    </h3>
-                  </div>
-      
-                  {/* Modal Body */}
-                  <p className="text-[#BCCBB9] leading-relaxed text-left">
-                    {confirmModal.message}
-                  </p>
-      
-                  {/* Modal Actions */}
-                  <div className="flex justify-end gap-2 pt-2">
-                    <button
-                      type="button"
-                      onClick={confirmModal.onConfirm}
-                      className="bg-[#FFB4AB]/15 text-[#FFB4AB] border border-[#FFB4AB]/30 hover:bg-[#FFB4AB]/25 font-bold px-4 py-2 rounded-lg hover:scale-105 active:scale-95 transition-all cursor-pointer font-mono"
-                    >
-                      Confirm Action
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
-                      className="bg-[#333B33] text-[#DCE5D9] border border-[#3D4A3D] px-4 py-2 rounded-lg hover:bg-[#333B33]/85 transition-colors cursor-pointer font-mono"
-                    >
-                      Dismiss
-                    </button>
-                  </div>
-                  
-                </div>
-              </div>,
-              document.body
-            )}
+      {confirmModal.isOpen &&
+        createPortal(
+          <div className="fixed inset-0 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 z-[10000] animate-fade-in">
+            <div className="bg-[#161D16] border border-[#FFB4AB]/30 shadow-[0_0_50px_rgba(255,180,171,0.1)] max-w-sm w-full rounded-2xl p-5 space-y-4 font-mono text-xs">
+              {/* Modal Header */}
+              <div className="flex items-center gap-2 text-[#FFB4AB] border-b border-[#DCE5D9]/10 pb-2">
+                <ShieldAlert size={18} className="shrink-0" />
+                <h3 className="font-bold text-sm text-[#DCE5D9] uppercase tracking-wider">
+                  {confirmModal.title}
+                </h3>
+              </div>
+
+              {/* Modal Body */}
+              <p className="text-[#BCCBB9] leading-relaxed text-left">
+                {confirmModal.message}
+              </p>
+
+              {/* Modal Actions */}
+              <div className="flex justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={confirmModal.onConfirm}
+                  className="bg-[#FFB4AB]/15 text-[#FFB4AB] border border-[#FFB4AB]/30 hover:bg-[#FFB4AB]/25 font-bold px-4 py-2 rounded-lg hover:scale-105 active:scale-95 transition-all cursor-pointer font-mono"
+                >
+                  Confirm Action
+                </button>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setConfirmModal((prev) => ({ ...prev, isOpen: false }))
+                  }
+                  className="bg-[#333B33] text-[#DCE5D9] border border-[#3D4A3D] px-4 py-2 rounded-lg hover:bg-[#333B33]/85 transition-colors cursor-pointer font-mono"
+                >
+                  Dismiss
+                </button>
+              </div>
+            </div>
+          </div>,
+          document.body
+        )}
     </div>
   );
 }
