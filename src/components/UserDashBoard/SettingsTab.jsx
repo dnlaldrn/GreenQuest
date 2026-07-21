@@ -1,5 +1,6 @@
-import  { useState } from "react";
+import  { useState , useEffect} from "react";
 import { User, Mail, ShieldAlert, CheckCircle, ArrowRight } from "lucide-react";
+import {getCurrentUser} from '../../services/authService'
 
 export default function ProfileTab() {
   const [profile, setProfile] = useState({
@@ -9,6 +10,21 @@ export default function ProfileTab() {
     newPassword: "",
     confirmPassword: "",
   });
+
+    const [userData, setUserData] = useState(null)
+ useEffect(() => {
+  async function getUser() {
+    const { data, error } = await getCurrentUser()
+    if (error) {
+      console.error(error)
+      return
+    }
+    setUserData(data.user) // store just the user object, not the whole wrapper
+    console.log(data.user?.email)
+  }
+  getUser()
+}, [])
+  
 
   const [status, setStatus] = useState({ type: null, message: "" });
   const [isSaving, setIsSaving] = useState(false);
@@ -70,8 +86,17 @@ export default function ProfileTab() {
             </div>
           </div>
           <div>
-            <h3 className="font-bold text-white text-base">{profile.name}</h3>
-            <p className="text-xs font-mono text-slate-400">{profile.email}</p>
+           {userData?(
+            <div>
+               <h3 className="font-bold text-white text-base">{userData.username}</h3>
+            <p className="text-xs font-mono text-slate-400">{userData.email}</p>
+            </div>
+           ):(
+            <div>
+               
+            <p className="text-xs font-mono text-slate-400">Loading..</p>
+            </div>
+           )}
           </div>
           <div className="w-full bg-[#0B120F] border border-[#14231C] p-3 rounded-lg text-left">
             <div className="text-[10px] font-mono text-slate-500 uppercase tracking-wider mb-1">
@@ -112,7 +137,8 @@ export default function ProfileTab() {
                 Personal Information
               </h3>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {userData?(
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
                   <label className="text-[11px] font-mono text-slate-400 uppercase">
                     Full Name
@@ -122,7 +148,7 @@ export default function ProfileTab() {
                     <input
                       type="text"
                       name="name"
-                      value={profile.name}
+                      value={userData.name}
                       onChange={handleChange}
                       placeholder="Your full name"
                       className="w-full bg-[#0B120F] border border-[#14231C] rounded-lg pl-10 pr-4 py-2.5 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-[#10B981]/40 transition-colors"
@@ -139,7 +165,7 @@ export default function ProfileTab() {
                     <input
                       type="email"
                       name="email"
-                      value={profile.email}
+                      value={userData.email}
                       onChange={handleChange}
                       placeholder="name@domain.com"
                       className="w-full bg-[#0B120F] border border-[#14231C] rounded-lg pl-10 pr-4 py-2.5 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-[#10B981]/40 transition-colors"
@@ -147,6 +173,9 @@ export default function ProfileTab() {
                   </div>
                 </div>
               </div>
+              ): (
+                <p>Loading</p>
+              )}
             </div>
 
             {/* Password Security Section */}

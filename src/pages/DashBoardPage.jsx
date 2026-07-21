@@ -198,10 +198,14 @@ export default function GreenQuestDashboard() {
 
     async function fetchUser() {
       try {
-        const data = await getCurrentUser();
-        if (isMounted) setUserData(data);
-      } catch (err) {
-        console.error("Failed to fetch current user:", err);
+        const {data, error} = await getCurrentUser();
+        if (error) {
+      console.error(error)
+      return;
+    }
+     setUserData(data.user)
+      } catch (error) {
+        console.error("Failed to fetch current user:", error);
       } finally {
         const elapsed = Date.now() - start;
         const remaining = Math.max(MIN_SKELETON_MS - elapsed, 0);
