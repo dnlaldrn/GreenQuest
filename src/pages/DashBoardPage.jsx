@@ -198,12 +198,12 @@ export default function GreenQuestDashboard() {
 
     async function fetchUser() {
       try {
-        const {data, error} = await getCurrentUser();
-        if (error) {
+       const { data, error } = await getCurrentUser()
+    if (error) {
       console.error(error)
-      return;
+      return
     }
-     setUserData(data.user)
+    setUserData(data.user) // st
       } catch (error) {
         console.error("Failed to fetch current user:", error);
       } finally {
@@ -437,7 +437,7 @@ export default function GreenQuestDashboard() {
                 </div>
                 <div>
                   <div className="font-bold text-white leading-tight text-xs truncate max-w-[110px]">
-                    {userData?.email || "Loading..."}
+                    {userData.user_metadata?.username|| "Loading..."}
                   </div>
                   <div className="text-[10px] text-slate-400 font-mono">
                     Level 24 Guardian
