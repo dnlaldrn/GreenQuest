@@ -1,29 +1,34 @@
 import  { useState , useEffect} from "react";
 import { User, Mail, ShieldAlert, CheckCircle, ArrowRight } from "lucide-react";
 import {getCurrentUser} from '../../services/authService'
+import { supabase } from "../../lib/supabase";
 
 export default function ProfileTab() {
   const [profile, setProfile] = useState({
-    name: "Alex Green",
-    email: "alex@greenquest.io",
+    name: "",
+    email: "",
     currentPassword: "",
     newPassword: "",
     confirmPassword: "",
   });
 
     const [userData, setUserData] = useState(null)
- useEffect(() => {
+useEffect(() => {
   async function getUser() {
-    const { data, error } = await getCurrentUser()
+    const { data, error } = await getCurrentUser();
     if (error) {
-      console.error(error)
-      return
+      console.error(error);
+      return;
     }
-    setUserData(data.user) // store just the user object, not the whole wrapper
-    console.log(data.user?.email)
+    setUserData(data.user);
+    setProfile((prev) => ({
+      ...prev,
+      name: data.user.user_metadata?.username ?? "",
+      email: data.user.email ?? "",
+    }));
   }
-  getUser()
-}, [])
+  getUser();
+}, []);
   
 
   const [status, setStatus] = useState({ type: null, message: "" });
@@ -34,39 +39,44 @@ export default function ProfileTab() {
     setProfile((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSave = (e) => {
-    e.preventDefault();
-    setStatus({ type: null, message: "" });
+ const handleSave = async (e) => {
+  e.preventDefault();
+  setStatus({ type: null, message: "" });
 
-    // Simple validation
-    if (!profile.name || !profile.email) {
-      setStatus({ type: "error", message: "Name and email are required." });
-      return;
-    }
+  if (!profile.name || !profile.email) {
+    setStatus({ type: "error", message: "Name and email are required." });
+    return;
+  }
+  if (profile.newPassword && profile.newPassword !== profile.confirmPassword) {
+    setStatus({ type: "error", message: "New passwords do not match." });
+    return;
+  }
+  if (profile.newPassword && !profile.currentPassword) {
+    setStatus({ type: "error", message: "Please provide your current password to authorize changes." });
+    return;
+  }
 
-    if (profile.newPassword && profile.newPassword !== profile.confirmPassword) {
-      setStatus({ type: "error", message: "New passwords do not match." });
-      return;
-    }
+  setIsSaving(true);
 
-    if (profile.newPassword && !profile.currentPassword) {
-      setStatus({ type: "error", message: "Please provide your current password to authorize changes." });
-      return;
-    }
-
-    // Simulate saving state
-    setIsSaving(true);
-    setTimeout(() => {
-      setIsSaving(false);
-      setStatus({ type: "success", message: "Profile updated successfully!" });
-      setProfile((prev) => ({
-        ...prev,
-        currentPassword: "",
-        newPassword: "",
-        confirmPassword: "",
-      }));
-    }, 1200);
+  const updates = {
+    data: { username: profile.name }, // merges into user_metadata
   };
+  if (profile.email !== userData?.email) updates.email = profile.email;
+  if (profile.newPassword) updates.password = profile.newPassword;
+
+  const { data, error } = await supabase.auth.updateUser(updates);
+
+  setIsSaving(false);
+
+  if (error) {
+    setStatus({ type: "error", message: error.message });
+    return;
+  }
+
+  setUserData(data.user);
+  setStatus({ type: "success", message: "Profile updated successfully!" });
+  setProfile((prev) => ({ ...prev, currentPassword: "", newPassword: "", confirmPassword: "" }));
+};
 
   return (
     <div className="w-full p-4 md:p-6 space-y-6">
@@ -88,7 +98,7 @@ export default function ProfileTab() {
           <div>
            {userData?(
             <div>
-               <h3 className="font-bold text-white text-base">{userData.username}</h3>
+               <h3 className="font-bold text-white text-base">{userData.user_metadata?.username}</h3>
             <p className="text-xs font-mono text-slate-400">{userData.email}</p>
             </div>
            ):(
@@ -148,7 +158,7 @@ export default function ProfileTab() {
                     <input
                       type="text"
                       name="name"
-                      value={userData.name}
+                      value={userData.user_metadata?.username}
                       onChange={handleChange}
                       placeholder="Your full name"
                       className="w-full bg-[#0B120F] border border-[#14231C] rounded-lg pl-10 pr-4 py-2.5 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-[#10B981]/40 transition-colors"
@@ -165,7 +175,7 @@ export default function ProfileTab() {
                     <input
                       type="email"
                       name="email"
-                      value={userData.email}
+                      value={profile.email}
                       onChange={handleChange}
                       placeholder="name@domain.com"
                       className="w-full bg-[#0B120F] border border-[#14231C] rounded-lg pl-10 pr-4 py-2.5 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-[#10B981]/40 transition-colors"
