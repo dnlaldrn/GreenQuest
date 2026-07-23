@@ -1,24 +1,15 @@
 import {
-  LayoutDashboard,
-  UploadCloud,
-  Globe,
+
   Award,
   Trophy,
-  Settings,
-  LogOut,
-  Search,
-  Bell,
-  MoreHorizontal,
   CheckCircle2,
   Clock,
-  Menu,
-  Loader2,
-  X,
+ 
 } from "lucide-react";
 import { useState } from "react";
 export default function OverviewTab() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState("overview");
+
   return (
     <main className="w-full p-4 md:p-6 space-y-6">
       {/* MOBILE OVERLAY BACKGROUND */}
