@@ -24,20 +24,63 @@ import QuestsTab from "../components/UserDashBoard/Quests";
 import ProfileTab from "../components/UserDashBoard/SettingsTab";
 
 /* ---------------------------------------------------------------- */
+/*  Static config                                                     */
+/* ---------------------------------------------------------------- */
+
+// Single source of truth for the sidebar nav — avoids repeating the same
+// button markup/classNames 6 times.
+const NAV_ITEMS = [
+  { value: "overview", label: "Overview", icon: LayoutDashboard },
+  { value: "upload-video", label: "Upload Video", icon: UploadCloud },
+  { value: "impact-hub", label: "Impact Hub", icon: Globe },
+  { value: "quests", label: "Quests", icon: Award },
+  { value: "leaderboard", label: "Leaderboard", icon: Trophy },
+];
+
+const TAB_COMPONENTS = {
+  overview: OverviewTab,
+  "upload-video": UploadVideoTab,
+  "impact-hub": ImpactHubTab,
+  quests: QuestsTab,
+  leaderboard: LeaderboardsTab,
+  settings: ProfileTab,
+};
+
+const MIN_SKELETON_MS = 500; // avoids flash-of-skeleton on instant loads
+
+// Thin, themed scrollbar so md+ (desktop) matches the slim overlay-style
+// scrollbar mobile browsers show by default. Applied via className below.
+const scrollbarStyles = `
+  .gq-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: #14231C transparent;
+  }
+  .gq-scrollbar::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  .gq-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .gq-scrollbar::-webkit-scrollbar-thumb {
+    background-color: #14231C;
+    border-radius: 9999px;
+  }
+  .gq-scrollbar::-webkit-scrollbar-thumb:hover {
+    background-color: #1A2E24;
+  }
+`;
+
+/* ---------------------------------------------------------------- */
 /*  Skeleton primitives                                              */
 /* ---------------------------------------------------------------- */
 
 // Base pulsing block. Every skeleton piece below is built from this.
 function Bone({ className = "" }) {
-  return (
-    <div
-      className={`animate-pulse rounded-md bg-[#14231C] ${className}`}
-    />
-  );
+  return <div className={`animate-pulse rounded-md bg-[#14231C] ${className}`} />;
 }
 
 // Skeleton for the sidebar logo block (icon + title + subtitle).
-// Mirrors the real logo's layout: w-8 h-8 icon, title line, subtitle line.
 function LogoSkeleton() {
   return (
     <div className="flex items-center gap-3">
@@ -50,11 +93,11 @@ function LogoSkeleton() {
   );
 }
 
-// Skeleton for the sidebar nav links list (Overview, Upload Video, etc.)
+// Skeleton for the sidebar nav links list.
 function SidebarNavSkeleton() {
   return (
     <nav className="space-y-1">
-      {Array.from({ length: 5 }).map((_, i) => (
+      {Array.from({ length: NAV_ITEMS.length }).map((_, i) => (
         <div key={i} className="flex items-center gap-3 px-4 py-3">
           <Bone className="w-[18px] h-[18px] rounded-md shrink-0" />
           <Bone className="h-3 w-24" />
@@ -96,27 +139,21 @@ function HeaderSkeleton() {
         <Bone className="hidden sm:block h-2.5 w-56" />
       </div>
       <div className="space-y-2 p-3 flex">
-        <Bone className="h-8 w-50 mr-3 " />
-        <Bone className="h-8 w-13 mr-3 " />
-        <Bone className="h-8 w-13 mr-3 " />
+        <Bone className="h-8 w-50 mr-3" />
+        <Bone className="h-8 w-13 mr-3" />
+        <Bone className="h-8 w-13 mr-3" />
       </div>
     </div>
   );
 }
 
 // Generic content skeleton shown in <main> while a tab's data is "loading".
-// Deliberately generic (stat cards + a table-ish block) since it stands in
-// for five different tabs with different real content.
 function MainContentSkeleton() {
   return (
     <div className="p-4 md:p-6 space-y-6">
-      {/* Stat card row */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
         {Array.from({ length: 4 }).map((_, i) => (
-          <div
-            key={i}
-            className="bg-[#111A16] border border-[#14231C] rounded-xl p-4 space-y-3"
-          >
+          <div key={i} className="bg-[#111A16] border border-[#14231C] rounded-xl p-4 space-y-3">
             <Bone className="h-3 w-16" />
             <Bone className="h-6 w-20" />
             <Bone className="h-2 w-24" />
@@ -124,7 +161,6 @@ function MainContentSkeleton() {
         ))}
       </div>
 
-      {/* Main panel */}
       <div className="bg-[#111A16] border border-[#14231C] rounded-xl p-4 md:p-6 space-y-4">
         <div className="flex items-center justify-between">
           <Bone className="h-4 w-40" />
@@ -149,31 +185,6 @@ function MainContentSkeleton() {
 /*  Main component                                                   */
 /* ---------------------------------------------------------------- */
 
-const MIN_SKELETON_MS = 500; // avoids flash-of-skeleton on instant loads
-
-// Thin, themed scrollbar so md+ (desktop) matches the slim overlay-style
-// scrollbar mobile browsers show by default. Applied via className below.
-const scrollbarStyles = `
-  .gq-scrollbar {
-    scrollbar-width: thin;
-    scrollbar-color: #14231C transparent;
-  }
-  .gq-scrollbar::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
-  }
-  .gq-scrollbar::-webkit-scrollbar-track {
-    background: transparent;
-  }
-  .gq-scrollbar::-webkit-scrollbar-thumb {
-    background-color: #14231C;
-    border-radius: 9999px;
-  }
-  .gq-scrollbar::-webkit-scrollbar-thumb:hover {
-    background-color: #1A2E24;
-  }
-`;
-
 export default function GreenQuestDashboard() {
   const navigate = useNavigate();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -189,6 +200,13 @@ export default function GreenQuestDashboard() {
   const [isTabLoading, setIsTabLoading] = useState(true);
   const tabRequestId = useRef(0);
 
+  const [confirmModal, setConfirmModal] = useState({
+    isOpen: false,
+    title: "",
+    message: "",
+    onConfirm: null,
+  });
+
   // Initial shell load: fetch the current user, then reveal the sidebar.
   // A minimum display time is enforced so the skeleton doesn't flash by
   // instantly on very fast responses.
@@ -198,12 +216,12 @@ export default function GreenQuestDashboard() {
 
     async function fetchUser() {
       try {
-       const { data, error } = await getCurrentUser()
-    if (error) {
-      console.error(error)
-      return
-    }
-    setUserData(data.user) // st
+        const { data, error } = await getCurrentUser();
+        if (error) {
+          console.error(error);
+          return;
+        }
+        if (isMounted) setUserData(data.user);
       } catch (error) {
         console.error("Failed to fetch current user:", error);
       } finally {
@@ -233,28 +251,17 @@ export default function GreenQuestDashboard() {
     return () => clearTimeout(timer);
   }, [activeTab]);
 
-  const handleSignOut = () => {
-    requestConfirm(
-      "Confirm Log Out",
-      "Are you sure you want to sign out of GreenQuest? You'll need to log back in to continue tracking your impact.",
-      async () => {
-        await signOut();
-        navigate("/login");
+  // Close the confirm modal on Escape.
+  useEffect(() => {
+    if (!confirmModal.isOpen) return;
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape") {
+        setConfirmModal((prev) => ({ ...prev, isOpen: false }));
       }
-    );
-  };
-
-  const handleNav = (value, bool) => {
-    setActiveTab(value);
-    setIsSidebarOpen(bool);
-  };
-
-  const [confirmModal, setConfirmModal] = useState({
-    isOpen: false,
-    title: "",
-    message: "",
-    onConfirm: null,
-  });
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [confirmModal.isOpen]);
 
   const requestConfirm = (title, message, onConfirm) => {
     setConfirmModal({
@@ -268,19 +275,23 @@ export default function GreenQuestDashboard() {
     });
   };
 
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      if (e.key === "Escape") {
-        setConfirmModal((prev) => ({ ...prev, isOpen: false }));
+  const handleSignOut = () => {
+    requestConfirm(
+      "Confirm Log Out",
+      "Are you sure you want to sign out of GreenQuest? You'll need to log back in to continue tracking your impact.",
+      async () => {
+        await signOut();
+        navigate("/login");
       }
-    };
-    if (confirmModal.isOpen) {
-      window.addEventListener("keydown", handleKeyDown);
-    }
-    return () => {
-      window.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [confirmModal.isOpen]);
+    );
+  };
+
+  const handleNav = (value, sidebarOpen) => {
+    setActiveTab(value);
+    setIsSidebarOpen(sidebarOpen);
+  };
+
+  const ActiveTabComponent = TAB_COMPONENTS[activeTab];
 
   return (
     <div className="min-h-screen bg-[#0B120F] text-slate-200 font-sans flex flex-col md:flex-row text-xs md:text-sm selection:bg-[#10B981] selection:text-black relative overflow-hidden">
@@ -316,7 +327,6 @@ export default function GreenQuestDashboard() {
               </div>
             )}
 
-            {/* Close sidebar on mobile */}
             <button
               className="md:hidden p-1 text-slate-400 hover:text-white"
               onClick={() => setIsSidebarOpen(false)}
@@ -330,65 +340,23 @@ export default function GreenQuestDashboard() {
             <SidebarNavSkeleton />
           ) : (
             <nav className="space-y-1">
-              <button
-                onClick={() => handleNav("overview", false)}
-                className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm transition-all whitespace-nowrap active:translate-x-0.5 cursor-pointer w-full ${
-                  activeTab === "overview"
-                    ? "bg-[#4BE277]/10 text-[#4BE277] border-l-4 border-[#4BE277]"
-                    : "text-[#BCCBB9] hover:bg-[#333B33]/20"
-                }`}
-              >
-                <LayoutDashboard size={18} />
-                <span>Overview</span>
-              </button>
-              <button
-                onClick={() => handleNav("upload-video", false)}
-                className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm transition-all whitespace-nowrap active:translate-x-0.5 cursor-pointer w-full ${
-                  activeTab === "upload-video"
-                    ? "bg-[#4BE277]/10 text-[#4BE277] border-l-4 border-[#4BE277]"
-                    : "text-[#BCCBB9] hover:bg-[#333B33]/20"
-                }`}
-              >
-                <UploadCloud size={18} />
-                <span>Upload Video</span>
-              </button>
-              <button
-                onClick={() => handleNav("impact-hub", false)}
-                className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm transition-all whitespace-nowrap active:translate-x-0.5 cursor-pointer w-full ${
-                  activeTab === "impact-hub"
-                    ? "bg-[#4BE277]/10 text-[#4BE277] border-l-4 border-[#4BE277]"
-                    : "text-[#BCCBB9] hover:bg-[#333B33]/20"
-                }`}
-              >
-                <Globe size={18} />
-                <span>Impact Hub</span>
-              </button>
-              <button
-                onClick={() => handleNav("quests", false)}
-                className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm transition-all whitespace-nowrap active:translate-x-0.5 cursor-pointer w-full ${
-                  activeTab === "quests"
-                    ? "bg-[#4BE277]/10 text-[#4BE277] border-l-4 border-[#4BE277]"
-                    : "text-[#BCCBB9] hover:bg-[#333B33]/20"
-                }`}
-              >
-                <Award size={18} />
-                <span>Quests</span>
-              </button>
-              <button
-                onClick={() => handleNav("leaderboard", false)}
-                className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm transition-all whitespace-nowrap active:translate-x-0.5 cursor-pointer w-full ${
-                  activeTab === "leaderboard"
-                    ? "bg-[#4BE277]/10 text-[#4BE277] border-l-4 border-[#4BE277]"
-                    : "text-[#BCCBB9] hover:bg-[#333B33]/20"
-                }`}
-              >
-                <Trophy size={18} />
-                <span>Leaderboard</span>
-              </button>
+              {NAV_ITEMS.map(({ value, label, icon: Icon }) => (
+                <button
+                  key={value}
+                  onClick={() => handleNav(value, false)}
+                  className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm transition-all whitespace-nowrap active:translate-x-0.5 cursor-pointer w-full ${
+                    activeTab === value
+                      ? "bg-[#4BE277]/10 text-[#4BE277] border-l-4 border-[#4BE277]"
+                      : "text-[#BCCBB9] hover:bg-[#333B33]/20"
+                  }`}
+                >
+                  <Icon size={18} />
+                  <span>{label}</span>
+                </button>
+              ))}
 
               <hr className="border-[#14231C] my-6" />
 
-              {/* Settings */}
               <button
                 onClick={() => handleNav("settings", false)}
                 className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm transition-all whitespace-nowrap active:translate-x-0.5 cursor-pointer w-full ${
@@ -409,7 +377,6 @@ export default function GreenQuestDashboard() {
           <SidebarFooterSkeleton />
         ) : (
           <div className="space-y-4 mt-6 md:mt-0">
-            {/* Weekly Goal Widget */}
             <div className="bg-[#111A16] border border-[#14231C] p-3 rounded-xl">
               <div className="text-[#10B981] font-bold mb-1 text-[11px] uppercase tracking-wider">
                 Weekly Goal
@@ -418,14 +385,13 @@ export default function GreenQuestDashboard() {
                 <div
                   className="bg-[#10B981] h-1.5 rounded-full shadow-[0_0_8px_rgba(16,185,129,0.5)]"
                   style={{ width: "75%" }}
-                ></div>
+                />
               </div>
               <div className="text-[10px] text-slate-400 font-mono">
                 750 / 1000 Green Points
               </div>
             </div>
 
-            {/* Profile Section */}
             <div className="flex items-center justify-between bg-[#111A16] border border-[#14231C] p-2 rounded-xl">
               <div className="flex items-center gap-2.5">
                 <div className="w-9 h-9 rounded-lg bg-[#142E24] overflow-hidden border border-[#10B981]/30">
@@ -437,7 +403,7 @@ export default function GreenQuestDashboard() {
                 </div>
                 <div>
                   <div className="font-bold text-white leading-tight text-xs truncate max-w-[110px]">
-                    {userData.user_metadata?.username|| "Loading..."}
+                    {userData?.user_metadata?.username || "Loading..."}
                   </div>
                   <div className="text-[10px] text-slate-400 font-mono">
                     Level 24 Guardian
@@ -455,14 +421,13 @@ export default function GreenQuestDashboard() {
         )}
       </aside>
 
-      {/* RIGHT CONTAINER: Flex setup allows header to claim remaining screen width */}
+      {/* RIGHT CONTAINER */}
       <div className="gq-scrollbar flex-1 flex flex-col h-screen min-w-0 overflow-auto relative">
         {isShellLoading ? (
           <HeaderSkeleton />
         ) : (
           <header className="h-16 w-full border-b border-[#14231C] px-4 md:px-6 flex items-center justify-between bg-[#0B120F]/80 backdrop-blur top-0 z-30 shrink-0">
             <div className="flex items-center gap-3">
-              {/* Hamburger Menu Icon for Mobile */}
               <button
                 className="md:hidden p-2 bg-[#111A16] border border-[#14231C] rounded-lg text-slate-400 hover:text-white"
                 onClick={() => setIsSidebarOpen(true)}
@@ -470,7 +435,6 @@ export default function GreenQuestDashboard() {
                 <Menu size={18} />
               </button>
 
-              {/* Title Block */}
               <div>
                 <h2 className="text-base md:text-lg font-bold text-white tracking-tight capitalize">
                   {activeTab.replace("-", " ")}
@@ -483,12 +447,8 @@ export default function GreenQuestDashboard() {
             </div>
 
             <div className="flex items-center gap-2 md:gap-4">
-              {/* Search Bar */}
               <div className="relative w-40 lg:w-64 hidden sm:block">
-                <Search
-                  className="absolute left-3 top-2.5 text-slate-500"
-                  size={16}
-                />
+                <Search className="absolute left-3 top-2.5 text-slate-500" size={16} />
                 <input
                   type="text"
                   placeholder="Search quests..."
@@ -496,13 +456,11 @@ export default function GreenQuestDashboard() {
                 />
               </div>
 
-              {/* Notifications */}
               <button className="p-2 bg-[#111A16] border border-[#14231C] text-slate-400 hover:text-white rounded-lg relative transition-colors">
                 <Bell size={16} />
-                <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-[#10B981] rounded-full animate-pulse"></span>
+                <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-[#10B981] rounded-full animate-pulse" />
               </button>
 
-              {/* Upload Action Button */}
               <button
                 onClick={() => setActiveTab("upload-video")}
                 className="bg-[#10B981] hover:bg-[#0ea5e9] text-[#0B120F] font-bold px-3 md:px-4 py-1.5 rounded-lg flex items-center gap-2 transition-colors shadow-[0_4px_12px_rgba(16,185,129,0.2)]"
@@ -519,22 +477,15 @@ export default function GreenQuestDashboard() {
           {isTabLoading ? (
             <MainContentSkeleton />
           ) : (
-            <>
-              {activeTab === "overview" && <OverviewTab />}
-              {activeTab === "upload-video" && <UploadVideoTab />}
-              {activeTab === "impact-hub" && <ImpactHubTab />}
-              {activeTab === "quests" && <QuestsTab />}
-              {activeTab === "leaderboard" && <LeaderboardsTab />}
-              {activeTab === "settings" && <ProfileTab />}
-            </>
+            ActiveTabComponent && <ActiveTabComponent />
           )}
         </main>
       </div>
+
       {confirmModal.isOpen &&
         createPortal(
           <div className="fixed inset-0 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 z-[10000] animate-fade-in">
             <div className="bg-[#161D16] border border-[#FFB4AB]/30 shadow-[0_0_50px_rgba(255,180,171,0.1)] max-w-sm w-full rounded-2xl p-5 space-y-4 font-mono text-xs">
-              {/* Modal Header */}
               <div className="flex items-center gap-2 text-[#FFB4AB] border-b border-[#DCE5D9]/10 pb-2">
                 <ShieldAlert size={18} className="shrink-0" />
                 <h3 className="font-bold text-sm text-[#DCE5D9] uppercase tracking-wider">
@@ -542,12 +493,10 @@ export default function GreenQuestDashboard() {
                 </h3>
               </div>
 
-              {/* Modal Body */}
               <p className="text-[#BCCBB9] leading-relaxed text-left">
                 {confirmModal.message}
               </p>
 
-              {/* Modal Actions */}
               <div className="flex justify-end gap-2 pt-2">
                 <button
                   type="button"
@@ -558,9 +507,7 @@ export default function GreenQuestDashboard() {
                 </button>
                 <button
                   type="button"
-                  onClick={() =>
-                    setConfirmModal((prev) => ({ ...prev, isOpen: false }))
-                  }
+                  onClick={() => setConfirmModal((prev) => ({ ...prev, isOpen: false }))}
                   className="bg-[#333B33] text-[#DCE5D9] border border-[#3D4A3D] px-4 py-2 rounded-lg hover:bg-[#333B33]/85 transition-colors cursor-pointer font-mono"
                 >
                   Dismiss
