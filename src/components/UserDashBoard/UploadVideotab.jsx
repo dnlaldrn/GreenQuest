@@ -6,8 +6,11 @@ import {
   AlertCircle,
   HelpCircle,
   CheckCircle,
+  CheckCircle2,
+  XCircle,
   Leaf,
 } from "lucide-react";
+import { supabase } from "../../lib/supabase";
 
 export default function UploadVideoTab() {
   const [dragActive, setDragActive] = useState(false);
@@ -15,6 +18,9 @@ export default function UploadVideoTab() {
   const [title, setTitle] = useState("");
   const [category, setCategory] = useState("recycling");
   const [description, setDescription] = useState("");
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState(null);
+  const [uploadSuccess, setUploadSuccess] = useState(false);
 
   const handleDrag = (e) => {
     e.preventDefault();
@@ -32,6 +38,66 @@ export default function UploadVideoTab() {
     setDragActive(false);
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
       setFile(e.dataTransfer.files[0]);
+      setUploadSuccess(false);
+      setUploadError(null);
+    }
+  };
+
+  const handleSubmit = async () => {
+    if (!file) {
+      setUploadError("Please select a video file first.");
+      return;
+    }
+
+    setUploading(true);
+    setUploadError(null);
+    setUploadSuccess(false);
+
+    try {
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError || !user) throw new Error("You must be logged in to submit.");
+
+      const fileExt = file.name.split(".").pop();
+      const fileName = `${user.id}/${Date.now()}.${fileExt}`;
+
+      const { error: storageError } = await supabase.storage
+        .from("eco-videos")
+        .upload(fileName, file, {
+          cacheControl: "3600",
+          upsert: false,
+        });
+
+      if (storageError) throw storageError;
+
+      const { data: urlData } = supabase.storage
+        .from("eco-videos")
+        .getPublicUrl(fileName);
+
+      const { error: insertError } = await supabase.from("submissions").insert({
+        user_id: user.id,
+        title,
+        category,
+        description,
+        video_path: fileName,
+        video_url: urlData.publicUrl,
+        status: "pending_review",
+      });
+
+      if (insertError) throw insertError;
+
+      // Success — show banner and reset form
+      setUploadSuccess(true);
+      setFile(null);
+      setTitle("");
+      setDescription("");
+
+      // Auto-hide the success banner after a few seconds
+      setTimeout(() => setUploadSuccess(false), 5000);
+    } catch (err) {
+      console.error(err);
+      setUploadError(err.message || "Upload failed. Please try again.");
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -48,6 +114,39 @@ export default function UploadVideoTab() {
           verification engine reviews metrics automatically.
         </p>
       </div>
+
+      {/* SUCCESS NOTIFICATION */}
+      {uploadSuccess && (
+        <div className="flex items-center gap-3 bg-[#14281E] border border-[#10B981]/40 text-[#10B981] px-4 py-3 rounded-xl text-xs font-medium animate-in fade-in slide-in-from-top-2 duration-300">
+          <CheckCircle2 size={18} className="shrink-0" />
+          <span>
+            Video uploaded successfully! Your submission is now pending AI
+            review.
+          </span>
+          <button
+            type="button"
+            onClick={() => setUploadSuccess(false)}
+            className="ml-auto text-[#10B981]/60 hover:text-[#10B981] text-lg leading-none"
+          >
+            &times;
+          </button>
+        </div>
+      )}
+
+      {/* ERROR NOTIFICATION */}
+      {uploadError && (
+        <div className="flex items-center gap-3 bg-[#2A1414] border border-red-500/40 text-red-400 px-4 py-3 rounded-xl text-xs font-medium animate-in fade-in slide-in-from-top-2 duration-300">
+          <XCircle size={18} className="shrink-0" />
+          <span>{uploadError}</span>
+          <button
+            type="button"
+            onClick={() => setUploadError(null)}
+            className="ml-auto text-red-400/60 hover:text-red-400 text-lg leading-none"
+          >
+            &times;
+          </button>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* LEFT COLUMN: UPLOAD ZONE & FORM */}
@@ -98,11 +197,13 @@ export default function UploadVideoTab() {
                       type="file"
                       className="hidden"
                       accept="video/*"
-                      onChange={(e) =>
-                        e.target.files &&
-                        e.target.files[0] &&
-                        setFile(e.target.files[0])
-                      }
+                      onChange={(e) => {
+                        if (e.target.files && e.target.files[0]) {
+                          setFile(e.target.files[0]);
+                          setUploadSuccess(false);
+                          setUploadError(null);
+                        }
+                      }}
                     />
                   </label>
                 </p>
@@ -176,10 +277,12 @@ export default function UploadVideoTab() {
               </button>
               <button
                 type="button"
-                className="bg-[#10B981] hover:bg-[#0ea5e9] text-[#0B120F] font-bold px-5 py-2 text-xs rounded-lg transition-colors shadow-[0_4px_12px_rgba(16,185,129,0.2)] flex items-center gap-2"
+                onClick={handleSubmit}
+                disabled={uploading || !file}
+                className="bg-[#10B981] hover:bg-[#0ea5e9] text-[#0B120F] font-bold px-5 py-2 text-xs rounded-lg transition-colors shadow-[0_4px_12px_rgba(16,185,129,0.2)] flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Sparkles size={14} />
-                <span>Submit for AI Review</span>
+                <span>{uploading ? "Uploading..." : "Submit for AI Review"}</span>
               </button>
             </div>
           </div>
@@ -216,10 +319,7 @@ export default function UploadVideoTab() {
 
             <ul className="space-y-3 text-[11px] text-slate-400">
               <li className="flex items-start gap-2.5">
-                <CheckCircle
-                  size={14}
-                  className="text-[#10B981] shrink-0 mt-0.5"
-                />
+                <CheckCircle size={14} className="text-[#10B981] shrink-0 mt-0.5" />
                 <span>
                   <strong>Unedited continuous sequence:</strong> Spliced,
                   clipped, or heavily filtered videos fail compliance
@@ -227,10 +327,7 @@ export default function UploadVideoTab() {
                 </span>
               </li>
               <li className="flex items-start gap-2.5">
-                <CheckCircle
-                  size={14}
-                  className="text-[#10B981] shrink-0 mt-0.5"
-                />
+                <CheckCircle size={14} className="text-[#10B981] shrink-0 mt-0.5" />
                 <span>
                   <strong>Clear object visibility:</strong> Items (e.g., dynamic
                   labels, compost heaps, solar equipment) must stay visible in
@@ -238,10 +335,7 @@ export default function UploadVideoTab() {
                 </span>
               </li>
               <li className="flex items-start gap-2.5">
-                <CheckCircle
-                  size={14}
-                  className="text-[#10B981] shrink-0 mt-0.5"
-                />
+                <CheckCircle size={14} className="text-[#10B981] shrink-0 mt-0.5" />
                 <span>
                   <strong>Geo-tag metadata match:</strong> File location
                   parameters should broadly align with your regional cluster
@@ -251,10 +345,7 @@ export default function UploadVideoTab() {
             </ul>
 
             <div className="bg-[#0B120F] border border-[#231A14] p-3 rounded-lg flex items-start gap-2.5 text-amber-500/90 text-[10px] leading-normal font-mono">
-              <AlertCircle
-                size={14}
-                className="shrink-0 mt-0.5 text-amber-600"
-              />
+              <AlertCircle size={14} className="shrink-0 mt-0.5 text-amber-600" />
               <span>
                 Submitting stock/stolen video feeds locks account point yields
                 instantly.
