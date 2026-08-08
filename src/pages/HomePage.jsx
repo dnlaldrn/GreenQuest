@@ -353,7 +353,7 @@ export default function HeroSection() {
               <div className="w-full h-full rounded-xl overflow-hidden bg-[#0d1210] flex items-center justify-center relative">
                 {/* Main AI / Mossy Sphere Image Place Holder */}
                 <img
-                  src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=600&q=80" // Replace this URL with your custom green AI graphic
+                  src="src/assets/heroimg.png" // Replace this URL with your custom green AI graphic
                   alt="AI Sustainability Hub"
                   className="w-full h-full object-cover mix-blend-lighten opacity-80 group-hover:scale-105 transition-transform duration-500"
                 />
