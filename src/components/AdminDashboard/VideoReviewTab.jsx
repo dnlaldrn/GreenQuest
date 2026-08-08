@@ -1,16 +1,63 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
-import { Play, Check, X, RefreshCw, X as CloseIcon } from "lucide-react";
+import { Play, Check, X, RefreshCw, X as CloseIcon, Loader2 } from "lucide-react";
+import { supabase } from "../../lib/supabase";
 
-export default function VideoReviewTab({
-  filteredSubmissions,
-  handleApprove,
-  handleReject,
-  handleRecalculateAI
-}) {
+export default function VideoReviewTab({ statusFilter = "all" }) {
+  const [submissions, setSubmissions] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
   // Local state for Video Player Modal
   const [selectedVideo, setSelectedVideo] = useState(null);
+  const [videoLoading, setVideoLoading] = useState(false);
 
+  const fetchSubmissions = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+
+    let query = supabase
+      .from("submissions")
+      .select(`
+        id,
+        user_id,
+        title,
+        category,
+        description,
+        video_path,
+        video_url,
+        status,
+        ai_score,
+        ai_feedback,
+        points_awarded,
+        created_at,
+        profiles (
+          username,
+          total_points
+        )
+      `)
+      .order("created_at", { ascending: false });
+
+    if (statusFilter !== "all") {
+      query = query.eq("status", statusFilter);
+    }
+
+    const { data, error } = await query;
+
+    if (error) {
+      console.error(error);
+      setError(error.message);
+    } else {
+      setSubmissions(data || []);
+    }
+    setLoading(false);
+  }, [statusFilter]);
+
+  useEffect(() => {
+    fetchSubmissions();
+  }, [fetchSubmissions]);
+
+  // Escape key closes modal
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.key === "Escape") {
@@ -25,12 +72,89 @@ export default function VideoReviewTab({
     };
   }, [selectedVideo]);
 
+  // Open modal + resolve a fresh signed URL (works for public or private buckets)
+  const handleOpenVideo = async (submission) => {
+    setSelectedVideo(submission);
+    setVideoLoading(true);
+
+    try {
+      const { data, error } = await supabase.storage
+        .from("eco-videos")
+        .createSignedUrl(submission.video_path, 60 * 60); // 1 hour expiry
+
+      if (error) throw error;
+
+      setSelectedVideo({ ...submission, video_url: data.signedUrl });
+    } catch (err) {
+      console.error("Failed to get signed URL, falling back to stored video_url:", err);
+      // Bucket may be public — stored video_url will already work as-is
+    } finally {
+      setVideoLoading(false);
+    }
+  };
+
+  const handleApprove = async (id, userId, points) => {
+    const { error } = await supabase
+      .from("submissions")
+      .update({ status: "approved", points_awarded: points })
+      .eq("id", id);
+
+    if (error) {
+      console.error(error);
+      return;
+    }
+
+    // Optionally bump the user's total points via an RPC function
+    const { error: rpcError } = await supabase.rpc("increment_user_points", {
+      uid: userId,
+      amount: points,
+    });
+    if (rpcError) console.error(rpcError);
+
+    fetchSubmissions();
+  };
+
+  const handleReject = async (id) => {
+    const { error } = await supabase
+      .from("submissions")
+      .update({ status: "rejected" })
+      .eq("id", id);
+
+    if (error) console.error(error);
+    fetchSubmissions();
+  };
+
+  const handleRecalculateAI = async (id) => {
+    const { error } = await supabase.functions.invoke("recalculate-ai-score", {
+      body: { submission_id: id },
+    });
+
+    if (error) console.error(error);
+    fetchSubmissions();
+  };
+
   return (
     <section className="glass-card rounded-xl overflow-hidden border border-[#DCE5D9]/10">
-      <div className="p-6 border-b border-[#DCE5D9]/10">
-        <h3 className="text-lg font-bold text-[#DCE5D9]">Eco Video Verification Queue</h3>
-        <p className="text-xs text-[#BCCBB9]">Review pending video evidence where AI checks flagged confidence criteria.</p>
+      <div className="p-6 border-b border-[#DCE5D9]/10 flex items-center justify-between">
+        <div>
+          <h3 className="text-lg font-bold text-[#DCE5D9]">Eco Video Verification Queue</h3>
+          <p className="text-xs text-[#BCCBB9]">Review pending video evidence where AI checks flagged confidence criteria.</p>
+        </div>
+        <button
+          onClick={fetchSubmissions}
+          className="w-8 h-8 rounded-lg bg-[#333B33] text-[#BCCBB9] hover:bg-[#4BE277]/10 hover:text-[#4BE277] border border-[#3D4A3D] transition-all flex items-center justify-center active:scale-90 cursor-pointer shrink-0"
+          title="Refresh queue"
+        >
+          <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
+        </button>
       </div>
+
+      {error && (
+        <div className="mx-6 mt-4 flex items-center gap-2 bg-[#2A1414] border border-red-500/40 text-red-400 px-4 py-3 rounded-xl text-xs font-medium">
+          <X size={16} className="shrink-0" />
+          <span>Failed to load submissions: {error}</span>
+        </div>
+      )}
 
       <div className="overflow-x-auto">
         <table className="w-full text-left border-collapse">
@@ -45,104 +169,114 @@ export default function VideoReviewTab({
             </tr>
           </thead>
           <tbody className="divide-y divide-[#DCE5D9]/5">
-            {filteredSubmissions.length === 0 ? (
+            {loading ? (
+              <tr>
+                <td colSpan="6" className="px-6 py-8 text-center text-xs text-[#BCCBB9] font-mono">
+                  <Loader2 size={16} className="animate-spin inline mr-2" />
+                  Loading submissions...
+                </td>
+              </tr>
+            ) : submissions.length === 0 ? (
               <tr>
                 <td colSpan="6" className="px-6 py-8 text-center text-xs text-[#BCCBB9] font-mono">
                   No submissions currently in the verification queue.
                 </td>
               </tr>
             ) : (
-              filteredSubmissions.map((s) => (
-                <tr key={s.id} className="hover:bg-[#333B33]/10 transition-colors">
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-[#1A221A] border border-[#4BE277]/20 flex items-center justify-center font-bold text-xs uppercase text-[#4BE277]">
-                        {s.profiles?.username ? s.profiles.username.slice(0, 2) : "GQ"}
-                      </div>
-                      <div>
-                        <p className="text-sm font-semibold text-[#DCE5D9]">{s.profiles?.username || "Eco Participant"}</p>
-                        <span className="text-[10px] text-[#BCCBB9] font-mono">Points: {s.profiles?.total_points || 0}</span>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 max-w-xs">
-                    <p className="text-xs text-[#DCE5D9] line-clamp-2">{s.description || "No description provided."}</p>
-                    <span className="text-[9px] text-[#BCCBB9] font-mono block mt-1">
-                      {new Date(s.created_at || Date.now()).toLocaleString()}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <button
-                      onClick={() => setSelectedVideo(s)}
-                      className="relative w-24 h-14 rounded-lg overflow-hidden border border-[#3D4A3D] group block cursor-pointer bg-black/40"
-                    >
-                      <div className="absolute inset-0 bg-black/40 flex items-center justify-center group-hover:bg-black/20 transition-all">
-                        <Play size={16} className="text-white fill-white shadow-lg scale-100 group-hover:scale-110 transition-transform" />
-                      </div>
-                      <div className="w-full h-full bg-[#161D16] flex items-center justify-center font-mono text-[9px] text-[#BCCBB9]">
-                        Video Preview
-                      </div>
-                    </button>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-2 font-mono">
-                      <div className="w-16 h-1.5 bg-[#333B33] rounded-full overflow-hidden">
-                        <div
-                          className={`h-full ${
-                            (s.ai_score || 0) < 50 ? "bg-[#FFB4AB]" : "bg-[#92DB2A]"
-                          }`}
-                          style={{ width: `${s.ai_score || 0}%` }}
-                        ></div>
-                      </div>
-                      <span className="text-[11px] font-bold">{s.ai_score || 0}%</span>
-                    </div>
-                    {s.ai_feedback && (
-                      <span className="text-[9px] text-[#BCCBB9] block mt-0.5 line-clamp-1 truncate max-w-[150px]" title={s.ai_feedback}>
-                        {s.ai_feedback}
-                      </span>
-                    )}
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider ${
-                      s.status === "approved"
-                        ? "bg-[#4BE277]/10 text-[#4BE277] border border-[#4BE277]/30"
-                        : s.status === "rejected"
-                        ? "bg-[#FFB4AB]/10 text-[#FFB4AB] border border-[#FFB4AB]/30"
-                        : "bg-[#FFB4AB]/20 text-[#FFB4AB] animate-pulse border border-[#FFB4AB]/40"
-                    }`}>
-                      <span className={`w-1 h-1 rounded-full ${s.status === "approved" ? "bg-[#4BE277]" : "bg-[#FFB4AB]"}`}></span>
-                      {s.status === "manual_review" ? "Manual Review" : s.status}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-right space-x-1.5 whitespace-nowrap">
-                    {s.status !== "approved" && s.status !== "rejected" && (
-                      <>
-                        <button
-                          onClick={() => handleApprove(s.id, s.user_id, s.points_awarded || 150)}
-                          className="w-8 h-8 rounded-lg bg-[#4BE277]/10 text-[#4BE277] border border-[#4BE277]/20 hover:bg-[#4BE277]/20 transition-all flex items-center justify-center active:scale-90 inline-flex cursor-pointer"
-                          title="Approve Verification"
-                        >
-                          <Check size={16} />
-                        </button>
-                        <button
-                          onClick={() => handleReject(s.id)}
-                          className="w-8 h-8 rounded-lg bg-[#FFB4AB]/10 text-[#FFB4AB] border border-[#FFB4AB]/20 hover:bg-[#FFB4AB]/20 transition-all flex items-center justify-center active:scale-90 inline-flex cursor-pointer"
-                          title="Reject Evidence"
-                        >
-                          <X size={16} />
-                        </button>
-                      </>
-                    )}
-                    <button
-                      onClick={() => handleRecalculateAI(s.id)}
-                      className="w-8 h-8 rounded-lg bg-[#333B33] text-[#BCCBB9] hover:bg-[#4BE277]/10 hover:text-[#4BE277] border border-[#3D4A3D] transition-all flex items-center justify-center active:scale-90 inline-flex cursor-pointer"
-                      title="Recalculate with Gemini API"
-                    >
-                      <RefreshCw size={14} />
-                    </button>
-                  </td>
-                </tr>
-              ))
+             submissions.map((s) => {
+  const profile = Array.isArray(s.profiles) ? s.profiles[0] : s.profiles;
+  return (
+    <tr key={s.id} className="hover:bg-[#333B33]/10 transition-colors">
+      <td className="px-6 py-4">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-full bg-[#1A221A] border border-[#4BE277]/20 flex items-center justify-center font-bold text-xs uppercase text-[#4BE277]">
+            {profile?.username ? profile.username.slice(0, 2) : "GQ"}
+          </div>
+          <div>
+            <p className="text-sm font-semibold text-[#DCE5D9]">{profile?.username || "Eco Participant"}</p>
+            <span className="text-[10px] text-[#BCCBB9] font-mono">Points: {profile?.total_points || 0}</span>
+          </div>
+        </div>
+      </td>
+      <td className="px-6 py-4 max-w-xs">
+        <p className="text-xs text-[#DCE5D9] line-clamp-2">{s.description || "No description provided."}</p>
+        <span className="text-[9px] text-[#BCCBB9] font-mono block mt-1">
+          {new Date(s.created_at || Date.now()).toLocaleString()}
+        </span>
+      </td>
+      <td className="px-6 py-4">
+        <button
+          onClick={() => handleOpenVideo(s)}
+          className="relative w-24 h-14 rounded-lg overflow-hidden border border-[#3D4A3D] group block cursor-pointer bg-black/40"
+        >
+          <div className="absolute inset-0 bg-black/40 flex items-center justify-center group-hover:bg-black/20 transition-all">
+            <Play size={16} className="text-white fill-white shadow-lg scale-100 group-hover:scale-110 transition-transform" />
+          </div>
+          <div className="w-full h-full bg-[#161D16] flex items-center justify-center font-mono text-[9px] text-[#BCCBB9]">
+            Video Preview
+          </div>
+        </button>
+      </td>
+      <td className="px-6 py-4">
+        <div className="flex items-center gap-2 font-mono">
+          <div className="w-16 h-1.5 bg-[#333B33] rounded-full overflow-hidden">
+            <div
+              className={`h-full ${
+                (s.ai_score || 0) < 50 ? "bg-[#FFB4AB]" : "bg-[#92DB2A]"
+              }`}
+              style={{ width: `${s.ai_score || 0}%` }}
+            ></div>
+          </div>
+          <span className="text-[11px] font-bold">{s.ai_score || 0}%</span>
+        </div>
+        {s.ai_feedback && (
+          <span className="text-[9px] text-[#BCCBB9] block mt-0.5 line-clamp-1 truncate max-w-[150px]" title={s.ai_feedback}>
+            {s.ai_feedback}
+          </span>
+        )}
+      </td>
+      <td className="px-6 py-4">
+        <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider ${
+          s.status === "approved"
+            ? "bg-[#4BE277]/10 text-[#4BE277] border border-[#4BE277]/30"
+            : s.status === "rejected"
+            ? "bg-[#FFB4AB]/10 text-[#FFB4AB] border border-[#FFB4AB]/30"
+            : "bg-[#FFB4AB]/20 text-[#FFB4AB] animate-pulse border border-[#FFB4AB]/40"
+        }`}>
+          <span className={`w-1 h-1 rounded-full ${s.status === "approved" ? "bg-[#4BE277]" : "bg-[#FFB4AB]"}`}></span>
+          {s.status === "manual_review" ? "Manual Review" : s.status}
+        </span>
+      </td>
+      <td className="px-6 py-4 text-right space-x-1.5 whitespace-nowrap">
+        {s.status !== "approved" && s.status !== "rejected" && (
+          <>
+            <button
+              onClick={() => handleApprove(s.id, s.user_id, s.points_awarded || 150)}
+              className="w-8 h-8 rounded-lg bg-[#4BE277]/10 text-[#4BE277] border border-[#4BE277]/20 hover:bg-[#4BE277]/20 transition-all flex items-center justify-center active:scale-90 inline-flex cursor-pointer"
+              title="Approve Verification"
+            >
+              <Check size={16} />
+            </button>
+            <button
+              onClick={() => handleReject(s.id)}
+              className="w-8 h-8 rounded-lg bg-[#FFB4AB]/10 text-[#FFB4AB] border border-[#FFB4AB]/20 hover:bg-[#FFB4AB]/20 transition-all flex items-center justify-center active:scale-90 inline-flex cursor-pointer"
+              title="Reject Evidence"
+            >
+              <X size={16} />
+            </button>
+          </>
+        )}
+        <button
+          onClick={() => handleRecalculateAI(s.id)}
+          className="w-8 h-8 rounded-lg bg-[#333B33] text-[#BCCBB9] hover:bg-[#4BE277]/10 hover:text-[#4BE277] border border-[#3D4A3D] transition-all flex items-center justify-center active:scale-90 inline-flex cursor-pointer"
+          title="Recalculate with Gemini API"
+        >
+          <RefreshCw size={14} />
+        </button>
+      </td>
+    </tr>
+  );
+})
             )}
           </tbody>
         </table>
@@ -152,7 +286,7 @@ export default function VideoReviewTab({
       {selectedVideo && createPortal(
         <div className="fixed inset-0 bg-black/75 backdrop-blur-md flex items-center justify-center p-4 z-50 animate-fade-in">
           <div className="bg-[#161D16] border border-[#4BE277]/30 shadow-[0_0_40px_rgba(74,225,118,0.15)] max-w-2xl w-full rounded-2xl overflow-hidden p-5 space-y-4">
-            
+
             {/* Modal Header */}
             <div className="flex justify-between items-center border-b border-[#DCE5D9]/10 pb-2.5">
               <div className="flex items-center gap-2">
@@ -168,15 +302,19 @@ export default function VideoReviewTab({
                 <CloseIcon size={20} />
               </button>
             </div>
-            
+
             {/* Sleek Cinematic Video Box with Max Height Capped */}
             <div className="aspect-video bg-black/90 rounded-xl overflow-hidden border border-[#3D4A3D] shadow-inner relative flex items-center justify-center max-h-[240px] md:max-h-[260px] mx-auto w-full">
-              <video
-                src={selectedVideo.video_url}
-                controls
-                autoPlay
-                className="max-h-full max-w-full object-contain"
-              />
+              {videoLoading ? (
+                <Loader2 size={24} className="animate-spin text-[#4BE277]" />
+              ) : (
+                <video
+                  src={selectedVideo.video_url}
+                  controls
+                  autoPlay
+                  className="max-h-full max-w-full object-contain"
+                />
+              )}
             </div>
 
             {/* Structured Metadata Box */}
@@ -260,7 +398,7 @@ export default function VideoReviewTab({
                 </button>
               </div>
             </div>
-            
+
           </div>
         </div>,
         document.body
