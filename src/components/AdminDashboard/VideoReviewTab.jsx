@@ -50,12 +50,14 @@ export default function VideoReviewTab({ statusFilter = "all" }) {
     } else {
       setSubmissions(data || []);
     }
+    console.log(data[0])
     setLoading(false);
   }, [statusFilter]);
 
   useEffect(() => {
     fetchSubmissions();
   }, [fetchSubmissions]);
+  
 
   // Escape key closes modal
   useEffect(() => {
@@ -188,16 +190,16 @@ export default function VideoReviewTab({ statusFilter = "all" }) {
   return (
     <tr key={s.id} className="hover:bg-[#333B33]/10 transition-colors">
       <td className="px-6 py-4">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-full bg-[#1A221A] border border-[#4BE277]/20 flex items-center justify-center font-bold text-xs uppercase text-[#4BE277]">
-            {profile?.username ? profile.username.slice(0, 2) : "GQ"}
-          </div>
-          <div>
-            <p className="text-sm font-semibold text-[#DCE5D9]">{profile?.username || "Eco Participant"}</p>
-            <span className="text-[10px] text-[#BCCBB9] font-mono">Points: {profile?.total_points || 0}</span>
-          </div>
-        </div>
-      </td>
+  <div className="flex items-center gap-3">
+    <div className="w-8 h-8 rounded-full bg-[#1A221A] border border-[#4BE277]/20 flex items-center justify-center font-bold text-xs uppercase text-[#4BE277]">
+      {profile?.username ? profile.username.slice(0, 2) : "GQ"}
+    </div>
+    <div>
+      <p className="text-sm font-semibold text-[#DCE5D9]">{profile?.username ?? "Eco Participant"}</p>
+      <span className="text-[10px] text-[#BCCBB9] font-mono">Points: {profile?.total_points || 0}</span>
+    </div>
+  </div>
+</td>
       <td className="px-6 py-4 max-w-xs">
         <p className="text-xs text-[#DCE5D9] line-clamp-2">{s.description || "No description provided."}</p>
         <span className="text-[9px] text-[#BCCBB9] font-mono block mt-1">
