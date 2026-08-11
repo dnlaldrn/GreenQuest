@@ -38,6 +38,8 @@ export default function VideoReviewTab({ statusFilter = "all" }) {
       `)
       .order("created_at", { ascending: false });
 
+      
+
     if (statusFilter !== "all") {
       query = query.eq("status", statusFilter);
     }
@@ -111,7 +113,10 @@ export default function VideoReviewTab({ statusFilter = "all" }) {
       uid: userId,
       amount: points,
     });
-    if (rpcError) console.error(rpcError);
+   if (rpcError) {
+  console.error("RPC failed:", rpcError);
+  alert("Points update failed: " + rpcError.message); // temporary, remove later
+}
 
     fetchSubmissions();
   };
@@ -134,6 +139,8 @@ export default function VideoReviewTab({ statusFilter = "all" }) {
     if (error) console.error(error);
     fetchSubmissions();
   };
+
+  
 
   return (
     <section className="glass-card rounded-xl overflow-hidden border border-[#DCE5D9]/10">
@@ -196,7 +203,7 @@ export default function VideoReviewTab({ statusFilter = "all" }) {
     </div>
     <div>
       <p className="text-sm font-semibold text-[#DCE5D9]">{profile?.username ?? "Eco Participant"}</p>
-      <span className="text-[10px] text-[#BCCBB9] font-mono">Points: {profile?.total_points || 0}</span>
+     <span className="text-[10px] text-[#BCCBB9] font-mono">Points: {profile?.total_points || 0}</span>
     </div>
   </div>
 </td>
@@ -253,7 +260,7 @@ export default function VideoReviewTab({ statusFilter = "all" }) {
         {s.status !== "approved" && s.status !== "rejected" && (
           <>
             <button
-              onClick={() => handleApprove(s.id, s.user_id, s.points_awarded || 150)}
+              onClick={() => handleApprove(s.id, s.user_id, 5)}
               className="w-8 h-8 rounded-lg bg-[#4BE277]/10 text-[#4BE277] border border-[#4BE277]/20 hover:bg-[#4BE277]/20 transition-all flex items-center justify-center active:scale-90 inline-flex cursor-pointer"
               title="Approve Verification"
             >
@@ -335,7 +342,7 @@ export default function VideoReviewTab({ statusFilter = "all" }) {
                     Estimated Points
                   </span>
                   <p className="text-xs font-bold text-[#92DB2A]">
-                    +{selectedVideo.points_awarded || 150} pts
+                   +5 pts
                   </p>
                 </div>
               </div>
@@ -372,7 +379,7 @@ export default function VideoReviewTab({ statusFilter = "all" }) {
                   <>
                     <button
                       onClick={() => {
-                        handleApprove(selectedVideo.id, selectedVideo.user_id, selectedVideo.points_awarded || 150);
+                        handleApprove(selectedVideo.id, selectedVideo.user_id, 5);
                         setSelectedVideo(null);
                       }}
                       className="bg-[#4BE277] text-[#003915] font-bold px-4 py-2 rounded-lg text-[10px] hover:scale-105 active:scale-95 transition-all flex items-center gap-1 cursor-pointer font-mono shadow-[0_0_15px_rgba(75,226,119,0.2)]"

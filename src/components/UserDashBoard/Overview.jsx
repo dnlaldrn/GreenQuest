@@ -4,11 +4,45 @@ import {
   Trophy,
   CheckCircle2,
   Clock,
- 
+  Loader2,
+
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { supabase } from "../../lib/supabase";
+
 export default function OverviewTab() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [totalPoints, setTotalPoints] = useState(null);
+  const [pointsLoading, setPointsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchTotalPoints = async () => {
+      setPointsLoading(true);
+
+      const { data: userData, error: userError } = await supabase.auth.getUser();
+      if (userError || !userData?.user) {
+        console.error("Failed to get current user:", userError);
+        setPointsLoading(false);
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("total_points")
+        .eq("id", userData.user.id)
+        .single();
+
+      if (error) {
+        console.error("Failed to fetch total points:", error);
+      } else {
+        setTotalPoints(data?.total_points ?? 0);
+      }
+
+      setPointsLoading(false);
+    };
+
+    fetchTotalPoints();
+  }, []);
 
   return (
     <main className="w-full p-4 md:p-6 space-y-6">
@@ -31,12 +65,13 @@ export default function OverviewTab() {
               Total Points
             </div>
             <div className="flex items-baseline gap-2 mb-1">
-              <span className="text-2xl font-bold text-white tracking-tight">
-                12,450
-              </span>
-              <span className="text-[11px] font-mono text-[#10B981] font-semibold">
-                +12%
-              </span>
+              {pointsLoading ? (
+                <Loader2 size={20} className="animate-spin text-[#10B981]" />
+              ) : (
+                <span className="text-2xl font-bold text-white tracking-tight">
+                  {(totalPoints ?? 0).toLocaleString()}
+                </span>
+              )}
             </div>
             <div className="text-[10px] text-slate-500 font-mono">
               Rank #124 Globally
