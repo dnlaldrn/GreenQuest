@@ -203,7 +203,7 @@ export default function VideoReviewTab({ statusFilter = "all" }) {
     </div>
     <div>
       <p className="text-sm font-semibold text-[#DCE5D9]">{profile?.username ?? "Eco Participant"}</p>
-     <span className="text-[10px] text-[#BCCBB9] font-mono">Points: {profile?.total_points || 0}</span>
+     <span className="text-[10px] text-[#BCCBB9] font-mono">Points: +5 </span>
     </div>
   </div>
 </td>
