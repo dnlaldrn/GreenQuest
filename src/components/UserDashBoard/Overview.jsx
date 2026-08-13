@@ -74,7 +74,7 @@ export default function OverviewTab() {
               )}
             </div>
             <div className="text-[10px] text-slate-500 font-mono">
-              Rank #124 Globally
+              Rank #1 Globally
             </div>
             <div className="absolute right-3 bottom-3 text-slate-800/20 group-hover:text-[#10B981]/5 transition-colors pointer-events-none">
               <Award size={48} />
@@ -88,14 +88,14 @@ export default function OverviewTab() {
             </div>
             <div className="flex items-baseline gap-2 mb-1">
               <span className="text-2xl font-bold text-white tracking-tight">
-                #124
+                #1
               </span>
               <span className="text-[11px] font-mono text-slate-400">
-                / 8.4k
+                / 1
               </span>
             </div>
             <div className="text-[10px] text-[#10B981] font-mono">
-              Top 2% this month
+              Top 1% this month
             </div>
             <div className="absolute right-3 bottom-3 text-slate-800/20 group-hover:text-[#10B981]/5 transition-colors pointer-events-none">
               <Trophy size={48} />
@@ -109,7 +109,7 @@ export default function OverviewTab() {
             </div>
             <div className="flex items-baseline gap-2 mb-1">
               <span className="text-2xl font-bold text-white tracking-tight">
-                42
+                2
               </span>
               <span className="text-[11px] font-mono text-[#10B981] font-semibold">
                 +3 new
