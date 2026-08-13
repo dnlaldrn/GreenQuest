@@ -221,7 +221,10 @@ export default function GreenQuestDashboard() {
           console.error(error);
           return;
         }
-        if (isMounted) setUserData(data.user);
+        if (isMounted) {
+          setUserData(data.user) ;
+          console.log(userData)
+        }
       } catch (error) {
         console.error("Failed to fetch current user:", error);
       } finally {
@@ -405,9 +408,7 @@ export default function GreenQuestDashboard() {
                   <div className="font-bold text-white leading-tight text-xs truncate max-w-[110px]">
                     {userData?.user_metadata?.username || "Loading..."}
                   </div>
-                  <div className="text-[10px] text-slate-400 font-mono">
-                    Level 24 Guardian
-                  </div>
+        
                 </div>
               </div>
               <button
@@ -440,7 +441,7 @@ export default function GreenQuestDashboard() {
                   {activeTab.replace("-", " ")}
                 </h2>
                 <p className="hidden sm:block text-[11px] md:text-xs text-slate-400">
-                  Welcome back{userData?.email ? `, ${userData.email}` : ""}. Your
+                  Welcome back {userData?.user_metadata?.username || "Loading..."}. Your
                   impact is growing.
                 </p>
               </div>
