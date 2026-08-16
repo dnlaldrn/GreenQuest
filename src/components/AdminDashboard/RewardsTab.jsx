@@ -165,13 +165,10 @@ export default function RewardsTab({
 
                 <div className="flex items-center justify-between mt-3 font-mono text-[10px]">
                   <div>
-                    <span className="text-[#BCCBB9] block text-[9px] uppercase tracking-wider">Point Value</span>
-                    <span className="text-[#92DB2A] font-bold text-xs">{(r.points_cost || 0).toLocaleString()} pts</span>
+                    <span className="text-[#BCCBB9] block text-[9px] uppercase tracking-wider">Rank Required</span>
+                    <span className="text-[#92DB2A] font-bold text-xs">{r.points_cost }</span>
                   </div>
-                  <div className="text-right">
-                    <span className="text-[#BCCBB9] block text-[9px] uppercase tracking-wider">In Stock</span>
-                    <span className="text-[#DCE5D9] font-bold text-xs">{r.stock} units</span>
-                  </div>
+                 
                 </div>
               </div>
             </div>
