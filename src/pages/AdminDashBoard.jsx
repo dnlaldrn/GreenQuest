@@ -884,18 +884,7 @@ export default function AdminDashBoard() {
       {/* Main Content Area */}
       <main className="flex-grow min-h-screen p-4 md:p-8 space-y-6">
         
-        {/* Status Alerts Bar */}
-        {isMocked && (
-          <div className="p-4 bg-[#FFB4AB]/10 border border-[#FFB4AB]/30 text-[#FFB4AB] rounded-xl flex items-center gap-3 animate-pulse">
-            <ShieldAlert size={20} className="shrink-0" />
-            <div className="text-xs">
-              <span className="font-bold uppercase tracking-wider">Mock Offline Mode Active</span>: Supabase database tables (`submissions`, `rewards`) were not found. Using local sandbox state. To connect live features, run SQL scripts in <a href="file:///c:/Users/HP%20LAPTOP%2015s/GreenQuest/schema.sql" className="underline font-semibold hover:text-[#4BE277]">schema.sql</a>.
-            </div>
-            <button onClick={loadAllData} className="ml-auto text-xs border border-[#FFB4AB]/40 px-2 py-0.5 rounded hover:bg-[#FFB4AB]/20 transition-all font-mono cursor-pointer">
-              Retry DB
-            </button>
-          </div>
-        )}
+      
 
         {isAdminBypassed && (
           <div className="p-3 bg-[#92DB2A]/10 border border-[#92DB2A]/30 text-[#92DB2A] rounded-xl flex items-center gap-2">
