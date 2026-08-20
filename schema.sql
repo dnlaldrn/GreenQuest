@@ -148,9 +148,9 @@ END;
 $$;
 
 -- 9. Seed Default Rewards
-INSERT INTO public.rewards (name, description, image_url, points_cost, stock, active)
+INSERT INTO public.rewards (name, description, image_url, rank)
 VALUES 
-  ('Eco-Tech Water Bottle', 'Smart temperature tracking and biodegradable materials.', 'https://images.unsplash.com/photo-1602143407151-7111542de6e8?w=300', 5000, 42, true),
-  ('Forest Restoration Bond', 'Planted in your name in the Amazon rainforest.', 'https://images.unsplash.com/photo-1513836279014-a89f7a76ae86?w=300', 12500, 99999, true),
-  ('Sustainable Yoga Mat', 'Hemp & natural organic tree rubber construction.', 'https://images.unsplash.com/photo-1592432678016-e910b452f9a2?w=300', 8200, 15, true)
+  ('Eco-Tech Water Bottle', 'Smart temperature tracking and biodegradable materials.', 'https://images.unsplash.com/photo-1602143407151-7111542de6e8?w=300', 2),
+  ('Forest Restoration Bond', 'Planted in your name in the Amazon rainforest.', 'https://images.unsplash.com/photo-1513836279014-a89f7a76ae86?w=300', 1),
+  ('Sustainable Yoga Mat', 'Hemp & natural organic tree rubber construction.', 'https://images.unsplash.com/photo-1592432678016-e910b452f9a2?w=300', 3 )
 ON CONFLICT DO NOTHING;
