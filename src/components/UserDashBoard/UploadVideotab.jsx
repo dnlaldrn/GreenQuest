@@ -208,7 +208,7 @@ export default function UploadVideoTab() {
                   </label>
                 </p>
                 <p className="text-[10px] text-slate-500 font-mono uppercase tracking-wider">
-                  MP4, MOV, or WEBM up to 100MB
+                  MP4  to 50MB
                 </p>
               </>
             )}
@@ -290,23 +290,6 @@ export default function UploadVideoTab() {
 
         {/* RIGHT COLUMN: AI VERIFICATION GUIDE & EXPECTED POINTS */}
         <div className="space-y-6">
-          {/* REWARD ESTIMATE BOX */}
-          <div className="bg-[#14281E]/30 border border-[#10B981]/20 p-5 rounded-xl relative overflow-hidden">
-            <div className="text-[#10B981] font-mono font-bold text-[11px] uppercase tracking-wider mb-2 flex items-center gap-1.5">
-              <Leaf size={12} /> Estimated Reward Range
-            </div>
-            <div className="text-3xl font-black text-white tracking-tight mb-1">
-              +50 - 250{" "}
-              <span className="text-xs text-[#10B981] font-mono font-normal">
-                pts
-              </span>
-            </div>
-            <p className="text-[11px] text-slate-400 leading-relaxed">
-              Points vary based on object validation accuracy, verified
-              quantities, and active multipliers.
-            </p>
-            <div className="absolute top-[-20px] right-[-20px] w-24 h-24 bg-[#10B981]/5 rounded-full blur-2xl pointer-events-none" />
-          </div>
 
           {/* CHECKLIST RULES */}
           <div className="bg-[#111A16] border border-[#14231C] p-5 rounded-xl space-y-4">
