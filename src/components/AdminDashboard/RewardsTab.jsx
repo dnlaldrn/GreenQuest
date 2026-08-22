@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
-import { Plus, Edit2, Trash2, Ticket, X } from "lucide-react";
+import { Plus, Edit2, Trash2, Ticket, X, Upload, ImageOff } from "lucide-react";
 
 export default function RewardsTab({
   rewards,
@@ -13,6 +13,8 @@ export default function RewardsTab({
     reward: null
   });
 
+  const fileInputRef = useRef(null);
+
   const handleOpenRewardModal = (reward = null) => {
     if (reward) {
       setRewardModal({ isOpen: true, reward: { ...reward } });
@@ -22,8 +24,7 @@ export default function RewardsTab({
         reward: {
           name: "",
           description: "",
-          points_cost: 1000,
-          stock: 10,
+          points_cost: 1,
           image_url: "",
           active: true
         }
@@ -52,11 +53,11 @@ export default function RewardsTab({
   const validateTextSpam = (text, maxLength, allowPunctuation = false) => {
     if (!text || text.trim().length < 3) return "Input must be at least 3 characters long.";
     if (text.length > maxLength) return `Input must not exceed ${maxLength} characters.`;
-    
-    const pattern = allowPunctuation 
-      ? /^[a-zA-Z\s\-.,'()!]+$/ 
+
+    const pattern = allowPunctuation
+      ? /^[a-zA-Z\s\-.,'()!]+$/
       : /^[a-zA-Z\s\-]+$/;
-      
+
     if (!pattern.test(text)) {
       return "Letters only. Numbers/digits are not allowed.";
     }
@@ -66,13 +67,50 @@ export default function RewardsTab({
     return null;
   };
 
-  const validateUrl = (url) => {
-    if (!url) return null;
-    if (url.length > 200) return "URL must not exceed 200 characters.";
-    if (!/^https?:\/\/[^\s/$.?#].[^\s]*$/i.test(url)) {
-      return "Please enter a valid HTTP/HTTPS URL.";
+  const getRankLabel = (rank) => {
+    switch (rank) {
+      case 1: return "1st Place";
+      case 2: return "2nd Place";
+      case 3: return "3rd Place";
+      default: return `${rank}th Place`;
     }
-    return null;
+  };
+
+  // Max rank/place option shown in the dropdown
+  const MAX_RANK = 3;
+  const rankOptions = Array.from({ length: MAX_RANK }, (_, i) => i + 1);
+
+  const MAX_IMAGE_SIZE_MB = 3;
+
+  const handleImageUpload = (file) => {
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      alert("Please upload a valid image file.");
+      return;
+    }
+
+    if (file.size > MAX_IMAGE_SIZE_MB * 1024 * 1024) {
+      alert(`Image must not exceed ${MAX_IMAGE_SIZE_MB}MB.`);
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      setRewardModal((prev) => ({
+        ...prev,
+        reward: { ...prev.reward, image_url: e.target.result }
+      }));
+    };
+    reader.onerror = () => {
+      alert("Failed to read image file. Please try again.");
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleRemoveImage = () => {
+    setRewardModal((prev) => ({ ...prev, reward: { ...prev.reward, image_url: "" } }));
+    if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
   const onSubmitReward = async (e) => {
@@ -90,21 +128,9 @@ export default function RewardsTab({
       return;
     }
 
-    const cost = parseInt(rewardModal.reward.points_cost);
-    if (isNaN(cost) || cost < 1 || cost > 1000000) {
-      alert("Point cost must be an integer between 1 and 1,000,000.");
-      return;
-    }
-
-    const stock = parseInt(rewardModal.reward.stock);
-    if (isNaN(stock) || stock < 0 || stock > 99999) {
-      alert("Stock allocation must be an integer between 0 and 99,999.");
-      return;
-    }
-
-    const urlError = validateUrl(rewardModal.reward.image_url);
-    if (urlError) {
-      alert(`Photo URL Error: ${urlError}`);
+    const rank = parseInt(rewardModal.reward.points_cost);
+    if (isNaN(rank) || rank < 1 || rank > MAX_RANK) {
+      alert(`Place must be a whole number between 1 and ${MAX_RANK}.`);
       return;
     }
 
@@ -112,9 +138,8 @@ export default function RewardsTab({
       ...rewardModal.reward,
       name: rewardModal.reward.name.trim(),
       description: rewardModal.reward.description.trim(),
-      points_cost: cost,
-      stock: stock,
-      image_url: rewardModal.reward.image_url ? rewardModal.reward.image_url.trim() : ""
+      points_cost: rank,
+      image_url: rewardModal.reward.image_url || ""
     };
 
     const success = await handleSaveReward(cleanedReward);
@@ -128,7 +153,7 @@ export default function RewardsTab({
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-[#DCE5D9]/5 pb-4 gap-4 w-full">
         <div>
           <h3 className="text-lg font-bold text-[#DCE5D9]">Eco Rewards Catalog</h3>
-          <p className="text-xs text-[#BCCBB9]">Configure incentive items, adjust point valuations, and audit stock allocations.</p>
+          <p className="text-xs text-[#BCCBB9]">Configure incentive items and assign the leaderboard place required to unlock them.</p>
         </div>
         <button
           onClick={() => handleOpenRewardModal()}
@@ -166,9 +191,8 @@ export default function RewardsTab({
                 <div className="flex items-center justify-between mt-3 font-mono text-[10px]">
                   <div>
                     <span className="text-[#BCCBB9] block text-[9px] uppercase tracking-wider">Rank Required</span>
-                    <span className="text-[#92DB2A] font-bold text-xs">{r.points_cost }</span>
+                    <span className="text-[#92DB2A] font-bold text-xs">{getRankLabel(r.points_cost)}</span>
                   </div>
-                 
                 </div>
               </div>
             </div>
@@ -240,58 +264,71 @@ export default function RewardsTab({
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-[#BCCBB9] mb-1 font-mono uppercase tracking-wider">Point Cost</label>
-                  <input
-                    type="number"
-                    min="1"
-                    max="1000000"
-                    required
-                    value={rewardModal.reward.points_cost}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      if (val.length <= 7) {
-                        setRewardModal(prev => ({ ...prev, reward: { ...prev.reward, points_cost: val } }));
-                      }
-                    }}
-                    className="w-full bg-[#161D16] border border-[#3D4A3D] rounded-lg p-2.5 text-[#DCE5D9] outline-none focus:border-[#4BE277] font-mono"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[#BCCBB9] mb-1 font-mono uppercase tracking-wider">Stock Allocation</label>
-                  <input
-                    type="number"
-                    min="0"
-                    max="99999"
-                    required
-                    value={rewardModal.reward.stock}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      if (val.length <= 6) {
-                        setRewardModal(prev => ({ ...prev, reward: { ...prev.reward, stock: val } }));
-                      }
-                    }}
-                    className="w-full bg-[#161D16] border border-[#3D4A3D] rounded-lg p-2.5 text-[#DCE5D9] outline-none focus:border-[#4BE277] font-mono"
-                  />
-                </div>
+              <div>
+                <label className="block text-[#BCCBB9] mb-1 font-mono uppercase tracking-wider">Place Required</label>
+                <select
+                  required
+                  value={rewardModal.reward.points_cost}
+                  onChange={(e) => {
+                    setRewardModal(prev => ({ ...prev, reward: { ...prev.reward, points_cost: e.target.value } }));
+                  }}
+                  className="w-full bg-[#161D16] border border-[#3D4A3D] rounded-lg p-2.5 text-[#DCE5D9] outline-none focus:border-[#4BE277] font-mono"
+                >
+                  {rankOptions.map((rank) => (
+                    <option key={rank} value={rank}>
+                      {getRankLabel(rank)}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <div>
-                <label className="block text-[#BCCBB9] mb-1 font-mono uppercase tracking-wider">Product Photo URL</label>
+                <label className="block text-[#BCCBB9] mb-1 font-mono uppercase tracking-wider">Product Photo</label>
                 <input
-                  type="text"
-                  placeholder="https://..."
-                  maxLength={200}
-                  value={rewardModal.reward.image_url}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    if (val.length <= 200) {
-                      setRewardModal(prev => ({ ...prev, reward: { ...prev.reward, image_url: val } }));
-                    }
-                  }}
-                  className="w-full bg-[#161D16] border border-[#3D4A3D] rounded-lg p-2.5 text-[#DCE5D9] outline-none focus:border-[#4BE277] font-mono"
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => handleImageUpload(e.target.files?.[0])}
                 />
+
+                {rewardModal.reward.image_url ? (
+                  <div className="flex items-center gap-3">
+                    <div className="w-16 h-16 rounded-lg bg-[#161D16] border border-[#3D4A3D] overflow-hidden shrink-0">
+                      <img
+                        src={rewardModal.reward.image_url}
+                        alt="Reward preview"
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() => fileInputRef.current?.click()}
+                        className="bg-[#333B33] text-[#DCE5D9] px-3 py-1.5 rounded-lg text-[10px] font-mono hover:bg-[#333B33]/85 transition-colors cursor-pointer"
+                      >
+                        Replace Image
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleRemoveImage}
+                        className="bg-[#FFB4AB]/10 text-[#FFB4AB] px-3 py-1.5 rounded-lg text-[10px] font-mono hover:bg-[#FFB4AB]/20 transition-colors cursor-pointer"
+                      >
+                        Remove Image
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="w-full flex flex-col items-center justify-center gap-2 border border-dashed border-[#3D4A3D] rounded-lg p-5 text-[#BCCBB9] hover:border-[#4BE277] hover:text-[#4BE277] transition-colors cursor-pointer"
+                  >
+                    <Upload size={20} />
+                    <span className="font-mono text-[10px] uppercase tracking-wider">Click to upload image</span>
+                    <span className="text-[9px] text-[#BCCBB9]/70">PNG, JPG up to {MAX_IMAGE_SIZE_MB}MB</span>
+                  </button>
+                )}
               </div>
 
               <div className="flex items-center gap-2 pt-2">
