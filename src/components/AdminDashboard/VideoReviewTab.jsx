@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import  { useState, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { Play, Check, X, RefreshCw, X as CloseIcon, Loader2 } from "lucide-react";
 import { supabase } from "../../lib/supabase";
@@ -56,10 +56,9 @@ export default function VideoReviewTab({ statusFilter = "all" }) {
     setLoading(false);
   }, [statusFilter]);
 
-  useEffect(() => {
-    fetchSubmissions();
-  }, [fetchSubmissions]);
-  
+useEffect(() => {
+  fetchSubmissions();
+}, [fetchSubmissions]);
 
   // Escape key closes modal
   useEffect(() => {
@@ -203,7 +202,7 @@ export default function VideoReviewTab({ statusFilter = "all" }) {
     </div>
     <div>
       <p className="text-sm font-semibold text-[#DCE5D9]">{profile?.username ?? "Eco Participant"}</p>
-     <span className="text-[10px] text-[#BCCBB9] font-mono">Points: +5 </span>
+     <span className="text-[10px] text-[#BCCBB9] font-mono">Points: {s.status === "approved" ? '+5' : '0'} </span>
     </div>
   </div>
 </td>
