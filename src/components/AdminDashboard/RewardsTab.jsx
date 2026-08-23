@@ -5,7 +5,8 @@ import { Plus, Edit2, Trash2, Ticket, X, Upload, ImageOff } from "lucide-react";
 export default function RewardsTab({
   rewards,
   handleSaveReward,
-  handleDeleteReward
+  handleDeleteReward,
+  showToast
 }) {
   // Local state for Reward Modal (Add/Edit)
   const [rewardModal, setRewardModal] = useState({
@@ -50,20 +51,25 @@ export default function RewardsTab({
     };
   }, [rewardModal.isOpen]);
 
-  const validateTextSpam = (text, maxLength, allowPunctuation = false) => {
-    if (!text || text.trim().length < 3) return "Input must be at least 3 characters long.";
-    if (text.length > maxLength) return `Input must not exceed ${maxLength} characters.`;
-
-    const pattern = allowPunctuation
-      ? /^[a-zA-Z\s\-.,'()!]+$/
-      : /^[a-zA-Z\s\-]+$/;
-
-    if (!pattern.test(text)) {
-      return "Letters only. Numbers/digits are not allowed.";
+  const notify = (message, type = "error") => {
+    if (showToast) {
+      showToast(message, type);
+    } else {
+      alert(message);
     }
+  };
 
-    if (/(.)\1{4,}/.test(text)) return "Repeating characters spam detected.";
-    if (/(.{2,4})\1{3,}/i.test(text)) return "Repetitive syllables/words spam detected.";
+  const validateText = (text, minLength, maxLength, fieldName) => {
+    if (!text || text.trim().length < minLength) {
+      return `${fieldName} must be at least ${minLength} characters long.`;
+    }
+    if (text.length > maxLength) {
+      return `${fieldName} must not exceed ${maxLength} characters.`;
+    }
+    // Block consecutive repeating character spam (e.g. "aaaaaa")
+    if (/(.)\1{5,}/.test(text)) {
+      return `${fieldName} contains repetitive character spam.`;
+    }
     return null;
   };
 
@@ -86,12 +92,12 @@ export default function RewardsTab({
     if (!file) return;
 
     if (!file.type.startsWith("image/")) {
-      alert("Please upload a valid image file.");
+      notify("Please upload a valid image file (PNG, JPG, etc).", "error");
       return;
     }
 
     if (file.size > MAX_IMAGE_SIZE_MB * 1024 * 1024) {
-      alert(`Image must not exceed ${MAX_IMAGE_SIZE_MB}MB.`);
+      notify(`Image must not exceed ${MAX_IMAGE_SIZE_MB}MB.`, "error");
       return;
     }
 
@@ -101,9 +107,10 @@ export default function RewardsTab({
         ...prev,
         reward: { ...prev.reward, image_url: e.target.result }
       }));
+      notify("Image selected successfully.", "success");
     };
     reader.onerror = () => {
-      alert("Failed to read image file. Please try again.");
+      notify("Failed to read image file. Please try again.", "error");
     };
     reader.readAsDataURL(file);
   };
@@ -116,30 +123,33 @@ export default function RewardsTab({
   const onSubmitReward = async (e) => {
     e.preventDefault();
 
-    const nameError = validateTextSpam(rewardModal.reward.name, 40, false);
+    if (!rewardModal.reward) return;
+
+    const nameError = validateText(rewardModal.reward.name, 2, 60, "Item Name");
     if (nameError) {
-      alert(`Name Error: ${nameError}`);
+      notify(nameError, "error");
       return;
     }
 
-    const descError = validateTextSpam(rewardModal.reward.description, 120, true);
+    const descError = validateText(rewardModal.reward.description, 3, 200, "Description");
     if (descError) {
-      alert(`Description Error: ${descError}`);
+      notify(descError, "error");
       return;
     }
 
     const rank = parseInt(rewardModal.reward.points_cost);
     if (isNaN(rank) || rank < 1 || rank > MAX_RANK) {
-      alert(`Place must be a whole number between 1 and ${MAX_RANK}.`);
+      notify(`Place must be a whole number between 1 and ${MAX_RANK}.`, "error");
       return;
     }
 
     const cleanedReward = {
       ...rewardModal.reward,
       name: rewardModal.reward.name.trim(),
-      description: rewardModal.reward.description.trim(),
+      description: rewardModal.reward.description ? rewardModal.reward.description.trim() : "",
       points_cost: rank,
-      image_url: rewardModal.reward.image_url || ""
+      image_url: rewardModal.reward.image_url || "",
+      active: rewardModal.reward.active !== undefined ? Boolean(rewardModal.reward.active) : true
     };
 
     const success = await handleSaveReward(cleanedReward);
