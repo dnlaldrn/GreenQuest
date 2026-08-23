@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { Plus, Edit2, Trash2, Ticket, X, Upload, ImageOff } from "lucide-react";
+import { sanitizeAlphanumeric } from "../../lib/validation";
 
 export default function RewardsTab({
   rewards,
@@ -65,10 +66,6 @@ export default function RewardsTab({
     }
     if (text.length > maxLength) {
       return `${fieldName} must not exceed ${maxLength} characters.`;
-    }
-    // Block consecutive repeating character spam (e.g. "aaaaaa")
-    if (/(.)\1{5,}/.test(text)) {
-      return `${fieldName} contains repetitive character spam.`;
     }
     return null;
   };
@@ -246,14 +243,9 @@ export default function RewardsTab({
                 <input
                   type="text"
                   required
-                  maxLength={40}
+                  maxLength={50}
                   value={rewardModal.reward.name}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    if (val.length <= 40) {
-                      setRewardModal(prev => ({ ...prev, reward: { ...prev.reward, name: val } }));
-                    }
-                  }}
+                  onChange={(e) => setRewardModal(prev => ({ ...prev, reward: { ...prev.reward, name: sanitizeAlphanumeric(e.target.value, 50, 3) } }))}
                   className="w-full bg-[#161D16] border border-[#3D4A3D] rounded-lg p-2.5 text-[#DCE5D9] outline-none focus:border-[#4BE277]"
                 />
               </div>
@@ -262,14 +254,9 @@ export default function RewardsTab({
                 <label className="block text-[#BCCBB9] mb-1 font-mono uppercase tracking-wider">Description</label>
                 <textarea
                   required
-                  maxLength={120}
+                  maxLength={200}
                   value={rewardModal.reward.description}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    if (val.length <= 120) {
-                      setRewardModal(prev => ({ ...prev, reward: { ...prev.reward, description: val } }));
-                    }
-                  }}
+                  onChange={(e) => setRewardModal(prev => ({ ...prev, reward: { ...prev.reward, description: sanitizeAlphanumeric(e.target.value, 200, 3) } }))}
                   className="w-full bg-[#161D16] border border-[#3D4A3D] rounded-lg p-2.5 text-[#DCE5D9] outline-none focus:border-[#4BE277] h-20 resize-none"
                 />
               </div>

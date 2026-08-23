@@ -10,6 +10,7 @@ import VideoReviewTab from "../components/AdminDashboard/VideoReviewTab";
 import RewardsTab from "../components/AdminDashboard/RewardsTab";
 import AiLogsTab from "../components/AdminDashboard/AiLogsTab";
 import ReportsTab from "../components/AdminDashboard/ReportsTab";
+import { sanitizeAlphanumeric } from "../lib/validation";
 
 import {
   LayoutDashboard,
@@ -953,12 +954,7 @@ export default function AdminDashBoard() {
                 maxLength={40}
                 placeholder="Search lists..."
                 value={searchQuery}
-                onChange={(e) => {
-                  const val = e.target.value;
-                  if (val.length <= 40) {
-                    setSearchQuery(val.replace(/[^a-zA-Z0-9\s\-.]/g, ""));
-                  }
-                }}
+                onChange={(e) => setSearchQuery(sanitizeAlphanumeric(e.target.value, 40, 3))}
                 className="w-full md:w-60 bg-[#161D16] border border-[#3D4A3D] rounded-lg pl-9 pr-4 py-2 text-xs text-[#DCE5D9] placeholder-[#BCCBB9]/40 focus:border-[#4BE277] focus:ring-1 focus:ring-[#4BE277] outline-none transition-all"
               />
             </div>
