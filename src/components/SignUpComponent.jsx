@@ -2,6 +2,7 @@ import { useState } from "react";
 import { signUp } from "../services/authService";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabase";
+import { sanitizeTextOnly, sanitizeEmail, sanitizePassword, isValidEmail } from "../lib/validation";
 // Using lucide-react for matching layout icons (User, Mail, Lock, ArrowRight, plus tag icons)
 import { User, Mail, Lock, ArrowRight, Leaf, Recycle, Zap } from "lucide-react";
 
@@ -30,7 +31,25 @@ export default function SignUpComponent() {
       setLoading(true);
       setError(null);
 
-      const result = await signUp(username, email, password);
+      if (!username.trim() || username.trim().length < 2) {
+        setError("Please enter a valid name (at least 2 letters, numbers not allowed).");
+        setLoading(false);
+        return;
+      }
+
+      if (!isValidEmail(email)) {
+        setError("Please enter a valid email address.");
+        setLoading(false);
+        return;
+      }
+
+      if (password.length < 6) {
+        setError("Password must be at least 6 characters long.");
+        setLoading(false);
+        return;
+      }
+
+      const result = await signUp(username.trim(), email.trim(), password);
 
       if (error) {
         setError(error.message);
@@ -42,7 +61,7 @@ export default function SignUpComponent() {
       if (user) {
         await supabase.from("profiles").insert({
           id: user.id,
-          username: username,
+          username: username.trim(),
           role: "user",
           interests: selectedInterests, // Saves selected interests to DB if needed
         });
@@ -84,8 +103,9 @@ export default function SignUpComponent() {
                 <User className="absolute left-4 w-4 h-4 text-gray-500" />
                 <input
                   type="text"
+                  maxLength={40}
                   value={username}
-                  onChange={(e) => setUserName(e.target.value)}
+                  onChange={(e) => setUserName(sanitizeTextOnly(e.target.value, 40, 3))}
                   placeholder="Enter your full name"
                   className="w-full bg-[#17201c] border border-[#23322b] text-sm text-gray-200 placeholder-gray-500 rounded-xl pl-11 pr-4 py-[14px] focus:outline-none focus:border-[#2ecc71] transition"
                   required
@@ -102,8 +122,9 @@ export default function SignUpComponent() {
                 <Mail className="absolute left-4 w-4 h-4 text-gray-500" />
                 <input
                   type="email"
+                  maxLength={80}
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={(e) => setEmail(sanitizeEmail(e.target.value, 80))}
                   placeholder="you@example.com"
                   className="w-full bg-[#17201c] border border-[#23322b] text-sm text-gray-200 placeholder-gray-500 rounded-xl pl-11 pr-4 py-[14px] focus:outline-none focus:border-[#2ecc71] transition"
                   required
@@ -120,8 +141,9 @@ export default function SignUpComponent() {
                 <Lock className="absolute left-4 w-4 h-4 text-gray-500" />
                 <input
                   type="password"
+                  maxLength={64}
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  onChange={(e) => setPassword(sanitizePassword(e.target.value, 64))}
                   placeholder="••••••••"
                   className="w-full bg-[#17201c] border border-[#23322b] text-sm text-gray-200 placeholder-gray-500 rounded-xl pl-11 pr-4 py-[14px] focus:outline-none focus:border-[#2ecc71] transition"
                   required

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabase";
+import { sanitizeEmail, sanitizePassword, isValidEmail } from "../lib/validation";
 // Using lucide-react for the custom icons layout
 import {
   Leaf,
@@ -26,8 +27,20 @@ export default function Login() {
       setLoading(true);
       setError(null);
 
+      if (!isValidEmail(email)) {
+        setError("Please enter a valid email address.");
+        setLoading(false);
+        return;
+      }
+
+      if (!password) {
+        setError("Please enter your password.");
+        setLoading(false);
+        return;
+      }
+
       const { data, error } = await supabase.auth.signInWithPassword({
-        email,
+        email: email.trim(),
         password,
       });
 
@@ -42,13 +55,8 @@ export default function Login() {
         .eq("id", data.user.id)
         .single();
 
-      if (profileError) {
-        setError(profileError.message);
-        return;
-      }
-
-      if (!profile) {
-        setError("Profile not found");
+      if (profileError || !profile) {
+        navigate("/userDasboard");
         return;
       }
 
@@ -146,8 +154,9 @@ export default function Login() {
                 <AtSign className="absolute left-4 w-4 h-4 text-gray-500" />
                 <input
                   type="email"
+                  maxLength={80}
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={(e) => setEmail(sanitizeEmail(e.target.value, 80))}
                   placeholder="name@agency.eco"
                   className="w-full bg-[#111815] border border-[#1f2d26] text-xs text-gray-200 placeholder-gray-600 rounded-xl pl-11 pr-4 py-3.5 focus:outline-none focus:border-[#2ecc71] transition"
                   required
@@ -172,8 +181,9 @@ export default function Login() {
                 <Lock className="absolute left-4 w-4 h-4 text-gray-500" />
                 <input
                   type="password"
+                  maxLength={64}
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  onChange={(e) => setPassword(sanitizePassword(e.target.value, 64))}
                   placeholder="••••••••"
                   className="w-full bg-[#111815] border border-[#1f2d26] text-xs text-gray-200 placeholder-gray-600 rounded-xl pl-11 pr-4 py-3.5 focus:outline-none focus:border-[#2ecc71] transition"
                   required
@@ -238,7 +248,7 @@ export default function Login() {
             <button
               type="button"
               onClick={() => navigate("/signup")}
-              className="text-[#2ecc71] font-bold hover:underline bg-transparent border-none p-0 cursor-pointer ml-1"
+              className="text-[#2ecc71] hover:underline font-bold"
             >
               Sign Up
             </button>
