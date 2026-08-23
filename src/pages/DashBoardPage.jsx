@@ -22,6 +22,7 @@ import ImpactHubTab from "../components/UserDashBoard/Impacthub";
 import LeaderboardsTab from "../components/UserDashBoard/Leaderboard";
 import QuestsTab from "../components/UserDashBoard/Quests";
 import ProfileTab from "../components/UserDashBoard/SettingsTab";
+import { sanitizeAlphanumeric } from "../lib/validation";
 
 /* ---------------------------------------------------------------- */
 /*  Static config                                                     */
@@ -189,6 +190,7 @@ export default function GreenQuestDashboard() {
   const navigate = useNavigate();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("overview");
+  const [searchQuery, setSearchQuery] = useState("");
 
   // Logged-in user's data (email, name, etc.) fetched from authService.
   const [userData, setUserData] = useState(null);
@@ -452,6 +454,9 @@ export default function GreenQuestDashboard() {
                 <Search className="absolute left-3 top-2.5 text-slate-500" size={16} />
                 <input
                   type="text"
+                  maxLength={40}
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(sanitizeAlphanumeric(e.target.value, 40, 3))}
                   placeholder="Search quests..."
                   className="w-full bg-[#111A16] border border-[#14231C] rounded-lg pl-9 pr-4 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-[#10B981] transition-colors placeholder:text-slate-600"
                 />

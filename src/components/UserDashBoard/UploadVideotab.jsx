@@ -11,6 +11,7 @@ import {
   Leaf,
 } from "lucide-react";
 import { supabase } from "../../lib/supabase";
+import { sanitizeAlphanumeric } from "../../lib/validation";
 
 export default function UploadVideoTab() {
   const [dragActive, setDragActive] = useState(false);
@@ -224,8 +225,9 @@ export default function UploadVideoTab() {
                 </label>
                 <input
                   type="text"
+                  maxLength={60}
                   value={title}
-                  onChange={(e) => setTitle(e.target.value)}
+                  onChange={(e) => setTitle(sanitizeAlphanumeric(e.target.value, 60, 3))}
                   placeholder="e.g., Neighborhood Clean Up"
                   className="w-full bg-[#0B120F] border border-[#14231C] rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-[#10B981] transition-colors placeholder:text-slate-700"
                 />
@@ -260,8 +262,9 @@ export default function UploadVideoTab() {
               </label>
               <textarea
                 rows={4}
+                maxLength={300}
                 value={description}
-                onChange={(e) => setDescription(e.target.value)}
+                onChange={(e) => setDescription(sanitizeAlphanumeric(e.target.value, 300, 3))}
                 placeholder="Describe your environmental impact or resources saved..."
                 className="w-full bg-[#0B120F] border border-[#14231C] rounded-lg p-3 text-xs text-slate-200 focus:outline-none focus:border-[#10B981] transition-colors placeholder:text-slate-700 resize-none"
               />
