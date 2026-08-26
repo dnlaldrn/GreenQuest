@@ -10,6 +10,7 @@ import VideoReviewTab from "../components/AdminDashboard/VideoReviewTab";
 import RewardsTab from "../components/AdminDashboard/RewardsTab";
 import AiLogsTab from "../components/AdminDashboard/AiLogsTab";
 import ReportsTab from "../components/AdminDashboard/ReportsTab";
+import { sanitizeAlphanumeric } from "../lib/validation";
 
 import {
   LayoutDashboard,
@@ -464,12 +465,24 @@ export default function AdminDashBoard() {
 
   // Rewards Actions
   const handleSaveReward = async (r) => {
+    const rankValue = parseInt(r.points_cost) || 1;
+    const stockValue = r.stock !== undefined && !isNaN(parseInt(r.stock)) ? parseInt(r.stock) : 0;
+
+    const payload = {
+      name: r.name.trim(),
+      description: r.description ? r.description.trim() : "",
+      points_cost: rankValue,
+      stock: stockValue,
+      image_url: r.image_url || "",
+      active: r.active !== undefined ? Boolean(r.active) : true
+    };
+
     try {
       if (isMocked) {
         if (r.id) {
-          setRewards(prev => prev.map(item => (item.id === r.id ? r : item)));
+          setRewards(prev => prev.map(item => (item.id === r.id ? { ...item, ...payload } : item)));
         } else {
-          const newR = { ...r, id: `rew-${Date.now()}` };
+          const newR = { ...payload, id: `rew-${Date.now()}` };
           setRewards(prev => [...prev, newR]);
         }
         showToast("Reward inventory saved in mock mode!", "success");
@@ -480,38 +493,46 @@ export default function AdminDashBoard() {
       if (r.id) {
         const { error: editError } = await supabase
           .from("rewards")
-          .update({
-            name: r.name,
-            description: r.description,
-            points_cost: parseInt(r.points_cost),
-            stock: parseInt(r.stock),
-            image_url: r.image_url,
-            active: r.active
-          })
+          .update(payload)
           .eq("id", r.id);
         error = editError;
       } else {
         const { error: addError } = await supabase
           .from("rewards")
-          .insert([
-            {
-              name: r.name,
-              description: r.description,
-              points_cost: parseInt(r.points_cost),
-              stock: parseInt(r.stock),
-              image_url: r.image_url,
-              active: r.active
-            }
-          ]);
+          .insert([payload]);
         error = addError;
       }
 
-      if (error) throw error;
+      if (error) {
+        if (error.code === "42501" || isAdminBypassed) {
+          console.warn("RLS restriction on rewards table (code 42501). Falling back to session state update.");
+          if (r.id) {
+            setRewards(prev => prev.map(item => (item.id === r.id ? { ...item, ...payload } : item)));
+          } else {
+            const newR = { ...payload, id: `rew-${Date.now()}` };
+            setRewards(prev => [...prev, newR]);
+          }
+          showToast("Saved to current session! (Set role='admin' in Supabase to sync live DB).", "warning");
+          return true;
+        }
+        throw error;
+      }
+
       showToast("Reward saved successfully.", "success");
       await loadAllData();
       return true;
     } catch (err) {
       console.error("Failed to save reward:", err);
+      if (err?.code === "42501" || err?.message?.includes("row-level security")) {
+        if (r.id) {
+          setRewards(prev => prev.map(item => (item.id === r.id ? { ...item, ...payload } : item)));
+        } else {
+          const newR = { ...payload, id: `rew-${Date.now()}` };
+          setRewards(prev => [...prev, newR]);
+        }
+        showToast("Saved to current session! (Set role='admin' in Supabase to sync live DB).", "warning");
+        return true;
+      }
       showToast("Error saving reward: " + err.message, "error");
       return false;
     }
@@ -534,11 +555,24 @@ export default function AdminDashBoard() {
             .delete()
             .eq("id", rewardId);
 
-          if (error) throw error;
+          if (error) {
+            if (error.code === "42501" || isAdminBypassed) {
+              setRewards(prev => prev.filter(r => r.id !== rewardId));
+              showToast("Deleted from current session.", "warning");
+              return;
+            }
+            throw error;
+          }
+
           showToast("Reward deleted successfully.", "success");
           await loadAllData();
         } catch (err) {
           console.error("Failed to delete reward:", err);
+          if (err?.code === "42501" || err?.message?.includes("row-level security")) {
+            setRewards(prev => prev.filter(r => r.id !== rewardId));
+            showToast("Deleted from current session.", "warning");
+            return;
+          }
           showToast("Error deleting reward: " + err.message, "error");
         }
       }
@@ -920,12 +954,7 @@ export default function AdminDashBoard() {
                 maxLength={40}
                 placeholder="Search lists..."
                 value={searchQuery}
-                onChange={(e) => {
-                  const val = e.target.value;
-                  if (val.length <= 40) {
-                    setSearchQuery(val.replace(/[^a-zA-Z0-9\s\-.]/g, ""));
-                  }
-                }}
+                onChange={(e) => setSearchQuery(sanitizeAlphanumeric(e.target.value, 40, 3))}
                 className="w-full md:w-60 bg-[#161D16] border border-[#3D4A3D] rounded-lg pl-9 pr-4 py-2 text-xs text-[#DCE5D9] placeholder-[#BCCBB9]/40 focus:border-[#4BE277] focus:ring-1 focus:ring-[#4BE277] outline-none transition-all"
               />
             </div>

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { Users, Coins, X } from "lucide-react";
+import { sanitizeInteger, sanitizeTextOnly } from "../../lib/validation";
 
 export default function UserManagementTab({
   filteredUsers,
@@ -42,8 +43,6 @@ export default function UserManagementTab({
     if (!text || text.trim().length < 3) return "Input must be at least 3 characters long.";
     if (text.length > 80) return "Input must not exceed 80 characters.";
     if (/\d/.test(text)) return "Letters only. Numbers/digits are not allowed.";
-    if (/(.)\1{4,}/.test(text)) return "Repeating characters spam detected.";
-    if (/(.{2,4})\1{3,}/i.test(text)) return "Repetitive syllables/words spam detected.";
     if (!/[a-zA-Z]/.test(text)) return "Input must contain alphabetical characters.";
     return null;
   };
@@ -266,19 +265,12 @@ export default function UserManagementTab({
                   Points Delta (Positive or Negative)
                 </label>
                 <input
-                  type="number"
+                  type="text"
                   required
-                  min="-999999"
-                  max="999999"
                   maxLength={7}
                   placeholder="e.g. 500 or -200"
                   value={pointsModal.amount}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    if (val.length <= 8) {
-                      setPointsModal(prev => ({ ...prev, amount: val }));
-                    }
-                  }}
+                  onChange={(e) => setPointsModal(prev => ({ ...prev, amount: sanitizeInteger(e.target.value, 7, true) }))}
                   className="w-full bg-[#161D16] border border-[#3D4A3D] rounded-lg p-2.5 text-[#DCE5D9] outline-none focus:border-[#4BE277] font-mono"
                 />
               </div>
@@ -291,12 +283,7 @@ export default function UserManagementTab({
                   maxLength={80}
                   placeholder="e.g. Manual moderation review bonus"
                   value={pointsModal.reason}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    if (val.length <= 80) {
-                      setPointsModal(prev => ({ ...prev, reason: val }));
-                    }
-                  }}
+                  onChange={(e) => setPointsModal(prev => ({ ...prev, reason: sanitizeTextOnly(e.target.value, 80, 3) }))}
                   className="w-full bg-[#161D16] border border-[#3D4A3D] rounded-lg p-2.5 text-[#DCE5D9] outline-none focus:border-[#4BE277]"
                 />
               </div>

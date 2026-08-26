@@ -10,6 +10,7 @@ import {
   ShieldAlert,
   Sparkles,
 } from "lucide-react";
+import { sanitizeAlphanumeric } from "../../lib/validation";
 
 export default function LeaderboardsTab() {
   const [timeframe, setTimeframe] = useState("weekly");
@@ -138,8 +139,9 @@ export default function LeaderboardsTab() {
           />
           <input
             type="text"
+            maxLength={40}
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={(e) => setSearchQuery(sanitizeAlphanumeric(e.target.value, 40, 3))}
             placeholder="Search citizen or alias parameters..."
             className="w-full bg-[#0B120F] border border-[#14231C] rounded-lg pl-9 pr-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-[#10B981] transition-colors placeholder:text-slate-700"
           />

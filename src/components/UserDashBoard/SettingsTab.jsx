@@ -1,7 +1,8 @@
-import  { useState , useEffect} from "react";
+import { useState, useEffect } from "react";
 import { User, Mail, ShieldAlert, CheckCircle, ArrowRight } from "lucide-react";
-import {getCurrentUser} from '../../services/authService'
+import { getCurrentUser } from "../../services/authService";
 import { supabase } from "../../lib/supabase";
+import { sanitizeTextOnly, sanitizeEmail, sanitizePassword, isValidEmail } from "../../lib/validation";
 
 export default function ProfileTab() {
   const [profile, setProfile] = useState({
@@ -12,41 +13,50 @@ export default function ProfileTab() {
     confirmPassword: "",
   });
 
-    const [userData, setUserData] = useState(null)
-useEffect(() => {
-  async function getUser() {
-    const { data, error } = await getCurrentUser();
-    if (error) {
-      console.error(error);
-      return;
+  const [userData, setUserData] = useState(null);
+
+  useEffect(() => {
+    async function getUser() {
+      const { data, error } = await getCurrentUser();
+      if (error) {
+        console.error(error);
+        return;
+      }
+      setUserData(data.user);
+      setProfile((prev) => ({
+        ...prev,
+        name: data.user.user_metadata?.username ?? "",
+        email: data.user.email ?? "",
+      }));
     }
-    setUserData(data.user);
-    setProfile((prev) => ({
-      ...prev,
-      name: data.user.user_metadata?.username ?? "",
-      email: data.user.email ?? "",
-    }));
-  }
-  getUser();
-}, []);
-  
+    getUser();
+  }, []);
 
   const [status, setStatus] = useState({ type: null, message: "" });
   const [isSaving, setIsSaving] = useState(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setProfile((prev) => ({ ...prev, [name]: value }));
+    let sanitizedVal = value;
+    if (name === "name") sanitizedVal = sanitizeTextOnly(value, 40, 3);
+    else if (name === "email") sanitizedVal = sanitizeEmail(value, 80);
+    else if (name.includes("Password") || name.includes("password")) sanitizedVal = sanitizePassword(value, 64);
+    setProfile((prev) => ({ ...prev, [name]: sanitizedVal }));
   };
 
- const handleSave = async (e) => {
-  e.preventDefault();
-  setStatus({ type: null, message: "" });
+  const handleSave = async (e) => {
+    e.preventDefault();
+    setStatus({ type: null, message: "" });
 
-  if (!profile.name || !profile.email) {
-    setStatus({ type: "error", message: "Name and email are required." });
-    return;
-  }
+    if (!profile.name || profile.name.trim().length < 2) {
+      setStatus({ type: "error", message: "Please enter a valid full name (at least 2 letters, numbers not allowed)." });
+      return;
+    }
+
+    if (!isValidEmail(profile.email)) {
+      setStatus({ type: "error", message: "Please enter a valid email address." });
+      return;
+    }
   if (profile.newPassword && profile.newPassword !== profile.confirmPassword) {
     setStatus({ type: "error", message: "New passwords do not match." });
     return;
@@ -147,44 +157,46 @@ useEffect(() => {
                 Personal Information
               </h3>
               
-              {userData?(
+              {userData ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <label className="text-[11px] font-mono text-slate-400 uppercase">
-                    Full Name
-                  </label>
-                  <div className="relative">
-                    <User className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" size={15} />
-                    <input
-                      type="text"
-                      name="name"
-                      value={userData.user_metadata?.username}
-                      onChange={handleChange}
-                      placeholder="Your full name"
-                      className="w-full bg-[#0B120F] border border-[#14231C] rounded-lg pl-10 pr-4 py-2.5 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-[#10B981]/40 transition-colors"
-                    />
+                  <div className="space-y-1.5">
+                    <label className="text-[11px] font-mono text-slate-400 uppercase">
+                      Full Name
+                    </label>
+                    <div className="relative">
+                      <User className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" size={15} />
+                      <input
+                        type="text"
+                        name="name"
+                        maxLength={40}
+                        value={profile.name}
+                        onChange={handleChange}
+                        placeholder="Your full name"
+                        className="w-full bg-[#0B120F] border border-[#14231C] rounded-lg pl-10 pr-4 py-2.5 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-[#10B981]/40 transition-colors"
+                      />
+                    </div>
                   </div>
-                </div>
 
-                <div className="space-y-1.5">
-                  <label className="text-[11px] font-mono text-slate-400 uppercase">
-                    Email Address
-                  </label>
-                  <div className="relative">
-                    <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" size={15} />
-                    <input
-                      type="email"
-                      name="email"
-                      value={profile.email}
-                      onChange={handleChange}
-                      placeholder="name@domain.com"
-                      className="w-full bg-[#0B120F] border border-[#14231C] rounded-lg pl-10 pr-4 py-2.5 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-[#10B981]/40 transition-colors"
-                    />
+                  <div className="space-y-1.5">
+                    <label className="text-[11px] font-mono text-slate-400 uppercase">
+                      Email Address
+                    </label>
+                    <div className="relative">
+                      <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" size={15} />
+                      <input
+                        type="email"
+                        name="email"
+                        maxLength={80}
+                        value={profile.email}
+                        onChange={handleChange}
+                        placeholder="name@domain.com"
+                        className="w-full bg-[#0B120F] border border-[#14231C] rounded-lg pl-10 pr-4 py-2.5 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-[#10B981]/40 transition-colors"
+                      />
+                    </div>
                   </div>
                 </div>
-              </div>
-              ): (
-                <p>Loading</p>
+              ) : (
+                <p className="text-xs font-mono text-slate-500">Loading...</p>
               )}
             </div>
 
@@ -201,6 +213,7 @@ useEffect(() => {
                 <input
                   type="password"
                   name="currentPassword"
+                  maxLength={64}
                   value={profile.currentPassword}
                   onChange={handleChange}
                   placeholder="••••••••"
@@ -216,6 +229,7 @@ useEffect(() => {
                   <input
                     type="password"
                     name="newPassword"
+                    maxLength={64}
                     value={profile.newPassword}
                     onChange={handleChange}
                     placeholder="Min. 8 characters"
@@ -230,6 +244,7 @@ useEffect(() => {
                   <input
                     type="password"
                     name="confirmPassword"
+                    maxLength={64}
                     value={profile.confirmPassword}
                     onChange={handleChange}
                     placeholder="Repeat new password"

@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { User, Mail, ShieldAlert, CheckCircle, ArrowRight, ShieldCheck, KeyRound } from "lucide-react";
 import { getCurrentUser } from "../../services/authService";
 import { supabase } from "../../lib/supabase";
+import { sanitizeTextOnly, sanitizeEmail, sanitizePassword, isValidEmail } from "../../lib/validation";
 
 export default function AdminProfileTab() {
   const [profile, setProfile] = useState({
@@ -29,7 +30,6 @@ export default function AdminProfileTab() {
       }));
     }
     getUser();
-    console.log(userData)
   }, []);
 
   const [status, setStatus] = useState({ type: null, message: "" });
@@ -37,15 +37,24 @@ export default function AdminProfileTab() {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setProfile((prev) => ({ ...prev, [name]: value }));
+    let sanitizedVal = value;
+    if (name === "name") sanitizedVal = sanitizeTextOnly(value, 40, 3);
+    else if (name === "email") sanitizedVal = sanitizeEmail(value, 80);
+    else if (name.includes("Password") || name.includes("password")) sanitizedVal = sanitizePassword(value, 64);
+    setProfile((prev) => ({ ...prev, [name]: sanitizedVal }));
   };
 
   const handleSave = async (e) => {
     e.preventDefault();
     setStatus({ type: null, message: "" });
 
-    if (!profile.name || !profile.email) {
-      setStatus({ type: "error", message: "Name and email are required." });
+    if (!profile.name || profile.name.trim().length < 2) {
+      setStatus({ type: "error", message: "Please enter a valid full name (at least 2 letters, numbers not allowed)." });
+      return;
+    }
+
+    if (!isValidEmail(profile.email)) {
+      setStatus({ type: "error", message: "Please enter a valid email address." });
       return;
     }
     if (profile.newPassword && profile.newPassword !== profile.confirmPassword) {
@@ -176,6 +185,7 @@ export default function AdminProfileTab() {
                       <input
                         type="text"
                         name="name"
+                        maxLength={40}
                         value={profile.name}
                         onChange={handleChange}
                         placeholder="Your full name"
@@ -193,6 +203,7 @@ export default function AdminProfileTab() {
                       <input
                         type="email"
                         name="email"
+                        maxLength={80}
                         value={profile.email}
                         onChange={handleChange}
                         placeholder="name@domain.com"
@@ -220,6 +231,7 @@ export default function AdminProfileTab() {
                 <input
                   type="password"
                   name="currentPassword"
+                  maxLength={64}
                   value={profile.currentPassword}
                   onChange={handleChange}
                   placeholder="••••••••"
@@ -235,6 +247,7 @@ export default function AdminProfileTab() {
                   <input
                     type="password"
                     name="newPassword"
+                    maxLength={64}
                     value={profile.newPassword}
                     onChange={handleChange}
                     placeholder="Min. 8 characters"
@@ -249,6 +262,7 @@ export default function AdminProfileTab() {
                   <input
                     type="password"
                     name="confirmPassword"
+                    maxLength={64}
                     value={profile.confirmPassword}
                     onChange={handleChange}
                     placeholder="Repeat new password"
