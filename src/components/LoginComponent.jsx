@@ -1,7 +1,11 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabase";
-import { sanitizeEmail, sanitizePassword, isValidEmail } from "../lib/validation";
+import {
+  sanitizeEmail,
+  sanitizePassword,
+  isValidEmail,
+} from "../lib/validation";
 // Using lucide-react for the custom icons layout
 import {
   Leaf,
@@ -49,21 +53,25 @@ export default function Login() {
         return;
       }
 
-      const { data: profile, profileError } = await supabase
+      const { data: profile, error: profileError } = await supabase
         .from("profiles")
-        .select("*")
+        .select("user_type")
         .eq("id", data.user.id)
         .single();
 
       if (profileError || !profile) {
-        navigate("/userDasboard");
+        setError("Could not load your profile. Please try again.");
         return;
       }
 
-      if (profile.role === "admin") {
-        navigate("/adminDasboard");
-      } else {
+      if (profile.user_type === "faculty") {
+        navigate("/facultyDasboard");
+      } else if (profile.user_type === "student") {
         navigate("/userDasboard");
+      } else if (profile.user_type === "admin") {
+        navigate("/adminDashboard");
+      } else {
+        navigate("/");
       }
     } catch (err) {
       setError(err.message);
@@ -183,7 +191,9 @@ export default function Login() {
                   type="password"
                   maxLength={64}
                   value={password}
-                  onChange={(e) => setPassword(sanitizePassword(e.target.value, 64))}
+                  onChange={(e) =>
+                    setPassword(sanitizePassword(e.target.value, 64))
+                  }
                   placeholder="••••••••"
                   className="w-full bg-[#111815] border border-[#1f2d26] text-xs text-gray-200 placeholder-gray-600 rounded-xl pl-11 pr-4 py-3.5 focus:outline-none focus:border-[#2ecc71] transition"
                   required

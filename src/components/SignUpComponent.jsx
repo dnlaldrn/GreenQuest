@@ -2,7 +2,12 @@ import { useState } from "react";
 import { signUp } from "../services/authService";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabase";
-import { sanitizeTextOnly, sanitizeEmail, sanitizePassword, isValidEmail } from "../lib/validation";
+import {
+  sanitizeTextOnly,
+  sanitizeEmail,
+  sanitizePassword,
+  isValidEmail,
+} from "../lib/validation";
 // Using lucide-react for matching layout icons (User, Mail, Lock, ArrowRight, plus tag icons)
 import {
   User,
@@ -47,7 +52,9 @@ export default function SignUpComponent() {
       setError(null);
 
       if (!username.trim() || username.trim().length < 2) {
-        setError("Please enter a valid name (at least 2 letters, numbers not allowed).");
+        setError(
+          "Please enter a valid name (at least 2 letters, numbers not allowed).",
+        );
         setLoading(false);
         return;
       }
@@ -64,7 +71,12 @@ export default function SignUpComponent() {
         return;
       }
 
-      const result = await signUp(username.trim(), email.trim(), password);
+      const result = await signUp(
+        username.trim(),
+        email.trim(),
+        password,
+        userType,
+      );
 
       if (error) {
         setError(error.message);
@@ -74,15 +86,24 @@ export default function SignUpComponent() {
       const user = result.data.user;
 
       if (user) {
-        await supabase.from("profiles").insert({
-          id: user.id,
-          username: username.trim(),
-          role: "user",
-          user_type: userType, // "student" or "faculty"
-          interests: selectedInterests, // Saves selected interests to DB if needed
-        });
+        const { data: insertedProfile, error: insertError } = await supabase
+          .from("profiles")
+          .upsert({
+            id: user.id,
+            username: username.trim(),
+            role: "user",
+            user_type: userType, // "student" or "faculty"
+            interests: selectedInterests, // Saves selected interests to DB if needed
+          });
+
+        console.log(
+          "insert result:",
+          insertedProfile,
+          "insert error:",
+          insertError,
+        );
       }
-      setMessage(true)
+      setMessage(true);
     } catch (err) {
       setError(err.message);
     } finally {
