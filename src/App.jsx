@@ -5,26 +5,45 @@ import Login from "./components/LoginComponent";
 import SignUpComponent from "./components/SignUpComponent";
 import DashBoardPage from "./pages/DashBoardPage";
 import AdminDashBoard from "./pages/AdminDashBoard";
-
+import FacultyDashboard from "./pages/FacultyDashboard";
+import ProtectedRoute from "./routes/ProtectedRoutes";
 
 const router = createBrowserRouter([
   {
-    path:"/login", element: <Login/>
+    path: "/login",
+    element: <Login />,
   },
   {
-    path:"/signup", element: <SignUpComponent/>
+    path: "/signup",
+    element: <SignUpComponent />,
   },
   {
-    path:"/userDasboard", element:
-    (
-         
-           <DashBoardPage/>
-       
-    ),
-    
+    element: <ProtectedRoute allowedRole="student" />,
+    children: [
+      {
+        path: "/userDasboard",
+        element: <DashBoardPage />,
+      },
+    ],
   },
   {
-    path:"/adminDasboard", element: <AdminDashBoard/>
+    element: <ProtectedRoute allowedRole="faculty" />,
+    children: [
+      {
+        path: "/facultyDashboard",
+        element: <FacultyDashboard />,
+      },
+    ],
+  },
+
+  {
+    element: <ProtectedRoute allowedRole="admin" />,
+    children: [
+      {
+        path: "/adminDashboard",
+        element: <AdminDashBoard />,
+      },
+    ],
   },
   {
     path: "/",
@@ -34,7 +53,7 @@ const router = createBrowserRouter([
         index: true,
         element: (
           <>
-          < HomePage/>
+            <HomePage />
           </>
         ),
       },

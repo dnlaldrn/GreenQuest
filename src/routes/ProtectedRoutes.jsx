@@ -1,39 +1,76 @@
-import { Navigate } from "react-router-dom";
+import { Navigate, Outlet } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
 
-function ProtectedRoute({ children }) {
+function ProtectedRoute({ allowedRole }) {
   const [user, setUser] = useState(null);
+  const [userType, setUserType] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // 1. Get initial session status
+    let isMounted = true;
+
+    async function checkUserAndType(currentUser) {
+      if (!currentUser) {
+        if (isMounted) {
+          setUser(null);
+          setUserType(null);
+          setLoading(false);
+        }
+        return;
+      }
+
+      try {
+        const { data: profile, error } = await supabase
+          .from("profiles")
+          .select("user_type")
+          .eq("id", currentUser.id)
+          .single();
+
+        if (error) throw error;
+
+        if (isMounted) {
+          setUser(currentUser);
+          setUserType(profile?.user_type ?? null);
+        }
+      } catch (error) {
+        console.error("Error fetching user type:", error);
+        if (isMounted) {
+          setUser(currentUser);
+          setUserType(null);
+        }
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    }
+
     async function getInitialUser() {
       try {
-        const { data: { user } } = await supabase.auth.getUser();
-        setUser(user);
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+        await checkUserAndType(user);
       } catch (error) {
         console.error("Error fetching user session:", error);
-      } finally {
-        setLoading(false);
+        if (isMounted) setLoading(false);
       }
     }
 
     getInitialUser();
 
-    // 2. Listen for real-time auth changes (sign-in, sign-out, token refresh)
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
-      setLoading(false); // Safeguard in case listener fires before async function resolves
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setLoading(true);
+      checkUserAndType(session?.user ?? null);
     });
 
-    // 3. Clean up subscription on unmount
     return () => {
+      isMounted = false;
       subscription.unsubscribe();
     };
   }, []);
 
-  // Show a loading indicator while Supabase determines the auth state
   if (loading) {
     return (
       <div className="min-h-screen bg-[#0B120F] flex items-center justify-center">
@@ -42,8 +79,15 @@ function ProtectedRoute({ children }) {
     );
   }
 
-  // Once loading is false, either allow entry or redirect
-  return user ? children : <Navigate to="/login" replace />;
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+
+  if (userType !== allowedRole) {
+    return <Navigate to="/login" replace />;
+  }
+
+  return <Outlet />;
 }
 
 export default ProtectedRoute;
