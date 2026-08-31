@@ -21,6 +21,10 @@ const router = createBrowserRouter([
     element: <ProtectedRoute allowedRole="student" />,
     children: [
       {
+        path: "/userDashboard",
+        element: <DashBoardPage />,
+      },
+      {
         path: "/userDasboard",
         element: <DashBoardPage />,
       },
@@ -33,14 +37,21 @@ const router = createBrowserRouter([
         path: "/facultyDashboard",
         element: <FacultyDashboard />,
       },
+      {
+        path: "/facultyDasboard",
+        element: <FacultyDashboard />,
+      },
     ],
   },
-
   {
     element: <ProtectedRoute allowedRole="admin" />,
     children: [
       {
         path: "/adminDashboard",
+        element: <AdminDashBoard />,
+      },
+      {
+        path: "/adminDasboard",
         element: <AdminDashBoard />,
       },
     ],

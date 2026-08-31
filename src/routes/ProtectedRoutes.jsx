@@ -23,21 +23,34 @@ function ProtectedRoute({ allowedRole }) {
       try {
         const { data: profile, error } = await supabase
           .from("profiles")
-          .select("user_type")
+          .select("user_type, role")
           .eq("id", currentUser.id)
           .single();
 
-        if (error) throw error;
+        if (error) {
+          console.warn("Could not query profiles table, falling back to auth metadata:", error.message);
+        }
+
+        const effectiveType =
+          profile?.role === "admin"
+            ? "admin"
+            : profile?.user_type ||
+              currentUser.user_metadata?.user_type ||
+              (profile?.role === "faculty" ? "faculty" : "student");
 
         if (isMounted) {
           setUser(currentUser);
-          setUserType(profile?.user_type ?? null);
+          setUserType(effectiveType);
         }
       } catch (error) {
         console.error("Error fetching user type:", error);
         if (isMounted) {
           setUser(currentUser);
-          setUserType(null);
+          const fallbackType =
+            currentUser.user_metadata?.role === "admin"
+              ? "admin"
+              : currentUser.user_metadata?.user_type || "student";
+          setUserType(fallbackType);
         }
       } finally {
         if (isMounted) setLoading(false);
