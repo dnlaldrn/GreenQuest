@@ -65,7 +65,7 @@ export default function Login() {
       }
 
       if (profile.user_type === "faculty") {
-        navigate("/facultyDasboard");
+        navigate("/facultyDashboard");
       } else if (profile.user_type === "student") {
         navigate("/userDasboard");
       } else if (profile.user_type === "admin") {
