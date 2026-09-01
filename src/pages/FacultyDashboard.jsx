@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { CheckCircle2, AlertCircle } from "lucide-react";
 import { getCurrentUser, signOut } from "../services/authService";
 
@@ -14,12 +14,35 @@ import FacultyFooter from "../components/FacultyDashboard/FacultyFooter";
 
 export default function FacultyDashboard() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
 
-  // Navigation and View state
-  const [activeTab, setActiveTab] = useState("dashboard"); // "dashboard" | "my-entries" | "leaderboard" | "rules" | "support"
+  // Navigation and View state persisted via URL tab query
+  const tabFromUrl = searchParams.get("tab") || "dashboard";
+  const [activeTab, setActiveTabState] = useState(tabFromUrl);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [currentUser, setCurrentUser] = useState(null);
+
+  const setActiveTab = (tab) => {
+    setActiveTabState(tab);
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        if (tab === "dashboard") {
+          next.delete("tab");
+        } else {
+          next.set("tab", tab);
+        }
+        return next;
+      },
+      { replace: true }
+    );
+  };
+
+  useEffect(() => {
+    const tab = searchParams.get("tab") || "dashboard";
+    setActiveTabState(tab);
+  }, [searchParams]);
 
   // Toast notifications state
   const [toast, setToast] = useState(null);
@@ -121,13 +144,13 @@ export default function FacultyDashboard() {
     },
   ]);
 
-  // Fetch logged in user
+  // Fetch logged in user once
   useEffect(() => {
     async function loadUser() {
       try {
-        const { data } = await getCurrentUser();
-        if (data?.user) {
-          setCurrentUser(data.user);
+        const { data } = await supabase.auth.getSession();
+        if (data?.session?.user) {
+          setCurrentUser(data.session.user);
         }
       } catch (err) {
         console.error("Error loading faculty session:", err);

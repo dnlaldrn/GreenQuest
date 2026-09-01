@@ -60,9 +60,9 @@ function ProtectedRoute({ allowedRole }) {
     async function getInitialUser() {
       try {
         const {
-          data: { user },
-        } = await supabase.auth.getUser();
-        await checkUserAndType(user);
+          data: { session },
+        } = await supabase.auth.getSession();
+        await checkUserAndType(session?.user ?? null);
       } catch (error) {
         console.error("Error fetching user session:", error);
         if (isMounted) setLoading(false);
@@ -73,9 +73,24 @@ function ProtectedRoute({ allowedRole }) {
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setLoading(true);
-      checkUserAndType(session?.user ?? null);
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      // Completely ignore background token refresh events so that alt-tabbing never triggers re-renders or page flickers
+      if (event === "TOKEN_REFRESHED" || event === "INITIAL_SESSION") {
+        return;
+      }
+
+      if (event === "SIGNED_OUT") {
+        if (isMounted) {
+          setUser(null);
+          setUserType(null);
+          setLoading(false);
+        }
+        return;
+      }
+
+      if (event === "SIGNED_IN") {
+        checkUserAndType(session?.user ?? null);
+      }
     });
 
     return () => {
