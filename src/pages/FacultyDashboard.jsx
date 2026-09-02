@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { CheckCircle2, AlertCircle } from "lucide-react";
-import { getCurrentUser, signOut } from "../services/authService";
+import { signOut } from "../services/authService";
 
 import FacultySidebar from "../components/FacultyDashboard/FacultySidebar";
 import FacultyHeader from "../components/FacultyDashboard/FacultyHeader";
@@ -11,6 +11,8 @@ import FacultyLeaderboardTab from "../components/FacultyDashboard/FacultyLeaderb
 import FacultyRulesTab from "../components/FacultyDashboard/FacultyRulesTab";
 import FacultySupportTab from "../components/FacultyDashboard/FacultySupportTab";
 import FacultyFooter from "../components/FacultyDashboard/FacultyFooter";
+import FacultySettings from "../components/FacultyDashboard/FacultySettings";
+import { supabase } from "../lib/supabase";
 
 export default function FacultyDashboard() {
   const navigate = useNavigate();
@@ -22,6 +24,7 @@ export default function FacultyDashboard() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [currentUser, setCurrentUser] = useState(null);
+  const [userData, setUserData] = useState("");
 
   const setActiveTab = (tab) => {
     setActiveTabState(tab);
@@ -35,15 +38,15 @@ export default function FacultyDashboard() {
         }
         return next;
       },
-      { replace: true }
+      { replace: true },
     );
   };
 
   useEffect(() => {
     const tab = searchParams.get("tab") || "dashboard";
+
     setActiveTabState(tab);
   }, [searchParams]);
-
   // Toast notifications state
   const [toast, setToast] = useState(null);
 
@@ -182,10 +185,7 @@ export default function FacultyDashboard() {
     );
   });
 
-  const facultyDisplayName =
-    currentUser?.user_metadata?.username ||
-    currentUser?.email?.split("@")[0] ||
-    "Dr. Aris";
+  const facultyDisplayName = currentUser?.user_metadata?.username || "Loading";
 
   return (
     <div className="min-h-screen w-full bg-[#0e150e] text-[#dce5d9] font-sans flex flex-col md:flex-row text-xs sm:text-sm selection:bg-[#22c55e] selection:text-[#004b1e] relative overflow-x-hidden">
@@ -228,7 +228,7 @@ export default function FacultyDashboard() {
           onNotificationClick={() =>
             showToast("No new unread challenge alerts.")
           }
-          onSettingsClick={() => setActiveTab("support")}
+          onSettingsClick={() => setActiveTab("settings")}
           facultyDisplayName={facultyDisplayName}
           onMenuToggle={() => setIsSidebarOpen(!isSidebarOpen)}
         />
@@ -261,6 +261,9 @@ export default function FacultyDashboard() {
 
           {activeTab === "support" && (
             <FacultySupportTab showToast={showToast} />
+          )}
+          {activeTab === "settings" && (
+            <FacultySettings showToast={showToast} />
           )}
         </main>
 

@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import {
   Sparkles,
   Video,
@@ -35,6 +35,7 @@ export default function FacultyOverviewTab({
   const [isDragging, setIsDragging] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef(null);
+  const [daysLeft, setDaysLeft] = useState(0);
 
   // Drag & Drop handlers
   const handleDragOver = (e) => {
@@ -82,7 +83,10 @@ export default function FacultyOverviewTab({
     if (e) e.preventDefault();
 
     if (!entryTitle.trim() || entryTitle.trim().length < 3) {
-      showToast("Please enter an entry title (at least 3 characters).", "error");
+      showToast(
+        "Please enter an entry title (at least 3 characters).",
+        "error",
+      );
       return;
     }
 
@@ -130,9 +134,19 @@ export default function FacultyOverviewTab({
           };
         }
         return item;
-      })
+      }),
     );
   };
+
+  useEffect(() => {
+    const now = new Date();
+    const lastDay = new Date(
+      now.getFullYear(),
+      now.getMonth() + 1,
+      0,
+    ).getDate();
+    setDaysLeft(lastDay - now.getDate());
+  }, []);
 
   return (
     <div className="space-y-6 sm:space-y-8">
@@ -201,7 +215,7 @@ export default function FacultyOverviewTab({
               Days Remaining
             </div>
             <div className="text-lg sm:text-2xl font-bold text-[#ffb4ab]">
-              14
+              {daysLeft}
             </div>
           </div>
         </div>
@@ -225,7 +239,8 @@ export default function FacultyOverviewTab({
                     New Specimen Upload
                   </h3>
                   <p className="text-[11px] sm:text-xs text-[#bccbb9]">
-                    Submit botanical footage for peer review and challenge voting.
+                    Submit botanical footage for peer review and challenge
+                    voting.
                   </p>
                 </div>
               </div>
@@ -269,7 +284,7 @@ export default function FacultyOverviewTab({
                       value={entryTitle}
                       onChange={(e) =>
                         setEntryTitle(
-                          sanitizeAlphanumeric(e.target.value, 50, 3)
+                          sanitizeAlphanumeric(e.target.value, 50, 3),
                         )
                       }
                       placeholder="e.g., Week 4 Leaf Unfurling"

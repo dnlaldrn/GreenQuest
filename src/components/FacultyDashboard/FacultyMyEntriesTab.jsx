@@ -1,10 +1,14 @@
 import React from "react";
-import { Leaf, ThumbsUp, CheckCircle2, Play, RefreshCw, UploadCloud } from "lucide-react";
+import {
+  Leaf,
+  ThumbsUp,
+  CheckCircle2,
+  Play,
+  RefreshCw,
+  UploadCloud,
+} from "lucide-react";
 
-export default function FacultyMyEntriesTab({
-  entries,
-  setActiveTab,
-}) {
+export default function FacultyMyEntriesTab({ entries, setActiveTab }) {
   const myEntries = entries.filter((e) => e.isOwner);
 
   return (
@@ -66,7 +70,10 @@ export default function FacultyMyEntriesTab({
                 )}
                 {entry.isProcessing && (
                   <div className="absolute inset-0 flex flex-col items-center justify-center p-3 text-center bg-black/60">
-                    <RefreshCw size={20} className="text-[#4be277] animate-spin mb-1" />
+                    <RefreshCw
+                      size={20}
+                      className="text-[#4be277] animate-spin mb-1"
+                    />
                     <span className="font-mono text-[11px] text-[#dce5d9]">
                       AI Analysis in Progress
                     </span>
