@@ -1,12 +1,4 @@
-import {
-
-  Award,
-  Trophy,
-  CheckCircle2,
-  Clock,
-  Loader2,
-
-} from "lucide-react";
+import { Award, Trophy, CheckCircle2, Clock, Loader2 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { supabase } from "../../lib/supabase";
 
@@ -14,12 +6,14 @@ export default function OverviewTab() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [totalPoints, setTotalPoints] = useState(null);
   const [pointsLoading, setPointsLoading] = useState(true);
+  const [daysLeft, setDaysLeft] = useState(0);
 
   useEffect(() => {
     const fetchTotalPoints = async () => {
       setPointsLoading(true);
 
-      const { data: userData, error: userError } = await supabase.auth.getUser();
+      const { data: userData, error: userError } =
+        await supabase.auth.getUser();
       if (userError || !userData?.user) {
         console.error("Failed to get current user:", userError);
         setPointsLoading(false);
@@ -43,6 +37,16 @@ export default function OverviewTab() {
 
     fetchTotalPoints();
   }, []);
+
+  useEffect(() => {
+    const now = new Date();
+    const lastDay = new Date(
+      now.getFullYear(),
+      now.getMonth() + 1,
+      0,
+    ).getDate();
+    setDaysLeft(lastDay - now.getDate());
+  }, []); // Runs once when the component mounts
 
   return (
     <main className="w-full p-4 md:p-6 space-y-6">
@@ -90,9 +94,7 @@ export default function OverviewTab() {
               <span className="text-2xl font-bold text-white tracking-tight">
                 #1
               </span>
-              <span className="text-[11px] font-mono text-slate-400">
-                / 1
-              </span>
+              <span className="text-[11px] font-mono text-slate-400">/ 1</span>
             </div>
             <div className="text-[10px] text-[#10B981] font-mono">
               Top 1% this month
@@ -126,16 +128,14 @@ export default function OverviewTab() {
           {/* Stat 4: Pending Review */}
           <div className="bg-[#111A16] border border-[#14231C] p-4 rounded-xl relative overflow-hidden group hover:border-[#10B981]/30 transition-all">
             <div className="text-[11px] font-mono text-slate-400 uppercase tracking-wider mb-1">
-              Pending Review
+              Days remaining
             </div>
             <div className="flex items-baseline gap-2 mb-1">
               <span className="text-2xl font-bold text-white tracking-tight">
-                5
+                {daysLeft}
               </span>
             </div>
-            <div className="text-[10px] text-amber-500/80 font-mono">
-              Est. resolution 4-6 hours
-            </div>
+
             <div className="absolute right-3 bottom-3 text-slate-800/20 group-hover:text-amber-500/5 transition-colors pointer-events-none">
               <Clock size={48} />
             </div>

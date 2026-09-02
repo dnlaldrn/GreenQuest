@@ -2,7 +2,12 @@ import { useState, useEffect } from "react";
 import { User, Mail, ShieldAlert, CheckCircle, ArrowRight } from "lucide-react";
 import { getCurrentUser } from "../../services/authService";
 import { supabase } from "../../lib/supabase";
-import { sanitizeTextOnly, sanitizeEmail, sanitizePassword, isValidEmail } from "../../lib/validation";
+import {
+  sanitizeTextOnly,
+  sanitizeEmail,
+  sanitizePassword,
+  isValidEmail,
+} from "../../lib/validation";
 
 export default function ProfileTab() {
   const [profile, setProfile] = useState({
@@ -40,7 +45,8 @@ export default function ProfileTab() {
     let sanitizedVal = value;
     if (name === "name") sanitizedVal = sanitizeTextOnly(value, 40, 3);
     else if (name === "email") sanitizedVal = sanitizeEmail(value, 80);
-    else if (name.includes("Password") || name.includes("password")) sanitizedVal = sanitizePassword(value, 64);
+    else if (name.includes("Password") || name.includes("password"))
+      sanitizedVal = sanitizePassword(value, 64);
     setProfile((prev) => ({ ...prev, [name]: sanitizedVal }));
   };
 
@@ -49,44 +55,62 @@ export default function ProfileTab() {
     setStatus({ type: null, message: "" });
 
     if (!profile.name || profile.name.trim().length < 2) {
-      setStatus({ type: "error", message: "Please enter a valid full name (at least 2 letters, numbers not allowed)." });
+      setStatus({
+        type: "error",
+        message:
+          "Please enter a valid full name (at least 2 letters, numbers not allowed).",
+      });
       return;
     }
 
     if (!isValidEmail(profile.email)) {
-      setStatus({ type: "error", message: "Please enter a valid email address." });
+      setStatus({
+        type: "error",
+        message: "Please enter a valid email address.",
+      });
       return;
     }
-  if (profile.newPassword && profile.newPassword !== profile.confirmPassword) {
-    setStatus({ type: "error", message: "New passwords do not match." });
-    return;
-  }
-  if (profile.newPassword && !profile.currentPassword) {
-    setStatus({ type: "error", message: "Please provide your current password to authorize changes." });
-    return;
-  }
+    if (
+      profile.newPassword &&
+      profile.newPassword !== profile.confirmPassword
+    ) {
+      setStatus({ type: "error", message: "New passwords do not match." });
+      return;
+    }
+    if (profile.newPassword && !profile.currentPassword) {
+      setStatus({
+        type: "error",
+        message: "Please provide your current password to authorize changes.",
+      });
+      return;
+    }
 
-  setIsSaving(true);
+    setIsSaving(true);
 
-  const updates = {
-    data: { username: profile.name }, // merges into user_metadata
+    const updates = {
+      data: { username: profile.name }, // merges into user_metadata
+    };
+    if (profile.email !== userData?.email) updates.email = profile.email;
+    if (profile.newPassword) updates.password = profile.newPassword;
+
+    const { data, error } = await supabase.auth.updateUser(updates);
+
+    setIsSaving(false);
+
+    if (error) {
+      setStatus({ type: "error", message: error.message });
+      return;
+    }
+
+    setUserData(data.user);
+    setStatus({ type: "success", message: "Profile updated successfully!" });
+    setProfile((prev) => ({
+      ...prev,
+      currentPassword: "",
+      newPassword: "",
+      confirmPassword: "",
+    }));
   };
-  if (profile.email !== userData?.email) updates.email = profile.email;
-  if (profile.newPassword) updates.password = profile.newPassword;
-
-  const { data, error } = await supabase.auth.updateUser(updates);
-
-  setIsSaving(false);
-
-  if (error) {
-    setStatus({ type: "error", message: error.message });
-    return;
-  }
-
-  setUserData(data.user);
-  setStatus({ type: "success", message: "Profile updated successfully!" });
-  setProfile((prev) => ({ ...prev, currentPassword: "", newPassword: "", confirmPassword: "" }));
-};
 
   return (
     <div className="w-full p-4 md:p-6 space-y-6">
@@ -106,17 +130,20 @@ export default function ProfileTab() {
             </div>
           </div>
           <div>
-           {userData?(
-            <div>
-               <h3 className="font-bold text-white text-base">{userData.user_metadata?.username}</h3>
-            <p className="text-xs font-mono text-slate-400">{userData.email}</p>
-            </div>
-           ):(
-            <div>
-               
-            <p className="text-xs font-mono text-slate-400">Loading..</p>
-            </div>
-           )}
+            {userData ? (
+              <div>
+                <h3 className="font-bold text-white text-base">
+                  {userData.user_metadata?.username}
+                </h3>
+                <p className="text-xs font-mono text-slate-400">
+                  {userData.email}
+                </p>
+              </div>
+            ) : (
+              <div>
+                <p className="text-xs font-mono text-slate-400">Loading..</p>
+              </div>
+            )}
           </div>
           <div className="w-full bg-[#0B120F] border border-[#14231C] p-3 rounded-lg text-left">
             <div className="text-[10px] font-mono text-slate-500 uppercase tracking-wider mb-1">
@@ -132,7 +159,6 @@ export default function ProfileTab() {
         {/* Profile Edit Form */}
         <div className="lg:col-span-2 bg-[#111A16] border border-[#14231C] rounded-xl overflow-hidden">
           <form onSubmit={handleSave} className="p-5 md:p-6 space-y-6">
-            
             {/* Notifications */}
             {status.message && (
               <div
@@ -156,7 +182,7 @@ export default function ProfileTab() {
               <h3 className="text-xs font-mono uppercase tracking-wider text-slate-500 border-b border-[#14231C] pb-2">
                 Personal Information
               </h3>
-              
+
               {userData ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-1.5">
@@ -164,7 +190,10 @@ export default function ProfileTab() {
                       Full Name
                     </label>
                     <div className="relative">
-                      <User className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" size={15} />
+                      <User
+                        className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500"
+                        size={15}
+                      />
                       <input
                         type="text"
                         name="name"
@@ -182,7 +211,10 @@ export default function ProfileTab() {
                       Email Address
                     </label>
                     <div className="relative">
-                      <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" size={15} />
+                      <Mail
+                        className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500"
+                        size={15}
+                      />
                       <input
                         type="email"
                         name="email"
@@ -265,7 +297,6 @@ export default function ProfileTab() {
                 {!isSaving && <ArrowRight size={14} />}
               </button>
             </div>
-
           </form>
         </div>
       </div>
