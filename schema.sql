@@ -215,3 +215,28 @@ with check (auth.uid() = user_id);
 create policy "Faculty delete own vote"
 on faculty_votes for delete to authenticated
 using (auth.uid() = user_id);
+
+-- 13. Admin Notifications Table
+create table if not exists public.admin_notifications (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid references public.profiles(id) on delete cascade,
+  title text not null,
+  message text not null,
+  type text not null default 'upload', -- 'student_upload', 'faculty', 'system'
+  reference_id uuid,
+  is_read boolean default false,
+  created_at timestamptz default now()
+);
+
+alter table public.admin_notifications enable row level security;
+
+create policy "Admins can manage admin_notifications"
+on public.admin_notifications
+all using (exists (
+  select 1 from public.profiles where id = auth.uid() and role = 'admin'
+));
+
+create policy "Authenticated users can insert admin_notifications"
+on public.admin_notifications
+for insert to authenticated
+with check (true);

@@ -86,6 +86,18 @@ export default function UploadVideoTab() {
 
       if (insertError) throw insertError;
 
+      // Notify Admin of new student video upload
+      try {
+        await supabase.from("admin_notifications").insert({
+          user_id: user.id,
+          title: "New Student Video Submission",
+          message: `${user.user_metadata?.username || "A student"} submitted '${title}' under '${category}' for eco-review.`,
+          type: "student_upload",
+        });
+      } catch (notifErr) {
+        console.warn("Could not record admin notification:", notifErr);
+      }
+
       // Success — show banner and reset form
       setUploadSuccess(true);
       setFile(null);

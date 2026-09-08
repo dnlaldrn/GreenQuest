@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 import { signOut } from "../services/authService";
@@ -10,6 +10,9 @@ import VideoReviewTab from "../components/AdminDashboard/VideoReviewTab";
 import RewardsTab from "../components/AdminDashboard/RewardsTab";
 import AiLogsTab from "../components/AdminDashboard/AiLogsTab";
 import ReportsTab from "../components/AdminDashboard/ReportsTab";
+import GreenMateVotesTab from "../components/AdminDashboard/GreenMateVotesTab";
+import SettingsTab from "../components/AdminDashboard/SettingsTab";
+import AdminTabSkeleton from "../components/AdminDashboard/AdminTabSkeleton";
 import { sanitizeAlphanumeric } from "../lib/validation";
 
 import {
@@ -32,6 +35,7 @@ import {
   ChevronRight,
   Settings,
   Vote,
+  Leaf,
 } from "lucide-react";
 import { createPortal } from "react-dom";
 
@@ -39,6 +43,8 @@ export default function AdminDashBoard() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("analytics");
   const [loading, setLoading] = useState(true);
+  const [isTabLoading, setIsTabLoading] = useState(false);
+  const tabRequestId = useRef(0);
   const [isMocked, setIsMocked] = useState(false);
   const [isAdminBypassed, setIsAdminBypassed] = useState(false);
 
@@ -49,8 +55,16 @@ export default function AdminDashBoard() {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
   const handleTabChange = (tabName) => {
+    if (tabName === activeTab) return;
     setActiveTab(tabName);
     setIsSidebarOpen(false);
+    const reqId = ++tabRequestId.current;
+    setIsTabLoading(true);
+    setTimeout(() => {
+      if (tabRequestId.current === reqId) {
+        setIsTabLoading(false);
+      }
+    }, 400);
   };
 
   // Toast notifications state
@@ -64,46 +78,170 @@ export default function AdminDashBoard() {
     }, 3500);
   };
 
+  // Helper to format relative time
+  const formatRelativeTime = (dateString) => {
+    if (!dateString) return "Recently";
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffSec = Math.floor((now - date) / 1000);
+    if (diffSec < 60) return "Just now";
+    const diffMin = Math.floor(diffSec / 60);
+    if (diffMin < 60) return `${diffMin}m ago`;
+    const diffHours = Math.floor(diffMin / 60);
+    if (diffHours < 24) return `${diffHours}h ago`;
+    const diffDays = Math.floor(diffHours / 24);
+    return `${diffDays}d ago`;
+  };
+
   // Notifications state
   const [isNotifOpen, setIsNotifOpen] = useState(false);
   const [notifications, setNotifications] = useState([
     {
       id: 1,
-      title: "New Video Submission",
-      description:
-        "Elena J. uploaded a video for review ('Tree Planting Initiative').",
-      time: "5 mins ago",
-      read: false,
-      type: "video",
-    },
-    {
-      id: 2,
       title: "System Integrity Log",
       description: "Database sandbox synchronization completed successfully.",
       time: "1 hour ago",
       read: false,
       type: "system",
     },
-    {
-      id: 3,
-      title: "New User Registered",
-      description: "Marcus Aurelius created an eco-account.",
-      time: "3 hours ago",
-      read: true,
-      type: "user",
-    },
-    {
-      id: 4,
-      title: "AI Auto-Verification",
-      description: "AI system automatically approved submission #1049.",
-      time: "5 hours ago",
-      read: true,
-      type: "ai",
-    },
   ]);
 
-  const handleMarkAllRead = () => {
+  const fetchNotifications = async (currentSubs) => {
+    try {
+      const { data: notifData, error: nError } = await supabase
+        .from("admin_notifications")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(30);
+
+      if (!nError && notifData && notifData.length > 0) {
+        setNotifications(
+          notifData.map((n) => ({
+            id: n.id,
+            title: n.title,
+            description: n.message,
+            time: formatRelativeTime(n.created_at),
+            read: n.is_read || false,
+            type: n.type || "system",
+            created_at: n.created_at,
+          }))
+        );
+        return;
+      }
+
+      // Fallback: aggregate from recent submissions & faculty entries
+      const synthesized = [];
+      (currentSubs || []).slice(0, 10).forEach((sub) => {
+        synthesized.push({
+          id: `sub-${sub.id}`,
+          title: "New Student Video Submission",
+          description: `${sub.profiles?.username || "A student"} uploaded '${sub.title || "Eco action"}' for review.`,
+          time: formatRelativeTime(sub.created_at),
+          read: sub.status !== "pending_review" && sub.status !== "pending",
+          type: "video",
+          created_at: sub.created_at,
+        });
+      });
+
+      const { data: facultyEntries } = await supabase
+        .from("faculty_entries")
+        .select("id, title, specimen, created_at, profiles(username)")
+        .order("created_at", { ascending: false })
+        .limit(10);
+
+      (facultyEntries || []).forEach((entry) => {
+        synthesized.push({
+          id: `fac-${entry.id}`,
+          title: "New Faculty Challenge Entry",
+          description: `${entry.profiles?.username || "A faculty member"} submitted specimen '${entry.specimen}' (${entry.title}).`,
+          time: formatRelativeTime(entry.created_at),
+          read: false,
+          type: "faculty",
+          created_at: entry.created_at,
+        });
+      });
+
+      synthesized.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+      if (synthesized.length > 0) {
+        setNotifications(synthesized);
+      }
+    } catch (err) {
+      console.warn("Could not query notifications fallback:", err);
+    }
+  };
+
+  // Realtime subscription for instant upload notifications
+  useEffect(() => {
+    const channel = supabase
+      .channel("admin-upload-listener")
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "submissions" },
+        (payload) => {
+          const item = {
+            id: `sub-${payload.new.id || Date.now()}`,
+            title: "New Student Video Upload",
+            description: `Student uploaded '${payload.new.title || "New video"}' for review.`,
+            time: "Just now",
+            read: false,
+            type: "video",
+            created_at: new Date().toISOString(),
+          };
+          setNotifications((prev) => [item, ...prev]);
+          showToast("New student video uploaded for review!", "success");
+        }
+      )
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "faculty_entries" },
+        (payload) => {
+          const item = {
+            id: `fac-${payload.new.id || Date.now()}`,
+            title: "New Faculty Challenge Entry",
+            description: `Faculty submitted specimen: '${payload.new.specimen || "New entry"}'.`,
+            time: "Just now",
+            read: false,
+            type: "faculty",
+            created_at: new Date().toISOString(),
+          };
+          setNotifications((prev) => [item, ...prev]);
+          showToast("New faculty botanical challenge entry uploaded!", "success");
+        }
+      )
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "admin_notifications" },
+        (payload) => {
+          const item = {
+            id: payload.new.id,
+            title: payload.new.title,
+            description: payload.new.message,
+            time: "Just now",
+            read: payload.new.is_read || false,
+            type: payload.new.type,
+            created_at: payload.new.created_at,
+          };
+          setNotifications((prev) => {
+            if (prev.some((n) => n.id === item.id)) return prev;
+            return [item, ...prev];
+          });
+          showToast(payload.new.title, "success");
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
+  const handleMarkAllRead = async () => {
     setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+    try {
+      await supabase.from("admin_notifications").update({ is_read: true }).eq("is_read", false);
+    } catch {
+      // ignore
+    }
     showToast("All notifications marked as read.", "success");
   };
 
@@ -112,10 +250,23 @@ export default function AdminDashBoard() {
     showToast("Notifications cleared.", "warning");
   };
 
-  const handleToggleRead = (id) => {
+  const handleToggleRead = async (id) => {
     setNotifications((prev) =>
-      prev.map((n) => (n.id === id ? { ...n, read: !n.read } : n)),
+      prev.map((n) => (n.id === id ? { ...n, read: !n.read } : n))
     );
+    try {
+      if (typeof id === "string" && !id.startsWith("sub-") && !id.startsWith("fac-")) {
+        const notif = notifications.find((n) => n.id === id);
+        if (notif) {
+          await supabase
+            .from("admin_notifications")
+            .update({ is_read: !notif.read })
+            .eq("id", id);
+        }
+      }
+    } catch {
+      // ignore
+    }
   };
 
   useEffect(() => {
@@ -434,6 +585,8 @@ export default function AdminDashBoard() {
             message: "Database tables verified successfully.",
           },
         ]);
+
+        await fetchNotifications(subsData);
       }
     } catch (error) {
       console.error("Database fetch failed. Falling back to mock data.", error);
@@ -1297,14 +1450,17 @@ export default function AdminDashBoard() {
                               className={`mt-0.5 w-6 h-6 rounded-full flex items-center justify-center shrink-0 ${
                                 n.type === "video"
                                   ? "bg-[#4BE277]/15 text-[#4BE277]"
-                                  : n.type === "system"
-                                    ? "bg-[#92DB2A]/15 text-[#92DB2A]"
-                                    : n.type === "user"
-                                      ? "bg-[#4BE277]/15 text-[#4BE277]"
-                                      : "bg-[#acf847]/15 text-[#acf847]"
+                                  : n.type === "faculty"
+                                    ? "bg-[#4BE277]/15 text-[#4BE277]"
+                                    : n.type === "system"
+                                      ? "bg-[#92DB2A]/15 text-[#92DB2A]"
+                                      : n.type === "user"
+                                        ? "bg-[#4BE277]/15 text-[#4BE277]"
+                                        : "bg-[#acf847]/15 text-[#acf847]"
                               }`}
                             >
                               {n.type === "video" && <Video size={12} />}
+                              {n.type === "faculty" && <Leaf size={12} />}
                               {n.type === "system" && (
                                 <BrainCircuit size={12} />
                               )}
@@ -1359,39 +1515,51 @@ export default function AdminDashBoard() {
         </header>
 
         {/* Tab Panel Selection Render */}
-        {activeTab === "analytics" && <AnalyticsTab stats={stats} />}
+        {isTabLoading ? (
+          <AdminTabSkeleton />
+        ) : (
+          <>
+            {activeTab === "analytics" && <AnalyticsTab stats={stats} />}
 
-        {activeTab === "users" && (
-          <UserManagementTab
-            filteredUsers={filteredUsers}
-            handleAdjustPoints={handleAdjustPoints}
-            handleToggleUserRole={handleToggleUserRole}
-            showToast={showToast}
-          />
+            {activeTab === "users" && (
+              <UserManagementTab
+                filteredUsers={filteredUsers}
+                handleAdjustPoints={handleAdjustPoints}
+                handleToggleUserRole={handleToggleUserRole}
+                showToast={showToast}
+              />
+            )}
+
+            {activeTab === "moderation" && (
+              <VideoReviewTab
+                filteredSubmissions={filteredSubmissions}
+                handleApprove={handleApprove}
+                handleReject={handleReject}
+                handleRecalculateAI={handleRecalculateAI}
+                showToast={showToast}
+              />
+            )}
+
+            {activeTab === "GreenMate Votes" && (
+              <GreenMateVotesTab showToast={showToast} />
+            )}
+
+            {activeTab === "rewards" && (
+              <RewardsTab
+                rewards={rewards}
+                handleSaveReward={handleSaveReward}
+                handleDeleteReward={handleDeleteReward}
+                showToast={showToast}
+              />
+            )}
+
+            {activeTab === "ai-logs" && <AiLogsTab aiLogs={aiLogs} />}
+
+            {activeTab === "reports" && <ReportsTab />}
+
+            {activeTab === "settings" && <SettingsTab showToast={showToast} />}
+          </>
         )}
-
-        {activeTab === "moderation" && (
-          <VideoReviewTab
-            filteredSubmissions={filteredSubmissions}
-            handleApprove={handleApprove}
-            handleReject={handleReject}
-            handleRecalculateAI={handleRecalculateAI}
-            showToast={showToast}
-          />
-        )}
-
-        {activeTab === "rewards" && (
-          <RewardsTab
-            rewards={rewards}
-            handleSaveReward={handleSaveReward}
-            handleDeleteReward={handleDeleteReward}
-            showToast={showToast}
-          />
-        )}
-
-        {activeTab === "ai-logs" && <AiLogsTab aiLogs={aiLogs} />}
-
-        {activeTab === "reports" && <ReportsTab />}
       </main>
 
       {/* Floating Toasts container */}
