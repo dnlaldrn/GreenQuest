@@ -1,259 +1,270 @@
-import React, { useState } from "react";
-import {
-  Compass,
-  Award,
-  Clock,
-  Flame,
-  Zap,
-  CheckCircle,
-  Lock,
-  Filter,
-  Users,
-} from "lucide-react";
+import React, { useState, useEffect, useCallback } from "react";
+import { useFacultyVotes } from "../../hooks/VoteHandler";
+import { Leaf, ThumbsUp, CheckCircle2, Play, X, Loader2 } from "lucide-react";
+import { supabase } from "../../lib/supabase";
 
-export default function QuestsTab() {
-  const [activeFilter, setActiveFilter] = useState("all");
+export default function FacultyEntriesGallery({ showToast }) {
+  const [entries, setEntries] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [activeEntry, setActiveEntry] = useState(null); // entry currently open in modal
+  const [playbackUrl, setPlaybackUrl] = useState(null);
+  const [isResolvingVideo, setIsResolvingVideo] = useState(false);
 
-  const quests = [
-    {
-      id: 1,
-      title: "Plastic-Free Velocity",
-      category: "recycling",
-      description:
-        "Collect and safely log 5kg of category 1 & 2 plastics at a recognized community recycling hub.",
-      reward: 150,
-      multiplier: "1.2x",
-      timeLeft: "2 days left",
-      progress: 60,
-      status: "active",
-      participants: 1420,
-    },
-    {
-      id: 2,
-      title: "Dawn Photovoltaic Audit",
-      category: "energy",
-      description:
-        "Verify solar baseline generation metrics or submit an optimized consumption report during peak sun hours.",
-      reward: 350,
-      multiplier: "1.5x",
-      timeLeft: "5 days left",
-      progress: 0,
-      status: "available",
-      participants: 620,
-    },
-    {
-      id: 3,
-      title: "Urban Reforestation Micro-Drop",
-      category: "biodiversity",
-      description:
-        "Plant a native flora species in a local designated zone and log geo-tagged evidence video.",
-      reward: 200,
-      multiplier: "1.0x",
-      timeLeft: "14 hours left",
-      progress: 100,
-      status: "completed",
-      participants: 3105,
-    },
-    {
-      id: 4,
-      title: "Grid Isolation protocol",
-      category: "energy",
-      description:
-        "Achieve net-zero residential pull from public grids for an uninterrupted 4-hour cycle.",
-      reward: 500,
-      multiplier: "2.0x",
-      timeLeft: "Locked",
-      progress: 0,
-      status: "locked",
-      tierRequired: "Eco-Guardian Level 5",
-      participants: 0,
-    },
-  ];
+  const { toggleVote, votingId } = useFacultyVotes(
+    entries,
+    setEntries,
+    showToast,
+  );
 
-  const filteredQuests =
-    activeFilter === "all"
-      ? quests
-      : quests.filter((q) => q.category === activeFilter);
+  // Fetch entries + vote counts from faculty_entries / faculty_votes
+  const fetchEntries = useCallback(async () => {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    const { data, error } = await supabase
+      .from("faculty_entries")
+      .select(
+        `
+        id, user_id, title, specimen, video_path, video_url,
+        is_verified, duration, created_at,
+        profiles ( username ),
+        faculty_votes ( user_id )
+      `,
+      )
+      .order("created_at", { ascending: false });
+
+    if (error) throw error;
+
+    return data.map((entry) => ({
+      ...entry,
+      votes: entry.faculty_votes.length,
+      hasVoted: user
+        ? entry.faculty_votes.some((v) => v.user_id === user.id)
+        : false,
+      isVerified: entry.is_verified,
+    }));
+  }, []);
+
+  useEffect(() => {
+    let isMounted = true;
+    (async () => {
+      setIsLoading(true);
+      try {
+        const data = await fetchEntries();
+        if (isMounted) setEntries(data ?? []);
+      } catch (err) {
+        console.error("Failed to load faculty entries:", err);
+        showToast?.("Failed to load entries.", "error");
+        if (isMounted) setEntries([]);
+      } finally {
+        if (isMounted) setIsLoading(false);
+      }
+    })();
+    return () => {
+      isMounted = false;
+    };
+  }, [fetchEntries]);
+
+  // Resolve a playable URL for the clicked entry, then open the modal
+  const handleOpenVideo = async (entry) => {
+    setActiveEntry(entry);
+    setPlaybackUrl(null);
+    setIsResolvingVideo(true);
+
+    try {
+      const { data, error } = await supabase.storage
+        .from("plant-vids")
+        .createSignedUrl(entry.video_path, 3600); // valid for 1 hour
+
+      if (error) throw error;
+      if (!data?.signedUrl) throw new Error("Could not resolve video URL.");
+
+      setPlaybackUrl(data.signedUrl);
+    } catch (err) {
+      console.error("Failed to resolve video:", err);
+      showToast?.("Couldn't load this video. Please try again.", "error");
+      setActiveEntry(null);
+    } finally {
+      setIsResolvingVideo(false);
+    }
+  };
+
+  const handleCloseModal = () => {
+    setActiveEntry(null);
+    setPlaybackUrl(null);
+  };
+
+  // Close on Escape key
+  useEffect(() => {
+    if (!activeEntry) return;
+    const onKeyDown = (e) => {
+      if (e.key === "Escape") handleCloseModal();
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [activeEntry]);
 
   return (
-    <div className="space-y-6 max-w-5xl mx-auto p-4 md:p-6 bg-[#0B120F] text-slate-200">
-      {/* HEADER SECTION */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h3 className="text-base md:text-lg font-bold text-white tracking-tight flex items-center gap-2">
-            <Compass size={20} className="text-[#10B981]" />
-            Active Impact Quests
-          </h3>
-          <p className="text-xs text-slate-400">
-            Complete high-yield operations verified by AI to optimize your
-            ecological node return parameters.
+    <div className="space-y-6 p-5">
+      <div>
+        <h3 className="text-lg sm:text-xl font-bold text-[#8bd79b] flex items-center gap-2">
+          <Leaf size={20} />
+          <span>Challenge Entries</span>
+        </h3>
+        <p className="text-xs text-[#bccbb9] mt-0.5">
+          Click any entry to watch the full submission.
+        </p>
+      </div>
+
+      {isLoading ? (
+        <div className="p-12 text-center bg-[#161d16]/70 rounded-2xl border border-white/10">
+          <Loader2 size={28} className="mx-auto text-[#4be277] animate-spin" />
+        </div>
+      ) : entries.length === 0 ? (
+        <div className="p-12 text-center bg-[#161d16]/70 rounded-2xl border border-white/10 space-y-3">
+          <Leaf size={40} className="mx-auto text-[#bccbb9]" />
+          <h4 className="text-base font-bold text-[#dce5d9]">No Entries Yet</h4>
+          <p className="text-xs text-[#bccbb9] max-w-sm mx-auto">
+            Submissions will appear here once faculty start uploading.
           </p>
         </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+          {entries.map((entry) => (
+            <button
+              key={entry.id}
+              type="button"
+              onClick={() => handleOpenVideo(entry)}
+              className="text-left bg-[#161d16]/70 backdrop-blur-xl rounded-xl overflow-hidden border border-white/10 p-4 space-y-3 shadow-lg hover:border-[#4be277]/40 transition-colors cursor-pointer group"
+            >
+              <div className="relative aspect-video rounded-lg overflow-hidden bg-[#091009]">
+                <img
+                  src={
+                    entry.image ||
+                    "https://images.unsplash.com/photo-1545241047-6083a3684587?w=800&auto=format&fit=crop&q=80"
+                  }
+                  alt={entry.title}
+                  className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                />
+                <div className="absolute inset-0 bg-black/20 group-hover:bg-black/40 transition-colors flex items-center justify-center">
+                  <div className="w-11 h-11 rounded-full bg-[#4be277]/90 flex items-center justify-center opacity-90 group-hover:opacity-100 group-hover:scale-110 transition-all">
+                    <Play
+                      size={18}
+                      className="text-[#003915] fill-current ml-0.5"
+                    />
+                  </div>
+                </div>
+                {entry.isVerified && (
+                  <div className="absolute top-2.5 left-2.5 bg-[#78be00]/85 text-[#2a4700] font-mono text-[10px] font-bold px-2 py-0.5 rounded backdrop-blur-sm flex items-center gap-1">
+                    <CheckCircle2 size={11} />
+                    <span>Verified</span>
+                  </div>
+                )}
+                {entry.duration && (
+                  <div className="absolute bottom-2.5 right-2.5 flex items-center gap-1 bg-[#2f372e]/90 backdrop-blur-md px-2 py-0.5 rounded-full text-xs font-mono">
+                    <span>{entry.duration}</span>
+                  </div>
+                )}
+              </div>
 
-        {/* Level Stats Bar */}
-        <div className="flex items-center gap-3 bg-[#111A16] border border-[#14231C] px-3 py-1.5 rounded-xl self-start sm:self-auto">
-          <Award size={16} className="text-[#10B981]" />
-          <div className="font-mono text-left">
-            <div className="text-[10px] text-slate-500 leading-none uppercase">
-              Current Tier
+              <div>
+                <div className="font-mono text-[10px] text-[#4be277] uppercase">
+                  {entry.specimen}
+                </div>
+                <h4 className="font-bold text-sm text-[#dce5d9] truncate">
+                  {entry.title}
+                </h4>
+                {entry.profiles?.username && (
+                  <p className="text-[11px] text-[#bccbb9] font-mono truncate">
+                    by {entry.profiles.username}
+                  </p>
+                )}
+              </div>
+
+              <div className="flex justify-between items-center pt-2 border-t border-white/5">
+                <button
+                  className={
+                    entry.hasVoted
+                      ? "bg-[#4be277]/20 text-[#4be277] border border-[#4be277]/30 px-4 py-1 rounded-md font-mono"
+                      : "text-[#bccbb9] hover:text-[#4be277] hover:bg-white/5 border border-white/10 px-4 py-1 rounded-md font-mono"
+                  }
+                >
+                  {entry.hasVoted ? "Voted" : "Vote"}
+                </button>
+                <span className="flex items-center gap-1.5 text-xs font-mono text-[#4be277]">
+                  <ThumbsUp size={13} />
+
+                  {entry.votes}
+                </span>
+              </div>
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Video Player Modal */}
+      {activeEntry && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
+          onClick={handleCloseModal}
+        >
+          <div
+            className="relative w-full max-w-3xl bg-[#161d16] rounded-2xl border border-white/10 shadow-2xl overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={handleCloseModal}
+              className="absolute top-3 right-3 z-10 w-9 h-9 rounded-full bg-black/60 hover:bg-black/80 flex items-center justify-center text-white transition-colors cursor-pointer"
+              aria-label="Close video"
+            >
+              <X size={18} />
+            </button>
+
+            <div className="aspect-video bg-black flex items-center justify-center">
+              {isResolvingVideo ? (
+                <Loader2 size={32} className="text-[#4be277] animate-spin" />
+              ) : playbackUrl ? (
+                <video
+                  src={playbackUrl}
+                  controls
+                  autoPlay
+                  className="w-full h-full"
+                />
+              ) : (
+                <p className="text-sm text-[#bccbb9]">Video unavailable.</p>
+              )}
             </div>
-            <div className="text-xs font-bold text-white leading-tight">
-              Level 4 Citizen
+
+            <div className="p-4 sm:p-5 space-y-1.5">
+              <div className="font-mono text-[10px] text-[#4be277] uppercase">
+                {activeEntry.specimen}
+              </div>
+              <h4 className="font-bold text-base text-[#dce5d9]">
+                {activeEntry.title}
+              </h4>
+              <div className="flex items-center justify-between pt-1">
+                {activeEntry.profiles?.username && (
+                  <span className="text-xs text-[#bccbb9] font-mono">
+                    by {activeEntry.profiles.username}
+                  </span>
+                )}
+                <button
+                  onClick={() => toggleVote(activeEntry.id)}
+                  disabled={votingId === activeEntry.id}
+                  className={`flex items-center gap-1.5 text-xs font-mono px-3 py-1.5 rounded-lg transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${
+                    activeEntry.hasVoted
+                      ? "bg-[#4be277]/20 text-[#4be277] border border-[#4be277]/30"
+                      : "text-[#bccbb9] hover:text-[#4be277] hover:bg-white/5 border border-white/10"
+                  }`}
+                >
+                  {activeEntry.hasVoted ? "Voted" : "Vote"}
+                </button>
+              </div>
             </div>
           </div>
         </div>
-      </div>
-
-      {/* FILTER CONTROLS */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-1 border-b border-[#14231C] scrollbar-none">
-        <Filter size={12} className="text-slate-500 shrink-0 mr-1" />
-        {[
-          { id: "all", label: "All Operations" },
-          { id: "recycling", label: "Waste Management" },
-          { id: "energy", label: "Grid & Energy" },
-          { id: "biodiversity", label: "Biodiversity" },
-        ].map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => setActiveFilter(tab.id)}
-            className={`px-3 py-1 text-[11px] font-mono rounded-lg transition-colors border whitespace-nowrap ${
-              activeFilter === tab.id
-                ? "bg-[#14281E] text-[#10B981] border-[#10B981]/30"
-                : "bg-transparent text-slate-400 border-transparent hover:text-white"
-            }`}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </div>
-
-      {/* QUESTS GRID MAPPING */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {filteredQuests.map((quest) => (
-          <div
-            key={quest.id}
-            className={`bg-[#111A16] border rounded-xl p-5 flex flex-col justify-between transition-all group relative overflow-hidden ${
-              quest.status === "locked"
-                ? "border-[#231A14] opacity-60"
-                : "border-[#14231C] hover:border-[#10B981]/30"
-            }`}
-          >
-            {/* Top State row */}
-            <div className="flex items-center justify-between gap-2 mb-3">
-              <span
-                className={`text-[9px] font-mono px-2 py-0.5 rounded uppercase tracking-wider ${
-                  quest.status === "completed"
-                    ? "bg-emerald-950/50 text-emerald-400 border border-emerald-900/30"
-                    : quest.status === "active"
-                      ? "bg-[#14281E] text-[#10B981] border border-[#10B981]/20"
-                      : quest.status === "locked"
-                        ? "bg-amber-950/30 text-amber-500 border border-amber-900/20"
-                        : "bg-[#0B120F] text-slate-400 border border-[#14231C]"
-                }`}
-              >
-                {quest.status}
-              </span>
-
-              <div className="flex items-center gap-2 text-[10px] font-mono text-slate-500">
-                <Clock size={12} />
-                <span>{quest.timeLeft}</span>
-              </div>
-            </div>
-
-            {/* Core Metadata Information */}
-            <div className="space-y-1 mb-4">
-              <h4 className="text-sm font-bold text-white tracking-tight flex items-center gap-1.5">
-                {quest.title}
-                {quest.multiplier !== "1.0x" && quest.status !== "locked" && (
-                  <span className="text-[9px] text-amber-500 font-mono bg-amber-500/10 px-1 rounded flex items-center gap-0.5">
-                    <Zap size={8} fill="currentColor" /> {quest.multiplier}
-                  </span>
-                )}
-              </h4>
-              <p className="text-xs text-slate-400 leading-relaxed">
-                {quest.description}
-              </p>
-            </div>
-
-            {/* Bottom Actions and Progress Metrics */}
-            <div className="space-y-4 pt-2 border-t border-[#14231C]/60">
-              {/* Dynamic Bottom Metric Rendering depending on quest status */}
-              {quest.status === "locked" ? (
-                <div className="flex items-center gap-2 text-[11px] font-mono text-amber-500/80">
-                  <Lock size={12} />
-                  <span>Requires {quest.tierRequired}</span>
-                </div>
-              ) : (
-                <div className="flex items-center justify-between font-mono text-[11px]">
-                  <div>
-                    <span className="text-slate-500 uppercase text-[9px] block">
-                      Yield Pool
-                    </span>
-                    <span className="text-[#10B981] font-black text-sm">
-                      +{quest.reward}{" "}
-                      <span className="text-[10px] font-normal">PTS</span>
-                    </span>
-                  </div>
-                  <div className="text-right">
-                    <span className="text-slate-500 uppercase text-[9px] block flex items-center gap-1 justify-end">
-                      <Users size={10} /> Deployment
-                    </span>
-                    <span className="text-white font-medium">
-                      {quest.participants.toLocaleString()} active
-                    </span>
-                  </div>
-                </div>
-              )}
-
-              {/* Progress Bar rendering */}
-              {quest.status !== "locked" && (
-                <div className="space-y-1">
-                  <div className="w-full bg-[#0B120F] border border-[#14231C] h-1.5 rounded-full overflow-hidden">
-                    <div
-                      className={`h-full rounded-full transition-all duration-500 ${
-                        quest.status === "completed"
-                          ? "bg-[#10B981]"
-                          : "bg-[#10B981]/60"
-                      }`}
-                      style={{ width: `${quest.progress}%` }}
-                    />
-                  </div>
-                  {quest.status === "active" && (
-                    <div className="text-right text-[9px] font-mono text-slate-500">
-                      Linear Progress: {quest.progress}% Complete
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Call to Action Button */}
-              {quest.status === "available" && (
-                <button
-                  type="button"
-                  className="w-full bg-[#10B981] hover:bg-[#0ea5e9] text-[#0B120F] font-bold py-2 text-xs rounded-lg transition-colors flex items-center justify-center gap-1.5"
-                >
-                  <Flame size={12} fill="currentColor" />
-                  <span>Initiate Quest Route</span>
-                </button>
-              )}
-              {quest.status === "active" && (
-                <button
-                  type="button"
-                  className="w-full bg-transparent hover:bg-[#14281E] border border-[#10B981]/30 text-[#10B981] font-bold py-2 text-xs rounded-lg transition-colors flex items-center justify-center gap-1.5"
-                >
-                  <span>Log Evidence Feed</span>
-                </button>
-              )}
-              {quest.status === "completed" && (
-                <div className="w-full bg-[#14281E]/40 border border-[#10B981]/10 text-slate-400 py-1.5 text-xs rounded-lg flex items-center justify-center gap-1.5 font-mono">
-                  <CheckCircle size={12} className="text-[#10B981]" />
-                  <span>Rewards Minted & Settled</span>
-                </div>
-              )}
-            </div>
-          </div>
-        ))}
-      </div>
+      )}
     </div>
   );
 }

@@ -34,7 +34,7 @@ const NAV_ITEMS = [
   { value: "overview", label: "Overview", icon: LayoutDashboard },
   { value: "upload-video", label: "Upload Video", icon: UploadCloud },
   { value: "impact-hub", label: "Impact Hub", icon: Globe },
-  { value: "quests", label: "Quests", icon: Award },
+  { value: "quests", label: "GreenMate Challenge", icon: Award },
   { value: "leaderboard", label: "Leaderboard", icon: Trophy },
 ];
 
