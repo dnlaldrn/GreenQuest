@@ -132,73 +132,93 @@ export default function FacultyEntriesGallery({ showToast }) {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
           {entries.map((entry) => (
-            <button
+            <div
               key={entry.id}
-              type="button"
-              onClick={() => handleOpenVideo(entry)}
-              className="text-left bg-[#161d16]/70 backdrop-blur-xl rounded-xl overflow-hidden border border-white/10 p-4 space-y-3 shadow-lg hover:border-[#4be277]/40 transition-colors cursor-pointer group"
+              className="text-left bg-[#161d16]/70 backdrop-blur-xl rounded-xl overflow-hidden border border-white/10 p-4 space-y-3 shadow-lg hover:border-[#4be277]/40 transition-colors group flex flex-col justify-between"
             >
-              <div className="relative aspect-video rounded-lg overflow-hidden bg-[#091009]">
-                <img
-                  src={
-                    entry.image ||
-                    "https://images.unsplash.com/photo-1545241047-6083a3684587?w=800&auto=format&fit=crop&q=80"
-                  }
-                  alt={entry.title}
-                  className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                />
-                <div className="absolute inset-0 bg-black/20 group-hover:bg-black/40 transition-colors flex items-center justify-center">
-                  <div className="w-11 h-11 rounded-full bg-[#4be277]/90 flex items-center justify-center opacity-90 group-hover:opacity-100 group-hover:scale-110 transition-all">
-                    <Play
-                      size={18}
-                      className="text-[#003915] fill-current ml-0.5"
-                    />
-                  </div>
-                </div>
-                {entry.isVerified && (
-                  <div className="absolute top-2.5 left-2.5 bg-[#78be00]/85 text-[#2a4700] font-mono text-[10px] font-bold px-2 py-0.5 rounded backdrop-blur-sm flex items-center gap-1">
-                    <CheckCircle2 size={11} />
-                    <span>Verified</span>
-                  </div>
-                )}
-                {entry.duration && (
-                  <div className="absolute bottom-2.5 right-2.5 flex items-center gap-1 bg-[#2f372e]/90 backdrop-blur-md px-2 py-0.5 rounded-full text-xs font-mono">
-                    <span>{entry.duration}</span>
-                  </div>
-                )}
-              </div>
-
               <div>
-                <div className="font-mono text-[10px] text-[#4be277] uppercase">
-                  {entry.specimen}
+                <div
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => handleOpenVideo(entry)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") handleOpenVideo(entry);
+                  }}
+                  className="relative aspect-video rounded-lg overflow-hidden bg-[#091009] cursor-pointer"
+                  title="Watch specimen video"
+                >
+                  <img
+                    src={
+                      entry.image ||
+                      "https://images.unsplash.com/photo-1545241047-6083a3684587?w=800&auto=format&fit=crop&q=80"
+                    }
+                    alt={entry.title}
+                    className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                  />
+                  <div className="absolute inset-0 bg-black/20 group-hover:bg-black/40 transition-colors flex items-center justify-center">
+                    <div className="w-11 h-11 rounded-full bg-[#4be277]/90 flex items-center justify-center opacity-90 group-hover:opacity-100 group-hover:scale-110 transition-all">
+                      <Play
+                        size={18}
+                        className="text-[#003915] fill-current ml-0.5"
+                      />
+                    </div>
+                  </div>
+                  {entry.isVerified && (
+                    <div className="absolute top-2.5 left-2.5 bg-[#78be00]/85 text-[#2a4700] font-mono text-[10px] font-bold px-2 py-0.5 rounded backdrop-blur-sm flex items-center gap-1">
+                      <CheckCircle2 size={11} />
+                      <span>Verified</span>
+                    </div>
+                  )}
+                  {entry.duration && (
+                    <div className="absolute bottom-2.5 right-2.5 flex items-center gap-1 bg-[#2f372e]/90 backdrop-blur-md px-2 py-0.5 rounded-full text-xs font-mono">
+                      <span>{entry.duration}</span>
+                    </div>
+                  )}
                 </div>
-                <h4 className="font-bold text-sm text-[#dce5d9] truncate">
-                  {entry.title}
-                </h4>
-                {entry.profiles?.username && (
-                  <p className="text-[11px] text-[#bccbb9] font-mono truncate">
-                    by {entry.profiles.username}
-                  </p>
-                )}
+
+                <div className="mt-3">
+                  <div className="font-mono text-[10px] text-[#4be277] uppercase">
+                    {entry.specimen}
+                  </div>
+                  <h4
+                    onClick={() => handleOpenVideo(entry)}
+                    className="font-bold text-sm text-[#dce5d9] truncate cursor-pointer hover:text-[#4be277] transition-colors"
+                  >
+                    {entry.title}
+                  </h4>
+                  {entry.profiles?.username && (
+                    <p className="text-[11px] text-[#bccbb9] font-mono truncate">
+                      by {entry.profiles.username}
+                    </p>
+                  )}
+                </div>
               </div>
 
-              <div className="flex justify-between items-center pt-2 border-t border-white/5">
+              <div className="flex justify-between items-center pt-3 border-t border-white/5">
                 <button
-                  className={
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleVote(entry.id);
+                  }}
+                  disabled={votingId === entry.id}
+                  className={`px-4 py-1.5 rounded-md font-mono text-xs transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${
                     entry.hasVoted
-                      ? "bg-[#4be277]/20 text-[#4be277] border border-[#4be277]/30 px-4 py-1 rounded-md font-mono"
-                      : "text-[#bccbb9] hover:text-[#4be277] hover:bg-white/5 border border-white/10 px-4 py-1 rounded-md font-mono"
-                  }
+                      ? "bg-[#4be277]/20 text-[#4be277] border border-[#4be277]/30"
+                      : "text-[#bccbb9] hover:text-[#4be277] hover:bg-white/5 border border-white/10"
+                  }`}
                 >
                   {entry.hasVoted ? "Voted" : "Vote"}
                 </button>
                 <span className="flex items-center gap-1.5 text-xs font-mono text-[#4be277]">
-                  <ThumbsUp size={13} />
-
+                  <ThumbsUp
+                    size={13}
+                    className={entry.hasVoted ? "fill-current" : ""}
+                  />
                   {entry.votes}
                 </span>
               </div>
-            </button>
+            </div>
           ))}
         </div>
       )}

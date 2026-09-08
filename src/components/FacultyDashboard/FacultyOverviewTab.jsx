@@ -163,27 +163,25 @@ export default function FacultyOverviewTab({
       setSelectedFile(null);
       if (fileInputRef.current) fileInputRef.current.value = "";
       showToast("Video uploaded — processing your entry now.", "success");
+
+      // Notify admin of new faculty challenge entry
+      try {
+        await supabase.from("admin_notifications").insert({
+          user_id: user.id,
+          title: "New Faculty Challenge Entry",
+          message: `${facultyDisplayName || "A faculty member"} submitted specimen '${specimen.split("(")[0].trim()}' (${entryTitle.trim()}).`,
+          type: "faculty",
+          reference_id: inserted.id,
+        });
+      } catch (notifErr) {
+        console.warn("Could not insert admin notification:", notifErr);
+      }
     } catch (err) {
       console.error("plant-vids upload failed:", err);
       showToast(err?.message || "Upload failed. Please try again.", "error");
     } finally {
       setIsUploading(false);
     }
-  };
-  const handleToggleVote = (id) => {
-    setEntries((prev) =>
-      prev.map((item) => {
-        if (item.id === id) {
-          const updatedVoted = !item.hasVoted;
-          return {
-            ...item,
-            hasVoted: updatedVoted,
-            votes: updatedVoted ? item.votes + 1 : item.votes - 1,
-          };
-        }
-        return item;
-      }),
-    );
   };
 
   useEffect(() => {
@@ -607,20 +605,13 @@ export default function FacultyOverviewTab({
                   </div>
 
                   <div className="flex items-center justify-between pt-2 border-t border-white/5">
-                    <button
-                      onClick={() => handleToggleVote(entry.id)}
-                      className={`flex items-center gap-1.5 text-xs font-mono px-2.5 py-1 rounded-lg transition-colors cursor-pointer ${
-                        entry.hasVoted
-                          ? "bg-[#4be277]/20 text-[#4be277] border border-[#4be277]/30"
-                          : "text-[#bccbb9] hover:text-[#4be277] hover:bg-white/5"
-                      }`}
+                    <div
+                      className="flex items-center gap-1.5 text-xs font-mono px-2.5 py-1 rounded-lg bg-[#4be277]/10 text-[#4be277] border border-[#4be277]/20"
+                      title="Total student votes"
                     >
-                      <ThumbsUp
-                        size={13}
-                        className={entry.hasVoted ? "fill-current" : ""}
-                      />
-                      <span>{entry.votes > 0 ? entry.votes : "--"}</span>
-                    </button>
+                      <ThumbsUp size={13} />
+                      <span>{entry.votes > 0 ? entry.votes : 0} {entry.votes === 1 ? "vote" : "votes"}</span>
+                    </div>
                     <span className="text-[11px] font-mono text-[#bccbb9]/70">
                       {entry.timestamp}
                     </span>
@@ -659,20 +650,13 @@ export default function FacultyOverviewTab({
                 </div>
 
                 <div className="flex items-center gap-3 shrink-0">
-                  <button
-                    onClick={() => handleToggleVote(entry.id)}
-                    className={`flex items-center gap-1.5 text-xs font-mono px-3 py-1.5 rounded-lg transition-colors cursor-pointer ${
-                      entry.hasVoted
-                        ? "bg-[#4be277]/20 text-[#4be277] border border-[#4be277]/30"
-                        : "text-[#bccbb9] hover:text-[#4be277] hover:bg-white/5"
-                    }`}
+                  <div
+                    className="flex items-center gap-1.5 text-xs font-mono px-3 py-1.5 rounded-lg bg-[#4be277]/10 text-[#4be277] border border-[#4be277]/20"
+                    title="Total student votes"
                   >
-                    <ThumbsUp
-                      size={13}
-                      className={entry.hasVoted ? "fill-current" : ""}
-                    />
-                    <span>{entry.votes}</span>
-                  </button>
+                    <ThumbsUp size={13} />
+                    <span>{entry.votes > 0 ? entry.votes : 0} {entry.votes === 1 ? "vote" : "votes"}</span>
+                  </div>
                 </div>
               </div>
             ))}

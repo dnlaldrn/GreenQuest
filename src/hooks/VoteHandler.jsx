@@ -23,6 +23,25 @@ export function useFacultyVotes(entries, setEntries, showToast) {
         return;
       }
 
+      // Enforce student-only voting to avoid faculty self-voting / bias
+      let role = user.user_metadata?.role || user.user_metadata?.user_type;
+      if (!role || role === "user") {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("role, user_type")
+          .eq("id", user.id)
+          .single();
+        role = profile?.role || profile?.user_type || "student";
+      }
+
+      if (role === "faculty" || role === "admin") {
+        showToast?.(
+          "Only students are eligible to vote on GreenMate Challenge entries.",
+          "error"
+        );
+        return;
+      }
+
       const entry = (entries ?? []).find((e) => e.id === entryId);
       if (!entry) return;
 
