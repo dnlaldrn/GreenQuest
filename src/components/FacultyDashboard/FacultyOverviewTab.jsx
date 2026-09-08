@@ -1,4 +1,5 @@
 import React, { useRef, useState, useEffect } from "react";
+import { supabase } from "../../lib/supabase";
 import {
   Sparkles,
   Video,
@@ -76,12 +77,13 @@ export default function FacultyOverviewTab({
   const handleRemoveFile = (e) => {
     e.stopPropagation();
     setSelectedFile(null);
-    if (fileInputRef.current) fileInputRef.current.value = "";
+    if (fileInputRef.current) {
+      supabase.storage.from("plant-vids").remove([fileInputRef]);
+    }
   };
 
-  const handleSubmitEntry = (e) => {
+  const handleSubmitEntry = async (e) => {
     if (e) e.preventDefault();
-
     if (!entryTitle.trim() || entryTitle.trim().length < 3) {
       showToast(
         "Please enter an entry title (at least 3 characters).",
@@ -89,39 +91,85 @@ export default function FacultyOverviewTab({
       );
       return;
     }
-
     if (!selectedFile) {
       showToast("Please select or drop a video file first.", "error");
       return;
     }
-
     setIsUploading(true);
+    try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) throw new Error("You must be signed in to submit an entry.");
 
-    setTimeout(() => {
+      const fileExt = selectedFile.name.split(".").pop();
+      const safeTitle = entryTitle
+        .trim()
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/(^-|-$)/g, "");
+      const folder =
+        (facultyDisplayName || "faculty")
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, "-") || "faculty";
+      const filePath = `${folder}/${Date.now()}-${safeTitle}.${fileExt}`;
+
+      // 1. Upload the raw video file into the plant-vids bucket
+      const { error: uploadError } = await supabase.storage
+        .from("plant-vids")
+        .upload(filePath, selectedFile, {
+          cacheControl: "3600",
+          upsert: false,
+          contentType: selectedFile.type,
+        });
+      if (uploadError) throw uploadError;
+
+      // 2. Get a public URL for playback/thumbnail generation downstream
+      const { data: publicUrlData } = supabase.storage
+        .from("plant-vids")
+        .getPublicUrl(filePath);
+
+      // 3. Persist the entry so it survives a refresh / shows up for other faculty
+      const { data: inserted, error: insertError } = await supabase
+        .from("faculty_entries")
+        .insert({
+          user_id: user.id,
+          title: entryTitle.trim(),
+          specimen: specimen.split("(")[0].trim(),
+          video_path: filePath,
+          video_url: publicUrlData?.publicUrl,
+          is_verified: false,
+          duration: "0:30",
+        })
+        .select(
+          `id, user_id, title, specimen, video_path, video_url, is_verified, duration, created_at, profiles ( username )`,
+        )
+        .single();
+      if (insertError) throw insertError;
+
       const newEntry = {
-        id: `ent-${Date.now()}`,
-        specimen: specimen.split("(")[0].trim(),
-        title: entryTitle.trim(),
-        votes: 1,
-        hasVoted: true,
-        timestamp: "Just now",
-        duration: "0:30",
-        isVerified: true,
-        isProcessing: false,
+        ...inserted,
+        votes: 0,
+        hasVoted: false,
+        isVerified: inserted.is_verified,
         isOwner: true,
-        image:
-          "https://images.unsplash.com/photo-1545241047-6083a3684587?w=800&auto=format&fit=crop&q=80",
+        videoUrl: inserted.video_url,
+        videoPath: inserted.video_path,
+        timestamp: "Just now",
       };
 
       setEntries((prev) => [newEntry, ...prev]);
-      setIsUploading(false);
       setEntryTitle("");
       setSelectedFile(null);
       if (fileInputRef.current) fileInputRef.current.value = "";
-      showToast("Challenge entry uploaded successfully!", "success");
-    }, 1000);
+      showToast("Video uploaded — processing your entry now.", "success");
+    } catch (err) {
+      console.error("plant-vids upload failed:", err);
+      showToast(err?.message || "Upload failed. Please try again.", "error");
+    } finally {
+      setIsUploading(false);
+    }
   };
-
   const handleToggleVote = (id) => {
     setEntries((prev) =>
       prev.map((item) => {
