@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { CheckCircle2, AlertCircle } from "lucide-react";
 import { signOut } from "../services/authService";
@@ -12,6 +12,7 @@ import FacultyRulesTab from "../components/FacultyDashboard/FacultyRulesTab";
 import FacultySupportTab from "../components/FacultyDashboard/FacultySupportTab";
 import FacultyFooter from "../components/FacultyDashboard/FacultyFooter";
 import FacultySettings from "../components/FacultyDashboard/FacultySettings";
+import FacultyTabSkeleton from "../components/FacultyDashboard/FacultyTabSkeleton";
 import { supabase } from "../lib/supabase";
 
 export default function FacultyDashboard() {
@@ -25,6 +26,8 @@ export default function FacultyDashboard() {
   const [searchQuery, setSearchQuery] = useState("");
   const [currentUser, setCurrentUser] = useState(null);
   const [userData, setUserData] = useState("");
+  const [isTabLoading, setIsTabLoading] = useState(true);
+  const tabRequestId = useRef(0);
 
   const setActiveTab = (tab) => {
     setActiveTabState(tab);
@@ -44,8 +47,15 @@ export default function FacultyDashboard() {
 
   useEffect(() => {
     const tab = searchParams.get("tab") || "dashboard";
-
     setActiveTabState(tab);
+    const requestId = ++tabRequestId.current;
+    setIsTabLoading(true);
+    const timer = setTimeout(() => {
+      if (tabRequestId.current === requestId) {
+        setIsTabLoading(false);
+      }
+    }, 400);
+    return () => clearTimeout(timer);
   }, [searchParams]);
   // Toast notifications state
   const [toast, setToast] = useState(null);
@@ -235,35 +245,41 @@ export default function FacultyDashboard() {
 
         {/* Main Tab Content */}
         <main className="flex-1 p-4 sm:p-6 md:p-8 lg:p-10 max-w-7xl w-full mx-auto">
-          {activeTab === "dashboard" && (
-            <FacultyOverviewTab
-              facultyDisplayName={facultyDisplayName}
-              entries={filteredEntries}
-              setEntries={setEntries}
-              leaders={leaders}
-              setActiveTab={setActiveTab}
-              showToast={showToast}
-            />
-          )}
+          {isTabLoading ? (
+            <FacultyTabSkeleton />
+          ) : (
+            <>
+              {activeTab === "dashboard" && (
+                <FacultyOverviewTab
+                  facultyDisplayName={facultyDisplayName}
+                  entries={filteredEntries}
+                  setEntries={setEntries}
+                  leaders={leaders}
+                  setActiveTab={setActiveTab}
+                  showToast={showToast}
+                />
+              )}
 
-          {activeTab === "my-entries" && (
-            <FacultyMyEntriesTab
-              entries={filteredEntries}
-              setActiveTab={setActiveTab}
-            />
-          )}
+              {activeTab === "my-entries" && (
+                <FacultyMyEntriesTab
+                  entries={filteredEntries}
+                  setActiveTab={setActiveTab}
+                />
+              )}
 
-          {activeTab === "leaderboard" && (
-            <FacultyLeaderboardTab leaders={leaders} />
-          )}
+              {activeTab === "leaderboard" && (
+                <FacultyLeaderboardTab leaders={leaders} />
+              )}
 
-          {activeTab === "rules" && <FacultyRulesTab />}
+              {activeTab === "rules" && <FacultyRulesTab />}
 
-          {activeTab === "support" && (
-            <FacultySupportTab showToast={showToast} />
-          )}
-          {activeTab === "settings" && (
-            <FacultySettings showToast={showToast} />
+              {activeTab === "support" && (
+                <FacultySupportTab showToast={showToast} />
+              )}
+              {activeTab === "settings" && (
+                <FacultySettings showToast={showToast} />
+              )}
+            </>
           )}
         </main>
 
