@@ -154,3 +154,64 @@ VALUES
   ('Forest Restoration Bond', 'Planted in your name in the Amazon rainforest.', 'https://images.unsplash.com/photo-1513836279014-a89f7a76ae86?w=300', 1),
   ('Sustainable Yoga Mat', 'Hemp & natural organic tree rubber construction.', 'https://images.unsplash.com/photo-1592432678016-e910b452f9a2?w=300', 3 )
 ON CONFLICT DO NOTHING;
+
+--10.Allow authenticated users to upload into plant-vids
+
+create policy "Allow authenticated uploads to plant-vids"
+on storage.objects for insert
+to authenticated
+with check (bucket_id = 'plant-vids');
+
+
+--11. Allow anyone to read/view videos (skip this if the bucket should be private)
+create policy "Allow public read of plant-vids"
+on storage.objects for select
+to public
+using (bucket_id = 'plant-vids');
+
+--12 . Votes Table 
+create table if not exists faculty_entries (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references profiles(id) on delete cascade,
+  title text not null,
+  specimen text not null,
+  video_path text not null,
+  video_url text,
+  is_verified boolean not null default false,
+  is_processing boolean not null default true,
+  duration text,
+  created_at timestamptz not null default now()
+);
+
+create table if not exists faculty_votes (
+  id uuid primary key default gen_random_uuid(),
+  entry_id uuid not null references faculty_entries(id) on delete cascade,
+  user_id uuid not null references profiles(id) on delete cascade,
+  created_at timestamptz not null default now(),
+  unique (entry_id, user_id)
+);
+
+alter table faculty_entries enable row level security;
+alter table faculty_votes enable row level security;
+
+create policy "Public read faculty_entries"
+on faculty_entries for select to public using (true);
+
+create policy "Faculty insert own entries"
+on faculty_entries for insert to authenticated
+with check (auth.uid() = user_id);
+
+create policy "Faculty update own entries"
+on faculty_entries for update to authenticated
+using (auth.uid() = user_id);
+
+create policy "Public read faculty_votes"
+on faculty_votes for select to public using (true);
+
+create policy "Faculty insert own vote"
+on faculty_votes for insert to authenticated
+with check (auth.uid() = user_id);
+
+create policy "Faculty delete own vote"
+on faculty_votes for delete to authenticated
+using (auth.uid() = user_id);
