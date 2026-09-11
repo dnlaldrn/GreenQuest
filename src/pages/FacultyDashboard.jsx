@@ -25,7 +25,7 @@ export default function FacultyDashboard() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [currentUser, setCurrentUser] = useState(null);
-  const [userData, setUserData] = useState("");
+  const [userType, setuserType] = useState("");
   const [isTabLoading, setIsTabLoading] = useState(true);
   const tabRequestId = useRef(0);
 
@@ -45,6 +45,7 @@ export default function FacultyDashboard() {
     );
   };
 
+     
   useEffect(() => {
     const tab = searchParams.get("tab") || "dashboard";
     setActiveTabState(tab);
@@ -159,18 +160,31 @@ export default function FacultyDashboard() {
 
   // Fetch logged in user once
   useEffect(() => {
-    async function loadUser() {
-      try {
-        const { data } = await supabase.auth.getSession();
-        if (data?.session?.user) {
-          setCurrentUser(data.session.user);
+  async function loadUser() {
+    try {
+      const { data } = await supabase.auth.getSession();
+      if (data?.session?.user) {
+        setCurrentUser(data.session.user);
+
+        const { data: profile, error: profileError } = await supabase
+          .from("profiles")
+          .select("user_type")
+          .eq("id", data.session.user.id)
+          .single();
+
+        if (profileError || !profile) {
+          showToast("Could not load your profile. Please try again.", "error");
+          return;
         }
-      } catch (err) {
-        console.error("Error loading faculty session:", err);
+
+        setuserType(profile.user_type);
       }
+    } catch (err) {
+      console.error("Error loading faculty session:", err);
     }
-    loadUser();
-  }, []);
+  }
+  loadUser();
+}, []);
 
   // Handle Logout
   const handleLogout = async () => {
@@ -194,8 +208,16 @@ export default function FacultyDashboard() {
       item.specimen.toLowerCase().includes(q)
     );
   });
+  function capitalizeFirstLetter(str) {
+  return str
+    .split(" ")
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
+}
 
-  const facultyDisplayName = currentUser?.user_metadata?.username || "Loading";
+
+  const facultyDisplayName = currentUser?.user_metadata?.username|| "Loading";
+  const userTypeDisplay = capitalizeFirstLetter(userType) || "loading";
 
   return (
     <div className="min-h-screen w-full bg-[#0e150e] text-[#dce5d9] font-sans flex flex-col md:flex-row text-xs sm:text-sm selection:bg-[#22c55e] selection:text-[#004b1e] relative overflow-x-hidden">
@@ -241,6 +263,8 @@ export default function FacultyDashboard() {
           onSettingsClick={() => setActiveTab("settings")}
           facultyDisplayName={facultyDisplayName}
           onMenuToggle={() => setIsSidebarOpen(!isSidebarOpen)}
+          userTypeDisplay={userTypeDisplay}
+    
         />
 
         {/* Main Tab Content */}

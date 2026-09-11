@@ -18,7 +18,9 @@ export default function FacultyRulesTab() {
         <div className="p-4 rounded-xl bg-[#242c24] border border-white/5 space-y-2">
           <div className="flex items-center gap-2 text-[#4be277] font-bold text-sm">
             <CheckCircle2 size={16} />
-            <h4>1. Video Requirements</h4>
+            <h4>1. Video 
+              
+            </h4>
           </div>
           <p className="text-xs text-[#bccbb9] leading-relaxed">
             All video entries must document authentic plant specimens grown under

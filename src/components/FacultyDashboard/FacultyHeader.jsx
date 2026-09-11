@@ -9,6 +9,7 @@ export default function FacultyHeader({
   onSettingsClick,
   facultyDisplayName,
   onMenuToggle,
+  userTypeDisplay,
 }) {
   const [isSearchOpenMobile, setIsSearchOpenMobile] = useState(false);
 
@@ -96,7 +97,7 @@ export default function FacultyHeader({
                 {facultyDisplayName}
               </div>
               <div className="text-[10px] font-mono text-[#4be277] leading-none">
-                Faculty
+                {userTypeDisplay}
               </div>
             </div>
           </div>
