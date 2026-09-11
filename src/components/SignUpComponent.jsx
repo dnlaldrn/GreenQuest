@@ -92,7 +92,7 @@ export default function SignUpComponent() {
             id: user.id,
             username: username.trim(),
             role: "user",
-            user_type: userType, // "student" or "faculty"
+            user_type: userType, // "student" or "faculty or employee"
             interests: selectedInterests, // Saves selected interests to DB if needed
           });
 
@@ -221,7 +221,8 @@ export default function SignUpComponent() {
                       className="w-full appearance-none bg-[#17201c] border border-[#23322b] text-sm text-gray-200 rounded-none pl-11 pr-10 py-[14px] focus:outline-none focus:border-[#2ecc71] transition cursor-pointer"
                     >
                       <option value="student">Student</option>
-                      <option value="faculty">Faculty</option>
+                      <option value="faculty">Faculty (Teaching)</option>
+                        <option value="employee">Employee (Non-teaching)</option>
                     </select>
                     <ChevronDown className="absolute right-4 w-4 h-4 text-gray-500 pointer-events-none" />
                   </div>
