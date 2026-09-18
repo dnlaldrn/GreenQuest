@@ -2,6 +2,8 @@ import { Navigate, Outlet } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
 
+const PRIVILEGED_ROLES = ["admin", "faculty", "employee"];
+
 function ProtectedRoute({ allowedRole }) {
   const [user, setUser] = useState(null);
   const [userType, setUserType] = useState(null);
@@ -31,12 +33,9 @@ function ProtectedRoute({ allowedRole }) {
           console.warn("Could not query profiles table, falling back to auth metadata:", error.message);
         }
 
-        const effectiveType =
-          profile?.role === "admin"
-            ? "admin"
-            : profile?.user_type ||
-              currentUser.user_metadata?.user_type ||
-              (profile?.role === "faculty" ? "faculty" : "student");
+        const effectiveType = PRIVILEGED_ROLES.includes(profile?.role)
+          ? profile.role
+          : profile?.user_type || currentUser.user_metadata?.user_type || "student";
 
         if (isMounted) {
           setUser(currentUser);
@@ -46,10 +45,10 @@ function ProtectedRoute({ allowedRole }) {
         console.error("Error fetching user type:", error);
         if (isMounted) {
           setUser(currentUser);
-          const fallbackType =
-            currentUser.user_metadata?.role === "admin"
-              ? "admin"
-              : currentUser.user_metadata?.user_type || "student";
+          const metaRole = currentUser.user_metadata?.role;
+          const fallbackType = PRIVILEGED_ROLES.includes(metaRole)
+            ? metaRole
+            : currentUser.user_metadata?.user_type || "student";
           setUserType(fallbackType);
         }
       } finally {
@@ -74,7 +73,6 @@ function ProtectedRoute({ allowedRole }) {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, session) => {
-      // Completely ignore background token refresh events so that alt-tabbing never triggers re-renders or page flickers
       if (event === "TOKEN_REFRESHED" || event === "INITIAL_SESSION") {
         return;
       }
@@ -107,15 +105,17 @@ function ProtectedRoute({ allowedRole }) {
     );
   }
 
-  if (!user) {
+   if (!user) {
     return <Navigate to="/login" replace />;
   }
 
-  if (userType !== allowedRole) {
+  const allowed = Array.isArray(allowedRole) ? allowedRole : [allowedRole];
+  if (!allowed.includes(userType)) {
     return <Navigate to="/login" replace />;
   }
 
   return <Outlet />;
+
 }
 
 export default ProtectedRoute;
