@@ -1,107 +1,13 @@
-import { Link } from "react-router-dom";
-import FloatingLines from "../components/FloatingLines/FloatingLines";
+import LivingHero from "../components/PlantScene/LivingHero";
 
 export default function HeroSection() {
-  const steps = [
-    {
-      id: 1,
-      title: "Upload",
-      description: "Capture your eco-action in a short video clip.",
-      // Cloud upload icon
-      icon: (
-        <svg
-          className="w-6 h-6"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-          strokeWidth="2"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
-          />
-        </svg>
-      ),
-    },
-    {
-      id: 2,
-      title: "AI Analysis",
-      description: "Our AI verifies the authenticity of your action.",
-      // AI / Brain outline icon
-      icon: (
-        <svg
-          className="w-6 h-6"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-          strokeWidth="2"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
-          />
-        </svg>
-      ),
-    },
-    {
-      id: 3,
-      title: "Earn Points",
-      description: "Receive Green Points based on the impact score.",
-      // Currency / Points stack icon
-      icon: (
-        <svg
-          className="w-6 h-6"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-          strokeWidth="2"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"
-          />
-        </svg>
-      ),
-    },
-    {
-      id: 4,
-      title: "Redeem",
-      description: "Swap points for rewards or carbon offsets.",
-      // Giftbox icon
-      icon: (
-        <svg
-          className="w-6 h-6"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-          strokeWidth="2"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V6a2 2 0 10-2 2h2zm0 0H4v13a2 2 0 002 2h12a2 2 0 002-2V8H12z"
-          />
-        </svg>
-      ),
-    },
-  ];
   const features = [
     {
       title: "AI Verification",
       description:
         "Real-time computer vision processing to validate recycling, composting, and planting activities.",
-      // Checkmark Badge Icon
       icon: (
-        <svg
-          className="w-6 h-6"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-          strokeWidth="2"
-        >
+        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
           <path
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -114,15 +20,8 @@ export default function HeroSection() {
       title: "Gamified Rewards",
       description:
         "Level up your sustainability profile and unlock exclusive digital and physical eco-perks.",
-      // Medal/Trophy Icon
       icon: (
-        <svg
-          className="w-6 h-6"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-          strokeWidth="2"
-        >
+        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
           <path
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -135,15 +34,8 @@ export default function HeroSection() {
       title: "Leaderboards",
       description:
         "Compete globally or within your local community to see who makes the biggest impact.",
-      // Podium / Stats bar outline icon
       icon: (
-        <svg
-          className="w-6 h-6"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-          strokeWidth="2"
-        >
+        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
           <path
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -156,15 +48,8 @@ export default function HeroSection() {
       title: "Achievement Badges",
       description:
         "Collect unique on-chain badges for hitting specific sustainability milestones.",
-      // Star/Ribbon Award Icon
       icon: (
-        <svg
-          className="w-6 h-6"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-          strokeWidth="2"
-        >
+        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
           <path
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -177,15 +62,8 @@ export default function HeroSection() {
       title: "Sustainability Analytics",
       description:
         "Deep dive into your personal carbon footprint data and see your reduction trends.",
-      // Bar Chart Icon
       icon: (
-        <svg
-          className="w-6 h-6"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-          strokeWidth="2"
-        >
+        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
           <path
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -198,15 +76,8 @@ export default function HeroSection() {
       title: "Secure Profiles",
       description:
         "Your data and identity are protected with industry-standard encryption protocols.",
-      // Shield Icon
       icon: (
-        <svg
-          className="w-6 h-6"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-          strokeWidth="2"
-        >
+        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
           <path
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -218,199 +89,23 @@ export default function HeroSection() {
   ];
 
   const leaderboardData = [
-    {
-      rank: "01",
-      initials: "EL",
-      name: "Elena Rivers",
-      quests: 142,
-      points: "45,200",
-      impact: "12.4t CO2",
-    },
-    {
-      rank: "02",
-      initials: "MK",
-      name: "Marcus K.",
-      quests: 128,
-      points: "41,800",
-      impact: "10.1t CO2",
-    },
-    {
-      rank: "03",
-      initials: "SJ",
-      name: "Sarah Jenkins",
-      quests: 115,
-      points: "38,500",
-      impact: "8.9t CO2",
-    },
+    { rank: "01", initials: "EL", name: "Elena Rivers", quests: 142, points: "45,200", impact: "12.4t CO2" },
+    { rank: "02", initials: "MK", name: "Marcus K.", quests: 128, points: "41,800", impact: "10.1t CO2" },
+    { rank: "03", initials: "SJ", name: "Sarah Jenkins", quests: 115, points: "38,500", impact: "8.9t CO2" },
   ];
+
   return (
-    <div className="min-h-screen bg-[#070b09] text-white font-sans overflow-hidden relative selection:bg-emerald-500 selection:text-black">
-      {/* Background Decorative Waves (Simulated via gradients/blur) */}
+    <div id="home" className="min-h-screen bg-[#070b09] text-white font-sans relative selection:bg-emerald-500 selection:text-black">
+      {/* PAGE 1 + PAGE 2 — scroll-driven 3D plant experience (replaces the old
+          static hero and the boxed "How It Works" grid).
+          NOTE: this root wrapper must NOT have overflow-hidden (or any
+          overflow other than visible) — LivingHero relies on position:sticky,
+          and a clipped/scroll-container ancestor breaks sticky positioning,
+          which is why the How It Works corners were never appearing. */}
+      <LivingHero />
 
-      <div className="absolute inset-0 opacity-20 pointer-events-none mix-blend-screen overflow-hidden">
-        <div className="absolute -top-[20%] -left-[10%] w-[80%] h-[60%] bg-gradient-to-br from-emerald-500/20 to-transparent blur-3xl transform rotate-12" />
-
-        <div className="absolute top-[40%] -right-[10%] w-[70%] h-[70%] bg-gradient-to-tl from-green-500/10 via-emerald-600/5 to-transparent blur-3xl transform -rotate-12" />
-      </div>
-
-      {/* --- HERO WRAPPER: relative container that holds both the FloatingLines bg and the hero content --- */}
-
-      <div className="relative w-full">
-        {/* FloatingLines background — absolutely positioned behind everything in this section */}
-
-        <div className="absolute inset-0 z-0 pointer-events-none">
-          <FloatingLines
-            linesGradient={["#22C55E", "#166534", "#84CC16"]}
-            enabledWaves={["top", "middle", "bottom"]}
-            lineCount={6}
-            lineDistance={52}
-            bendRadius={8}
-            bendStrength={-2}
-            interactive
-            parallax={true}
-            animationSpeed={1}
-          />
-        </div>
-        <main className="relative z-10 max-w-7xl mx-auto px-6 md:px-12 pt-16 pb-24 grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
-          {/* Left Side: Copy and Stats */}
-          <div className="lg:col-span-7 space-y-8">
-            <div className="space-y-4">
-              <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-white leading-tight">
-                Turn Sustainable <br />
-                <span className=" text-[#22C55E] ">Actions Into Rewards</span>
-              </h1>
-              <p className="text-white text-base md:text-lg max-w-xl leading-relaxed">
-                Upload eco-friendly videos, let AI verify your impact, and earn
-                Green Points for a greener future. Join thousands making a real
-                difference.
-              </p>
-            </div>
-
-            {/* Action Call to Buttons */}
-            <div className="flex flex-wrap items-center gap-4">
-              <button className="flex items-center space-x-2 bg-emerald-400 hover:bg-emerald-300 text-neutral-950 px-6 py-3 rounded-lg font-semibold tracking-wide shadow-lg shadow-emerald-400/20 transition-all duration-200">
-                <svg
-                  className="w-5 h-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                  strokeWidth="2.5"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M12 4v16m8-8H4"
-                  />
-                </svg>
-                <Link to="/login">Upload Video</Link>
-              </button>
-
-              <button className="border border-emerald-500/30 hover:border-emerald-400 bg-emerald-950/20 hover:bg-emerald-950/40 text-emerald-400 px-6 py-3 rounded-lg font-semibold tracking-wide transition-all duration-200">
-                Learn More
-              </button>
-            </div>
-
-            {/* Statistics Grid */}
-            <div className="grid grid-cols-3 gap-4 pt-4 max-w-2xl">
-              {/* Stat 1 */}
-              <div className="bg-[#101714]/60 border border-emerald-950/60 p-4 rounded-xl backdrop-blur-sm">
-                <span className="block text-[10px] uppercase font-bold tracking-widest text-emerald-500 mb-1">
-                  Total Points
-                </span>
-                <span className="text-2xl md:text-3xl font-extrabold tracking-tight text-neutral-100">
-                  1.2M+
-                </span>
-              </div>
-
-              {/* Stat 2 */}
-              <div className="bg-[#101714]/60 border border-emerald-950/60 p-4 rounded-xl backdrop-blur-sm">
-                <span className="block text-[10px] uppercase font-bold tracking-widest text-emerald-500 mb-1">
-                  Videos Analyzed
-                </span>
-                <span className="text-2xl md:text-3xl font-extrabold tracking-tight text-neutral-100">
-                  85k+
-                </span>
-              </div>
-
-              {/* Stat 3 */}
-              <div className="bg-[#101714]/60 border border-emerald-950/60 p-4 rounded-xl backdrop-blur-sm">
-                <span className="block text-[10px] uppercase font-bold tracking-widest text-emerald-500 mb-1">
-                  CO2 Saved
-                </span>
-                <span className="text-2xl md:text-3xl font-extrabold tracking-tight text-neutral-100">
-                  450{" "}
-                  <span className="text-xs font-normal text-gray-400">
-                    Tons
-                  </span>
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* Right Side: AI Earth Image Card */}
-          <div className="lg:col-span-5 flex justify-center lg:justify-end">
-            <div className="relative group w-full max-w-[420px] aspect-square rounded-2xl p-1 bg-gradient-to-b from-emerald-950/50 to-emerald-900/10 border border-emerald-900/40 shadow-2xl shadow-emerald-950/50">
-              <div className="w-full h-full rounded-xl overflow-hidden bg-[#0d1210] flex items-center justify-center relative">
-                {/* Main AI / Mossy Sphere Image Place Holder */}
-                <img
-                  src="src/assets/heroimg.png" // Replace this URL with your custom green AI graphic
-                  alt="AI Sustainability Hub"
-                  className="w-full h-full object-cover mix-blend-lighten opacity-80 group-hover:scale-105 transition-transform duration-500"
-                />
-                {/* Optional inner glow overlay */}
-                <div className="absolute inset-0 bg-gradient-to-t from-[#070b09] via-transparent to-transparent opacity-60" />
-              </div>
-            </div>
-          </div>
-        </main>
-      </div>
-      {/* --- HERO MAIN CONTENT --- */}
-
-      <section className="bg-[#090f0c] text-white py-20 px-6 select-none relative overflow-hidden">
-        {/* Top Header Group */}
-        <div className="max-w-3xl mx-auto text-center mb-16 space-y-3">
-          <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight text-neutral-100">
-            How It Works
-          </h2>
-          <p className="text-gray-400 text-sm md:text-base font-medium tracking-wide">
-            Our advanced computer vision verifies your real-world ecological
-            actions in seconds.
-          </p>
-        </div>
-
-        {/* Steps Grid Container */}
-        <div className="max-w-6xl mx-auto relative">
-          {/* Decorative connecting line behind the elements (Visible on desktop) */}
-          <div className="hidden lg:block absolute top-[28px] left-[12%] right-[12%] h-[1px] bg-gradient-to-r from-emerald-500/0 via-emerald-500/20 to-emerald-500/0 z-0" />
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-12 lg:gap-6 relative z-10">
-            {steps.map((step) => (
-              <div
-                key={step.id}
-                className="flex flex-col items-center text-center space-y-4 group"
-              >
-                {/* Icon Circle */}
-                <div className="w-14 h-14 rounded-full flex items-center justify-center border border-emerald-500/30 bg-[#0d1612] text-emerald-400 shadow-md shadow-emerald-950/40 group-hover:border-emerald-400 group-hover:text-emerald-300 transition-all duration-300 transform group-hover:scale-105">
-                  {step.icon}
-                </div>
-
-                {/* Text Meta */}
-                <div className="space-y-2 max-w-[240px]">
-                  <h3 className="text-lg font-bold tracking-wide text-neutral-100">
-                    {step.title}
-                  </h3>
-                  <p className="text-sm text-gray-400 leading-relaxed font-normal">
-                    {step.description}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
       <section className="bg-[#090f0c] text-white py-24 px-6 md:px-12 selection:bg-emerald-500 selection:text-black">
         <div className="max-w-7xl mx-auto">
-          {/* Section Header with Green Accent Underline */}
           <div className="mb-14">
             <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight text-neutral-100">
               Future-Ready Features
@@ -418,42 +113,34 @@ export default function HeroSection() {
             <div className="w-16 h-[3px] bg-emerald-500 mt-3 rounded-full" />
           </div>
 
-          {/* Features 3x2 Grid Setup */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {features.map((feature, idx) => (
               <div
                 key={idx}
                 className="bg-[#121915]/60 border border-emerald-950/50 hover:border-emerald-500/30 p-8 rounded-2xl flex flex-col space-y-4 transition-all duration-300 group hover:bg-[#151e19]/80 shadow-lg shadow-black/20"
               >
-                {/* Feature Icon Container */}
                 <div className="text-emerald-500 group-hover:text-emerald-400 transition-colors duration-200">
                   {feature.icon}
                 </div>
-
-                {/* Title & Description Container */}
                 <div className="space-y-2">
                   <h3 className="text-lg font-bold tracking-wide text-neutral-100 group-hover:text-emerald-400 transition-colors duration-200">
                     {feature.title}
                   </h3>
-                  <p className="text-sm text-gray-400 leading-relaxed font-normal">
-                    {feature.description}
-                  </p>
+                  <p className="text-sm text-gray-400 leading-relaxed font-normal">{feature.description}</p>
                 </div>
               </div>
             ))}
           </div>
         </div>
       </section>
-      <section className="max-w-7xl mx-auto px-6 md:px-12 py-20">
-        {/* Section Header */}
+
+      <section id="leaderboard" className="max-w-7xl mx-auto px-6 md:px-12 py-20">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-10">
           <div>
             <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight text-neutral-100">
               Impact Leaderboard
             </h2>
-            <p className="text-gray-400 text-sm mt-2">
-              Celebrating this month's top Earth Champions.
-            </p>
+            <p className="text-gray-400 text-sm mt-2">Celebrating this month's top Earth Champions.</p>
           </div>
           <div>
             <button className="border border-emerald-500/40 hover:border-emerald-400 text-emerald-400 hover:bg-emerald-950/20 px-5 py-2.5 rounded-full text-sm font-semibold tracking-wide transition-all duration-200">
@@ -462,7 +149,6 @@ export default function HeroSection() {
           </div>
         </div>
 
-        {/* Responsive Table Wrapper */}
         <div className="w-full overflow-x-auto bg-[#111815]/50 border border-emerald-950/60 rounded-2xl backdrop-blur-sm shadow-xl">
           <table className="w-full text-left border-collapse min-w-[600px]">
             <thead>
@@ -475,36 +161,18 @@ export default function HeroSection() {
             </thead>
             <tbody className="divide-y divide-emerald-950/30">
               {leaderboardData.map((row, index) => (
-                <tr
-                  key={index}
-                  className="hover:bg-emerald-950/10 transition-colors duration-150"
-                >
-                  {/* Rank column */}
-                  <td className="py-5 px-6 text-emerald-400 font-bold tracking-wide">
-                    {row.rank}
-                  </td>
-
-                  {/* Avatar + User column */}
+                <tr key={index} className="hover:bg-emerald-950/10 transition-colors duration-150">
+                  <td className="py-5 px-6 text-emerald-400 font-bold tracking-wide">{row.rank}</td>
                   <td className="py-5 px-6">
                     <div className="flex items-center space-x-3">
                       <div className="w-8 h-8 rounded-full bg-neutral-800 border border-emerald-950 flex items-center justify-center text-[11px] font-bold text-gray-400 tracking-wider">
                         {row.initials}
                       </div>
-                      <span className="font-semibold text-neutral-200">
-                        {row.name}
-                      </span>
+                      <span className="font-semibold text-neutral-200">{row.name}</span>
                     </div>
                   </td>
-
-                  {/* Quests column */}
-                  <td className="py-5 px-6 text-gray-300 font-medium">
-                    {row.quests}
-                  </td>
-
-                  {/* Points column */}
-                  <td className="py-5 px-6 text-gray-300 font-medium">
-                    {row.points}
-                  </td>
+                  <td className="py-5 px-6 text-gray-300 font-medium">{row.quests}</td>
+                  <td className="py-5 px-6 text-gray-300 font-medium">{row.points}</td>
                 </tr>
               ))}
             </tbody>
