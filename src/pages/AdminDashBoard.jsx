@@ -1048,6 +1048,7 @@ export default function AdminDashBoard() {
       u.username?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       u.email?.toLowerCase().includes(searchQuery.toLowerCase()),
   );
+  console.log(filteredUsers)
 
   const filteredSubmissions = submissions.filter(
     (s) =>
