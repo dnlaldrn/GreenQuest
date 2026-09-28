@@ -9,11 +9,12 @@ import UserManagementTab from "../components/AdminDashboard/UserManagementTab";
 import VideoReviewTab from "../components/AdminDashboard/VideoReviewTab";
 import RewardsTab from "../components/AdminDashboard/RewardsTab";
 import AiLogsTab from "../components/AdminDashboard/AiLogsTab";
-import ReportsTab from "../components/AdminDashboard/ReportsTab";
 import GreenMateVotesTab from "../components/AdminDashboard/GreenMateVotesTab";
 import SettingsTab from "../components/AdminDashboard/SettingsTab";
 import AdminTabSkeleton from "../components/AdminDashboard/AdminTabSkeleton";
 import { sanitizeAlphanumeric } from "../lib/validation";
+import ConfirmModal from "../components/ConfirmModal"
+
 
 import {
   LayoutDashboard,
@@ -282,7 +283,7 @@ export default function AdminDashBoard() {
     };
   }, [isNotifOpen]);
 
-  // Custom Confirmation Modal state
+  // Single confirmation modal state (used by sign-out, delete, role change)
   const [confirmModal, setConfirmModal] = useState({
     isOpen: false,
     title: "",
@@ -290,30 +291,46 @@ export default function AdminDashBoard() {
     onConfirm: null,
   });
 
+  const closeModal = () =>
+    setConfirmModal((prev) => ({ ...prev, isOpen: false }));
+
   const requestConfirm = (title, message, onConfirm) => {
     setConfirmModal({
       isOpen: true,
       title,
       message,
-      onConfirm: () => {
-        onConfirm();
-        setConfirmModal((prev) => ({ ...prev, isOpen: false }));
+      onConfirm: async () => {
+        // Close first so the modal never hangs open if the action is slow or throws
+        closeModal();
+        await onConfirm();
       },
     });
   };
 
+  const handleSignOutTrigger = () => {
+    requestConfirm(
+      "Confirm Log Out",
+      "Are you sure you want to sign out of GreenQuest? You'll need to log back in to continue tracking your impact.",
+      async () => {
+        try {
+          await signOut();
+          navigate("/login");
+        } catch (err) {
+          console.error("Sign out failed:", err);
+          showToast("Error signing out: " + err.message, "error");
+        }
+      },
+    );
+  };
+
+  // Close modal on Escape
   useEffect(() => {
+    if (!confirmModal.isOpen) return;
     const handleKeyDown = (e) => {
-      if (e.key === "Escape") {
-        setConfirmModal((prev) => ({ ...prev, isOpen: false }));
-      }
+      if (e.key === "Escape") closeModal();
     };
-    if (confirmModal.isOpen) {
-      window.addEventListener("keydown", handleKeyDown);
-    }
-    return () => {
-      window.removeEventListener("keydown", handleKeyDown);
-    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
   }, [confirmModal.isOpen]);
 
   // Search filter
@@ -329,6 +346,8 @@ export default function AdminDashBoard() {
   const [users, setUsers] = useState([]);
   const [submissions, setSubmissions] = useState([]);
   const [rewards, setRewards] = useState([]);
+  // true once rewards were loaded from the real Supabase `rewards` table
+  const rewardsLive = useRef(false);
   const [aiLogs, setAiLogs] = useState([]);
 
   // Current admin details
@@ -507,6 +526,26 @@ export default function AdminDashBoard() {
     checkAuthAndLoad();
   }, [navigate]);
 
+  // Fetch only the rewards table (used on load and after every save/delete)
+  const fetchRewards = async () => {
+    const { data, error } = await supabase
+      .from("rewards")
+      .select("*")
+      .order("name", { ascending: true });
+
+    if (error) {
+      if (error.code === "PGRST205") {
+        // table does not exist in this project
+        rewardsLive.current = false;
+        return false;
+      }
+      throw error;
+    }
+    rewardsLive.current = true;
+    setRewards(data || []);
+    return true;
+  };
+
   // Load Real Data from Supabase
   const loadAllData = async () => {
     try {
@@ -538,18 +577,9 @@ export default function AdminDashBoard() {
         setSubmissions(subsData || []);
       }
 
-      // 3. Fetch rewards
-      const { data: rewardsData, error: rError } = await supabase
-        .from("rewards")
-        .select("*")
-        .order("name", { ascending: true });
-
-      if (rError) {
-        if (rError.code === "PGRST205") mockNeeded = true;
-        else throw rError;
-      } else {
-        setRewards(rewardsData || []);
-      }
+      // 3. Fetch rewards from public.rewards
+      const rewardsLoaded = await fetchRewards();
+      if (!rewardsLoaded) mockNeeded = true;
 
       if (mockNeeded) {
         setIsMocked(true);
@@ -599,22 +629,12 @@ export default function AdminDashBoard() {
     setStats(mockStats);
     setUsers(mockUsers);
     setSubmissions(mockSubmissions);
-    setRewards(mockRewards);
+    if (!rewardsLive.current) setRewards(mockRewards);
     setAiLogs(mockLogs);
   };
 
   // Sign out handler
-  const handleSignOut = () => {
-    requestConfirm(
-      "Confirm Logout",
-      "Are you sure you want to log out of the GreenQuest Admin Panel?",
-      async () => {
-        await signOut();
-        navigate("/login");
-      },
-    );
-  };
-
+  
   // Video review handlers
   const handleApprove = async (subId, userId, estPoints) => {
     try {
@@ -732,25 +752,44 @@ export default function AdminDashBoard() {
     }
   };
 
-  // Rewards Actions
-  const handleSaveReward = async (r) => {
-    const rankValue = parseInt(r.points_cost) || 1;
-    const stockValue =
-      r.stock !== undefined && !isNaN(parseInt(r.stock))
-        ? parseInt(r.stock)
-        : 0;
+  // Rewards Actions — these write straight to public.rewards in Supabase
+  const RLS_MESSAGE =
+    "Supabase blocked this change (row-level security). Make sure your profile has role = 'admin' and the rewards table has an admin write policy.";
 
+  const handleSaveReward = async (r) => {
+    const name = (r.name || "").trim();
+    const pointsCost = parseInt(r.points_cost, 10);
+    const stock =
+      r.stock === undefined || r.stock === null || r.stock === ""
+        ? 0
+        : parseInt(r.stock, 10);
+
+    if (!name) {
+      showToast("Reward name is required.", "error");
+      return false;
+    }
+    if (isNaN(pointsCost) || pointsCost < 1) {
+      showToast("Points cost must be a whole number of at least 1.", "error");
+      return false;
+    }
+    if (isNaN(stock) || stock < 0) {
+      showToast("Stock must be a whole number (0 or more).", "error");
+      return false;
+    }
+
+    // Matches public.rewards (id and created_at are generated by the database)
     const payload = {
-      name: r.name.trim(),
+      name,
       description: r.description ? r.description.trim() : "",
-      points_cost: rankValue,
-      stock: stockValue,
+      points_cost: pointsCost,
+      stock,
       image_url: r.image_url || "",
       active: r.active !== undefined ? Boolean(r.active) : true,
     };
 
     try {
-      if (isMocked) {
+      // Only when the rewards table doesn't exist at all (demo mode)
+      if (!rewardsLive.current) {
         if (r.id) {
           setRewards((prev) =>
             prev.map((item) =>
@@ -758,77 +797,42 @@ export default function AdminDashBoard() {
             ),
           );
         } else {
-          const newR = { ...payload, id: `rew-${Date.now()}` };
-          setRewards((prev) => [...prev, newR]);
+          setRewards((prev) => [...prev, { ...payload, id: `rew-${Date.now()}` }]);
         }
-        showToast("Reward inventory saved in mock mode!", "success");
+        showToast("Reward saved in demo mode (not stored in Supabase).", "warning");
         return true;
       }
 
-      let error;
-      if (r.id) {
-        const { error: editError } = await supabase
-          .from("rewards")
-          .update(payload)
-          .eq("id", r.id);
-        error = editError;
-      } else {
-        const { error: addError } = await supabase
-          .from("rewards")
-          .insert([payload]);
-        error = addError;
+      // .select() returns the affected rows, so we can tell when RLS silently
+      // blocked an update (Supabase returns no error, just zero rows).
+      const query = r.id
+        ? supabase.from("rewards").update(payload).eq("id", r.id)
+        : supabase.from("rewards").insert([payload]);
+      const { data, error } = await query.select();
+
+      if (error) throw error;
+      if (!data || data.length === 0) {
+        showToast(
+          "Nothing was saved. The reward may no longer exist, or Supabase blocked the update (check RLS / admin role).",
+          "error",
+        );
+        return false;
       }
 
-      if (error) {
-        if (error.code === "42501" || isAdminBypassed) {
-          console.warn(
-            "RLS restriction on rewards table (code 42501). Falling back to session state update.",
-          );
-          if (r.id) {
-            setRewards((prev) =>
-              prev.map((item) =>
-                item.id === r.id ? { ...item, ...payload } : item,
-              ),
-            );
-          } else {
-            const newR = { ...payload, id: `rew-${Date.now()}` };
-            setRewards((prev) => [...prev, newR]);
-          }
-          showToast(
-            "Saved to current session! (Set role='admin' in Supabase to sync live DB).",
-            "warning",
-          );
-          return true;
-        }
-        throw error;
-      }
-
-      showToast("Reward saved successfully.", "success");
-      await loadAllData();
+      await fetchRewards();
+      showToast(
+        r.id ? "Reward updated in Supabase." : "Reward added to Supabase.",
+        "success",
+      );
       return true;
     } catch (err) {
       console.error("Failed to save reward:", err);
-      if (
-        err?.code === "42501" ||
-        err?.message?.includes("row-level security")
-      ) {
-        if (r.id) {
-          setRewards((prev) =>
-            prev.map((item) =>
-              item.id === r.id ? { ...item, ...payload } : item,
-            ),
-          );
-        } else {
-          const newR = { ...payload, id: `rew-${Date.now()}` };
-          setRewards((prev) => [...prev, newR]);
-        }
-        showToast(
-          "Saved to current session! (Set role='admin' in Supabase to sync live DB).",
-          "warning",
-        );
-        return true;
-      }
-      showToast("Error saving reward: " + err.message, "error");
+      const blocked =
+        err?.code === "42501" || err?.message?.includes("row-level security");
+      showToast(
+        blocked ? RLS_MESSAGE : "Error saving reward: " + err.message,
+        "error",
+      );
       return false;
     }
   };
@@ -839,39 +843,44 @@ export default function AdminDashBoard() {
       "Are you sure you want to delete this reward catalog item? This action is permanent.",
       async () => {
         try {
-          if (isMocked) {
+          if (!rewardsLive.current) {
             setRewards((prev) => prev.filter((r) => r.id !== rewardId));
-            showToast("Deleted reward item in mock mode.", "success");
+            showToast("Deleted reward in demo mode (not stored in Supabase).", "warning");
             return;
           }
 
-          const { error } = await supabase
+          const { data, error } = await supabase
             .from("rewards")
             .delete()
-            .eq("id", rewardId);
-
-          if (error) {
-            if (error.code === "42501" || isAdminBypassed) {
-              setRewards((prev) => prev.filter((r) => r.id !== rewardId));
-              showToast("Deleted from current session.", "warning");
-              return;
-            }
-            throw error;
+            .eq("id", rewardId)
+            .select();
+          
+          if (error) throw error;
+          if (!data || data.length === 0) {
+            showToast(
+              "Nothing was deleted. The reward may already be gone, or Supabase blocked the delete (check RLS / admin role).",
+              "error",
+            );
+            return;
           }
 
-          showToast("Reward deleted successfully.", "success");
-          await loadAllData();
+          await fetchRewards();
+          showToast("Reward deleted from Supabase.", "success");
         } catch (err) {
           console.error("Failed to delete reward:", err);
           if (
             err?.code === "42501" ||
             err?.message?.includes("row-level security")
           ) {
-            setRewards((prev) => prev.filter((r) => r.id !== rewardId));
-            showToast("Deleted from current session.", "warning");
-            return;
+            showToast(RLS_MESSAGE, "error");
+          } else if (err?.code === "23503") {
+            showToast(
+              "This reward is referenced by existing records (e.g. redemptions). Set it to inactive instead of deleting.",
+              "error",
+            );
+          } else {
+            showToast("Error deleting reward: " + err.message, "error");
           }
-          showToast("Error deleting reward: " + err.message, "error");
         }
       },
     );
@@ -1046,9 +1055,9 @@ export default function AdminDashBoard() {
   const filteredUsers = users.filter(
     (u) =>
       u.username?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      u.email?.toLowerCase().includes(searchQuery.toLowerCase()),
-  );
-  console.log(filteredUsers)
+      u.email?.toLowerCase().includes(searchQuery.toLowerCase()) || u.total_points,
+  ); 
+ 
 
   const filteredSubmissions = submissions.filter(
     (s) =>
@@ -1259,24 +1268,6 @@ export default function AdminDashBoard() {
           </button>
 
           <button
-            onClick={() => handleTabChange("reports")}
-            className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm transition-all whitespace-nowrap active:translate-x-0.5 cursor-pointer ${
-              isSidebarCollapsed ? "md:justify-center md:px-0" : ""
-            } ${
-              activeTab === "reports"
-                ? "bg-[#4BE277]/10 text-[#4BE277] border-l-4 border-[#4BE277]"
-                : "text-[#BCCBB9] hover:bg-[#333B33]/20"
-            }`}
-            title={isSidebarCollapsed ? "Reports" : undefined}
-          >
-            <BarChart3 size={18} className="shrink-0" />
-            <span
-              className={`transition-all duration-300 opacity-100 ${isSidebarCollapsed ? "md:hidden" : "block"}`}
-            >
-              Reports
-            </span>
-          </button>
-          <button
             onClick={() => handleTabChange("settings")}
             className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm transition-all whitespace-nowrap active:translate-x-0.5 cursor-pointer ${
               isSidebarCollapsed ? "md:justify-center md:px-0" : ""
@@ -1315,7 +1306,7 @@ export default function AdminDashBoard() {
             </span>
           </a>
           <button
-            onClick={handleSignOut}
+            onClick={handleSignOutTrigger}
             className={`flex items-center gap-3 px-4 py-2 text-xs text-[#BCCBB9] hover:text-[#FFB4AB] transition-all w-full text-left cursor-pointer font-mono ${
               isSidebarCollapsed ? "md:justify-center md:px-0" : ""
             }`}
@@ -1555,9 +1546,6 @@ export default function AdminDashBoard() {
             )}
 
             {activeTab === "ai-logs" && <AiLogsTab aiLogs={aiLogs} />}
-
-            {activeTab === "reports" && <ReportsTab />}
-
             {activeTab === "settings" && <SettingsTab showToast={showToast} />}
           </>
         )}
@@ -1602,45 +1590,16 @@ export default function AdminDashBoard() {
           document.body,
         )}
 
-      {/* Premium Custom Confirm Dialog Modal */}
+      {/* Confirm Dialog Modal */}
       {confirmModal.isOpen &&
         createPortal(
-          <div className="fixed inset-0 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 z-[10000] animate-fade-in">
-            <div className="bg-[#161D16] border border-[#FFB4AB]/30 shadow-[0_0_50px_rgba(255,180,171,0.1)] max-w-sm w-full rounded-2xl p-5 space-y-4 font-mono text-xs">
-              {/* Modal Header */}
-              <div className="flex items-center gap-2 text-[#FFB4AB] border-b border-[#DCE5D9]/10 pb-2">
-                <ShieldAlert size={18} className="shrink-0" />
-                <h3 className="font-bold text-sm text-[#DCE5D9] uppercase tracking-wider">
-                  {confirmModal.title}
-                </h3>
-              </div>
-
-              {/* Modal Body */}
-              <p className="text-[#BCCBB9] leading-relaxed text-left">
-                {confirmModal.message}
-              </p>
-
-              {/* Modal Actions */}
-              <div className="flex justify-end gap-2 pt-2">
-                <button
-                  type="button"
-                  onClick={confirmModal.onConfirm}
-                  className="bg-[#FFB4AB]/15 text-[#FFB4AB] border border-[#FFB4AB]/30 hover:bg-[#FFB4AB]/25 font-bold px-4 py-2 rounded-lg hover:scale-105 active:scale-95 transition-all cursor-pointer font-mono"
-                >
-                  Confirm Action
-                </button>
-                <button
-                  type="button"
-                  onClick={() =>
-                    setConfirmModal((prev) => ({ ...prev, isOpen: false }))
-                  }
-                  className="bg-[#333B33] text-[#DCE5D9] border border-[#3D4A3D] px-4 py-2 rounded-lg hover:bg-[#333B33]/85 transition-colors cursor-pointer font-mono"
-                >
-                  Dismiss
-                </button>
-              </div>
-            </div>
-          </div>,
+          <ConfirmModal
+            isOpen={confirmModal.isOpen}
+            title={confirmModal.title}
+            message={confirmModal.message}
+            onConfirm={confirmModal.onConfirm}
+            onClose={closeModal}
+          />,
           document.body,
         )}
     </div>

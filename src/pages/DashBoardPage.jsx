@@ -23,6 +23,7 @@ import LeaderboardsTab from "../components/UserDashBoard/Leaderboard";
 import QuestsTab from "../components/UserDashBoard/Quests";
 import ProfileTab from "../components/UserDashBoard/SettingsTab";
 import { sanitizeAlphanumeric } from "../lib/validation";
+import ConfirmModal from "../components/ConfirmModal";
 
 /* ---------------------------------------------------------------- */
 /*  Static config                                                     */
@@ -202,12 +203,24 @@ export default function GreenQuestDashboard() {
   const [isTabLoading, setIsTabLoading] = useState(true);
   const tabRequestId = useRef(0);
 
-  const [confirmModal, setConfirmModal] = useState({
+ const [modalConfig, setModalConfig] = useState({
     isOpen: false,
     title: "",
     message: "",
-    onConfirm: null,
+    onConfirm: () => {},
   });
+  const closeModal = () => setModalConfig((prev) => ({ ...prev, isOpen: false }));
+  const handleSignOutTrigger = () => {
+    setModalConfig({
+      isOpen: true,
+      title: "Confirm Log Out",
+      message: "Are you sure you want to sign out of GreenQuest? You'll need to log back in to continue tracking your impact.",
+      onConfirm: async () => {
+        await signOut();
+        navigate("/login");
+      },
+    });
+  };
 
   // Initial shell load: fetch the current user, then reveal the sidebar.
   // A minimum display time is enforced so the skeleton doesn't flash by
@@ -256,40 +269,7 @@ export default function GreenQuestDashboard() {
     return () => clearTimeout(timer);
   }, [activeTab]);
 
-  // Close the confirm modal on Escape.
-  useEffect(() => {
-    if (!confirmModal.isOpen) return;
-    const handleKeyDown = (e) => {
-      if (e.key === "Escape") {
-        setConfirmModal((prev) => ({ ...prev, isOpen: false }));
-      }
-    };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [confirmModal.isOpen]);
-
-  const requestConfirm = (title, message, onConfirm) => {
-    setConfirmModal({
-      isOpen: true,
-      title,
-      message,
-      onConfirm: () => {
-        onConfirm();
-        setConfirmModal((prev) => ({ ...prev, isOpen: false }));
-      },
-    });
-  };
-
-  const handleSignOut = () => {
-    requestConfirm(
-      "Confirm Log Out",
-      "Are you sure you want to sign out of GreenQuest? You'll need to log back in to continue tracking your impact.",
-      async () => {
-        await signOut();
-        navigate("/login");
-      }
-    );
-  };
+  
 
   const handleNav = (value, sidebarOpen) => {
     setActiveTab(value);
@@ -415,7 +395,7 @@ export default function GreenQuestDashboard() {
               </div>
               <button
                 className="text-slate-400 hover:text-red-400 p-1.5 rounded-lg transition-colors"
-                onClick={handleSignOut}
+                onClick={handleSignOutTrigger}
               >
                 <LogOut size={16} />
               </button>
@@ -488,39 +468,15 @@ export default function GreenQuestDashboard() {
         </main>
       </div>
 
-      {confirmModal.isOpen &&
+      {modalConfig.isOpen &&
         createPortal(
-          <div className="fixed inset-0 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 z-[10000] animate-fade-in">
-            <div className="bg-[#161D16] border border-[#FFB4AB]/30 shadow-[0_0_50px_rgba(255,180,171,0.1)] max-w-sm w-full rounded-2xl p-5 space-y-4 font-mono text-xs">
-              <div className="flex items-center gap-2 text-[#FFB4AB] border-b border-[#DCE5D9]/10 pb-2">
-                <ShieldAlert size={18} className="shrink-0" />
-                <h3 className="font-bold text-sm text-[#DCE5D9] uppercase tracking-wider">
-                  {confirmModal.title}
-                </h3>
-              </div>
-
-              <p className="text-[#BCCBB9] leading-relaxed text-left">
-                {confirmModal.message}
-              </p>
-
-              <div className="flex justify-end gap-2 pt-2">
-                <button
-                  type="button"
-                  onClick={confirmModal.onConfirm}
-                  className="bg-[#FFB4AB]/15 text-[#FFB4AB] border border-[#FFB4AB]/30 hover:bg-[#FFB4AB]/25 font-bold px-4 py-2 rounded-lg hover:scale-105 active:scale-95 transition-all cursor-pointer font-mono"
-                >
-                  Confirm Action
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setConfirmModal((prev) => ({ ...prev, isOpen: false }))}
-                  className="bg-[#333B33] text-[#DCE5D9] border border-[#3D4A3D] px-4 py-2 rounded-lg hover:bg-[#333B33]/85 transition-colors cursor-pointer font-mono"
-                >
-                  Dismiss
-                </button>
-              </div>
-            </div>
-          </div>,
+         <ConfirmModal 
+         isOpen={modalConfig.isOpen}
+        title={modalConfig.title}
+        message={modalConfig.message}
+        onConfirm={modalConfig.onConfirm}
+        onClose={closeModal}
+         />,
           document.body
         )}
     </div>

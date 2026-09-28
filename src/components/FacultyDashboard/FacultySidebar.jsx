@@ -1,6 +1,8 @@
 import React from "react";
+import ConfirmModal from "../ConfirmModal";
 import { useState } from "react";
-import { createPortal } from "react-dom";
+import { createPortal  } from "react-dom";
+import { useNavigate } from "react-router-dom";
 import {
   LayoutDashboard,
   Leaf,
@@ -13,14 +15,15 @@ import {
   ShieldAlert,
 } from "lucide-react";
 
+
 export default function FacultySidebar({
   activeTab,
   setActiveTab,
   isSidebarOpen,
   setIsSidebarOpen,
-  onLogout,
   onNewEntryClick,
 }) {
+  const navigate = useNavigate();
   const navItems = [
     { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
     { id: "my-entries", label: "My Entries", icon: Leaf },
@@ -29,6 +32,8 @@ export default function FacultySidebar({
     { id: "support", label: "Support", icon: HelpCircle },
   ];
 
+   
+
   const [confirmModal, setConfirmModal] = useState({
     isOpen: false,
     title: "",
@@ -36,7 +41,8 @@ export default function FacultySidebar({
     onConfirm: null,
   });
 
-  const closeConfirmModal = () =>
+
+  const closeModal = () =>
     setConfirmModal((prev) => ({ ...prev, isOpen: false }));
 
   const handleLogoutClick = () => {
@@ -45,10 +51,15 @@ export default function FacultySidebar({
       title: "Exit Portal",
       message:
         "You're about to log out of the faculty dashboard. Any unsaved changes will be lost. Continue?",
-      onConfirm: () => {
-        closeConfirmModal();
-        if (onLogout) onLogout();
-      },
+      onConfirm: async () => {
+             try{
+               await closeModal();
+              navigate("/login");
+            }
+            catch(err){
+              console.log("Sign Out Failed:" ,err)
+            }
+             }
     });
   };
 
@@ -152,37 +163,13 @@ export default function FacultySidebar({
       {/* Confirm Modal */}
       {confirmModal.isOpen &&
         createPortal(
-          <div className="fixed inset-0 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 z-[10000] animate-fade-in">
-            <div className="bg-[#161D16] border border-[#FFB4AB]/30 shadow-[0_0_50px_rgba(255,180,171,0.1)] max-w-sm w-full rounded-2xl p-5 space-y-4 font-mono text-xs">
-              <div className="flex items-center gap-2 text-[#FFB4AB] border-b border-[#DCE5D9]/10 pb-2">
-                <ShieldAlert size={18} className="shrink-0" />
-                <h3 className="font-bold text-sm text-[#DCE5D9] uppercase tracking-wider">
-                  {confirmModal.title}
-                </h3>
-              </div>
-
-              <p className="text-[#BCCBB9] leading-relaxed text-left">
-                {confirmModal.message}
-              </p>
-
-              <div className="flex justify-end gap-2 pt-2">
-                <button
-                  type="button"
-                  onClick={confirmModal.onConfirm}
-                  className="bg-[#FFB4AB]/15 text-[#FFB4AB] border border-[#FFB4AB]/30 hover:bg-[#FFB4AB]/25 font-bold px-4 py-2 rounded-lg hover:scale-105 active:scale-95 transition-all cursor-pointer font-mono"
-                >
-                  Confirm Action
-                </button>
-                <button
-                  type="button"
-                  onClick={closeConfirmModal}
-                  className="bg-[#333B33] text-[#DCE5D9] border border-[#3D4A3D] px-4 py-2 rounded-lg hover:bg-[#333B33]/85 transition-colors cursor-pointer font-mono"
-                >
-                  Dismiss
-                </button>
-              </div>
-            </div>
-          </div>,
+          <ConfirmModal
+         isOpen={confirmModal.isOpen}
+         title={confirmModal.title}
+         message={confirmModal.message}
+         onConfirm={confirmModal.onConfirm}
+           onClose={confirmModal.closeConfirmModal}/>,
+       
           document.body
         )}
     </>

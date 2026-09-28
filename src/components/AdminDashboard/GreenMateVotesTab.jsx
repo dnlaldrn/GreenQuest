@@ -210,7 +210,7 @@ export default function GreenMateVotesTab({ showToast }) {
               <thead className="bg-[#121912]/80 border-b border-[#3D4A3D]/40 text-[#BCCBB9] font-mono text-[11px] uppercase tracking-wider">
                 <tr>
                   <th className="p-3">Specimen & Title</th>
-                  <th className="p-3">Faculty Contributor</th>
+                  <th className="p-3">Contributor</th>
                   <th className="p-3">Student Votes</th>
                   <th className="p-3">Status</th>
                   <th className="p-3">Submitted</th>
