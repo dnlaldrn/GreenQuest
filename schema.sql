@@ -240,3 +240,37 @@ create policy "Authenticated users can insert admin_notifications"
 on public.admin_notifications
 for insert to authenticated
 with check (true);
+
+
+
+-- duplicate-upload protection
+alter table public.submissions add column if not exists file_hash text;
+create unique index if not exists submissions_user_hash_uniq
+  on public.submissions (user_id, file_hash) where file_hash is not null;
+
+-- AI log for AiLogsTab (skip if you already have one; adjust the FK)
+create table if not exists public.ai_logs (
+  id uuid primary key default gen_random_uuid(),
+  submission_id uuid references public.submissions(id) on delete cascade,
+  verdict jsonb,
+  model text,
+  created_at timestamptz default now()
+);
+
+-- atomic, one-time award
+create or replace function public.award_submission_points(p_submission_id uuid, p_points int)
+returns void language plpgsql security definer set search_path = public as $$
+declare v_user uuid;
+begin
+  update submissions
+     set status = 'approved', points_awarded = p_points
+   where id = p_submission_id and coalesce(points_awarded, 0) = 0
+   returning user_id into v_user;
+
+  if v_user is not null then
+    update profiles set points = coalesce(points, 0) + p_points where id = v_user;
+  end if;
+end $$;
+
+-- users must not be able to call it directly
+revoke execute on function public.award_submission_points(uuid, int) from public, anon, authenticated;
