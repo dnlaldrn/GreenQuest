@@ -169,7 +169,7 @@ on storage.objects for select
 to public
 using (bucket_id = 'plant-vids');
 
---12 . Votes Table 
+--12 . Votes Table
 create table if not exists faculty_entries (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references profiles(id) on delete cascade,
@@ -191,8 +191,18 @@ create table if not exists faculty_votes (
   unique (entry_id, user_id)
 );
 
+-- Submission votes table for employee/general submissions
+create table if not exists submission_votes (
+  id uuid primary key default gen_random_uuid(),
+  submission_id uuid not null references submissions(id) on delete cascade,
+  user_id uuid not null references profiles(id) on delete cascade,
+  created_at timestamptz not null default now(),
+  unique (submission_id, user_id)
+);
+
 alter table faculty_entries enable row level security;
 alter table faculty_votes enable row level security;
+alter table submission_votes enable row level security;
 
 create policy "Public read faculty_entries"
 on faculty_entries for select to public using (true);
@@ -214,6 +224,18 @@ with check (auth.uid() = user_id);
 
 create policy "Faculty delete own vote"
 on faculty_votes for delete to authenticated
+using (auth.uid() = user_id);
+
+-- Submission votes policies
+create policy "Public read submission_votes"
+on submission_votes for select to public using (true);
+
+create policy "Users can insert own submission votes"
+on submission_votes for insert to authenticated
+with check (auth.uid() = user_id);
+
+create policy "Users can delete own submission votes"
+on submission_votes for delete to authenticated
 using (auth.uid() = user_id);
 
 -- 13. Admin Notifications Table

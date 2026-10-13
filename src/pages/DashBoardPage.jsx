@@ -13,6 +13,7 @@ import {
   Menu,
   X,
   ShieldAlert,
+  Leaf
 } from "lucide-react";
 import { signOut, getCurrentUser } from "../services/authService";
 import { useNavigate } from "react-router-dom";
@@ -22,6 +23,7 @@ import ImpactHubTab from "../components/UserDashBoard/Impacthub";
 import LeaderboardsTab from "../components/UserDashBoard/Leaderboard";
 import QuestsTab from "../components/UserDashBoard/Quests";
 import ProfileTab from "../components/UserDashBoard/SettingsTab";
+import SubmissionsGalleryTab from "../components/UserDashBoard/SubmissionsGallery";
 import { sanitizeAlphanumeric } from "../lib/validation";
 import ConfirmModal from "../components/ConfirmModal";
 
@@ -37,6 +39,7 @@ const NAV_ITEMS = [
   { value: "impact-hub", label: "Impact Hub", icon: Globe },
   { value: "quests", label: "GreenMate Challenge", icon: Award },
   { value: "leaderboard", label: "Leaderboard", icon: Trophy },
+  { value: "submissions", label: "Community Submissions", icon: Leaf },
 ];
 
 const TAB_COMPONENTS = {
@@ -46,6 +49,7 @@ const TAB_COMPONENTS = {
   quests: QuestsTab,
   leaderboard: LeaderboardsTab,
   settings: ProfileTab,
+  submissions: SubmissionsGalleryTab,
 };
 
 const MIN_SKELETON_MS = 500; // avoids flash-of-skeleton on instant loads

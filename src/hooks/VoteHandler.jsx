@@ -5,6 +5,7 @@ import { supabase } from "../lib/supabase";
 /**
  * Handles voting/un-voting on faculty_entries via the faculty_votes table.
  * Optimistically updates local state, rolls back on failure.
+ * Enforces single active vote across all voting systems.
  *
  * @param {Array} entries - current entries array (must have id, votes, hasVoted)
  * @param {Function} setEntries - state setter for entries
@@ -44,6 +45,35 @@ export function useFacultyVotes(entries, setEntries, showToast) {
 
       const entry = (entries ?? []).find((e) => e.id === entryId);
       if (!entry) return;
+
+      // Check if user has any existing vote (faculty or submission) - except possibly on this entry
+      const { data: existingFacultyVote, error: facultyVoteError } = await supabase
+        .from("faculty_votes")
+        .select("entry_id")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      const { data: existingSubmissionVote, error: submissionVoteError } = await supabase
+        .from("submission_votes")
+        .select("submission_id")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      const hasExistingVote =
+        (existingFacultyVote && !facultyVoteError) ||
+        (existingSubmissionVote && !submissionVoteError);
+
+      // If user has existing vote elsewhere and is not removing it from this entry, prevent voting
+      if (hasExistingVote) {
+        const isVotingOnOwnEntry =
+          (existingFacultyVote && existingFacultyVote.entry_id === entryId) ||
+          (existingSubmissionVote && existingSubmissionVote.submission_id === entryId);
+
+        if (!isVotingOnOwnEntry) {
+          showToast?.("Please remove your existing vote before voting on another entry.", "warning");
+          return;
+        }
+      }
 
       const wasVoted = entry.hasVoted;
       setVotingId(entryId);
