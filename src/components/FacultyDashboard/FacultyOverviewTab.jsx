@@ -18,8 +18,56 @@ import {
   Play,
   RefreshCw,
   Award,
+  ChevronDown,
 } from "lucide-react";
 import { sanitizeAlphanumeric } from "../../lib/validation";
+
+const COMMON_PLANT_SPECIES = [
+  // Herbs & Kitchen Garden
+  "Oregano",
+  "Basil (Sweet / Holy Basil)",
+  "Rosemary",
+  "Mint (Peppermint / Spearmint)",
+  "Lemongrass (Tanglad)",
+  "Pandan",
+  "Thyme",
+  "Coriander / Cilantro",
+  // Vegetables & Fruit Bearing
+  "Calamansi (Philippine Lime)",
+  "Chili / Siling Labuyo",
+  "Tomato (Kamatis)",
+  "Eggplant (Talong)",
+  "Bitter Gourd (Ampalaya)",
+  "Okra",
+  "Malunggay (Moringa)",
+  "Kangkong (Water Spinach)",
+  "Bell Pepper",
+  // Medicinal & Succulents
+  "Aloe Vera",
+  "Katakataka (Miracle Leaf)",
+  "Snake Plant (Sansevieria)",
+  "Lagundi",
+  "Sambong",
+  "Jade Plant (Crassula Ovata)",
+  // Tropical & Ornamental
+  "Monstera Deliciosa",
+  "Monstera Adansonii (Swiss Cheese)",
+  "Golden Pothos (Devil's Ivy)",
+  "Philodendron Pink Princess",
+  "Philodendron Birkin",
+  "Ficus Elastica (Rubber Tree)",
+  "Ficus Lyrata (Fiddle Leaf Fig)",
+  "ZZ Plant (Zamioculcas)",
+  "Peace Lily (Spathiphyllum)",
+  "Calathea (Prayer Plant)",
+  "Aglaonema (Chinese Evergreen)",
+  "Spider Plant (Chlorophytum)",
+  "Bougainvillea",
+  "Gumamela (Hibiscus)",
+  "Sampaguita (Philippine Jasmine)",
+  "Bonsai Ficus Retusa",
+  "Other / Custom Specimen",
+];
 
 export default function FacultyOverviewTab({
   facultyDisplayName,
@@ -30,13 +78,26 @@ export default function FacultyOverviewTab({
   showToast,
 }) {
   const [viewMode, setViewMode] = useState("grid"); // "grid" | "list"
-  const [specimen, setSpecimen] = useState("Monstera Deliciosa (Variegated)");
+  const [specimen, setSpecimen] = useState("");
+  const [isSpecimenOpen, setIsSpecimenOpen] = useState(false);
+  const specimenRef = useRef(null);
   const [entryTitle, setEntryTitle] = useState("");
   const [selectedFile, setSelectedFile] = useState(null);
   const [isDragging, setIsDragging] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef(null);
   const [daysLeft, setDaysLeft] = useState(0);
+
+  // Close specimen dropdown when clicking outside
+  useEffect(() => {
+    const handleOutsideClick = (e) => {
+      if (specimenRef.current && !specimenRef.current.contains(e.target)) {
+        setIsSpecimenOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleOutsideClick);
+    return () => document.removeEventListener("mousedown", handleOutsideClick);
+  }, []);
 
   // Drag & Drop handlers
   const handleDragOver = (e) => {
@@ -84,6 +145,13 @@ export default function FacultyOverviewTab({
 
   const handleSubmitEntry = async (e) => {
     if (e) e.preventDefault();
+    if (!specimen.trim()) {
+      showToast(
+        "Please enter or select a plant variety/specimen (e.g., Oregano).",
+        "error",
+      );
+      return;
+    }
     if (!entryTitle.trim() || entryTitle.trim().length < 3) {
       showToast(
         "Please enter an entry title (at least 3 characters).",
@@ -130,12 +198,16 @@ export default function FacultyOverviewTab({
         .getPublicUrl(filePath);
 
       // 3. Persist the entry so it survives a refresh / shows up for other faculty
+      const finalSpecimen = (specimen.trim() || "General Flora")
+        .split("(")[0]
+        .trim();
+
       const { data: inserted, error: insertError } = await supabase
         .from("faculty_entries")
         .insert({
           user_id: user.id,
           title: entryTitle.trim(),
-          specimen: specimen.split("(")[0].trim(),
+          specimen: finalSpecimen,
           video_path: filePath,
           video_url: publicUrlData?.publicUrl,
           is_verified: false,
@@ -160,6 +232,8 @@ export default function FacultyOverviewTab({
 
       setEntries((prev) => [newEntry, ...prev]);
       setEntryTitle("");
+      setSpecimen("");
+      setIsSpecimenOpen(false);
       setSelectedFile(null);
       if (fileInputRef.current) fileInputRef.current.value = "";
       showToast("Video uploaded — processing your entry now.", "success");
@@ -169,7 +243,7 @@ export default function FacultyOverviewTab({
         await supabase.from("admin_notifications").insert({
           user_id: user.id,
           title: "New Faculty Challenge Entry",
-          message: `${facultyDisplayName || "A faculty member"} submitted specimen '${specimen.split("(")[0].trim()}' (${entryTitle.trim()}).`,
+          message: `${facultyDisplayName || "A faculty member"} submitted specimen '${finalSpecimen}' (${entryTitle.trim()}).`,
           type: "faculty",
           reference_id: inserted.id,
         });
@@ -193,6 +267,10 @@ export default function FacultyOverviewTab({
     ).getDate();
     setDaysLeft(lastDay - now.getDate());
   }, []);
+
+  const filteredPlants = COMMON_PLANT_SPECIES.filter((p) =>
+    p.toLowerCase().includes(specimen.toLowerCase()),
+  );
 
   return (
     <div className="space-y-6 sm:space-y-8">
@@ -293,31 +371,94 @@ export default function FacultyOverviewTab({
 
               <form onSubmit={handleSubmitEntry} className="space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block font-mono text-xs text-[#bccbb9] mb-1.5 uppercase tracking-wider">
-                      Plant Specimen
-                    </label>
-                    <select
-                      value={specimen}
-                      onChange={(e) => setSpecimen(e.target.value)}
-                      className="w-full bg-[#242c24] border border-white/10 rounded-lg p-2.5 text-xs text-[#dce5d9] focus:border-[#4be277] focus:ring-1 focus:ring-[#4be277] transition-all outline-none"
-                    >
-                      <option value="Monstera Deliciosa (Variegated)">
-                        Monstera Deliciosa (Variegated)
-                      </option>
-                      <option value="Philodendron Pink Princess">
-                        Philodendron Pink Princess
-                      </option>
-                      <option value="Ficus Elastica Tineke">
-                        Ficus Elastica Tineke
-                      </option>
-                      <option value="Bonsai Ficus Retusa">
-                        Bonsai Ficus Retusa
-                      </option>
-                      <option value="Other / Unclassified">
-                        Other / Unclassified
-                      </option>
-                    </select>
+                  <div className="relative" ref={specimenRef}>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <label className="block font-mono text-xs text-[#bccbb9] uppercase tracking-wider">
+                        Plant Specimen / Variety
+                      </label>
+                      <span className="text-[10px] text-[#4be277]/80 font-mono">
+                        Type or Select
+                      </span>
+                    </div>
+
+                    <div className="relative">
+                      <input
+                        type="text"
+                        maxLength={60}
+                        value={specimen}
+                        onChange={(e) => {
+                          setSpecimen(
+                            sanitizeAlphanumeric(e.target.value, 60, 3),
+                          );
+                          setIsSpecimenOpen(true);
+                        }}
+                        onFocus={() => setIsSpecimenOpen(true)}
+                        placeholder="e.g., Oregano, Aloe Vera, Calamansi"
+                        className="w-full bg-[#242c24] border border-white/10 rounded-lg p-2.5 pr-8 text-xs text-[#dce5d9] placeholder-[#bccbb9]/40 focus:border-[#4be277] focus:ring-1 focus:ring-[#4be277] transition-all outline-none"
+                        required
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setIsSpecimenOpen((prev) => !prev)}
+                        className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#bccbb9] hover:text-[#4be277] transition-colors p-1 cursor-pointer"
+                        title="Toggle plant suggestions"
+                      >
+                        <ChevronDown
+                          size={15}
+                          className={`transition-transform duration-200 ${
+                            isSpecimenOpen ? "rotate-180 text-[#4be277]" : ""
+                          }`}
+                        />
+                      </button>
+                    </div>
+
+                    {/* Suggestions Dropdown */}
+                    {isSpecimenOpen && (
+                      <div className="absolute left-0 right-0 top-full mt-1.5 max-h-56 overflow-y-auto bg-[#1a231b] border border-white/15 rounded-xl shadow-[0_10px_35px_rgba(0,0,0,0.6)] z-50 divide-y divide-white/5 scroll-hide backdrop-blur-xl">
+                        <div className="px-3 py-1.5 text-[10px] font-mono text-[#bccbb9]/60 uppercase bg-black/20 sticky top-0 flex justify-between items-center">
+                          <span>Suggestions ({filteredPlants.length})</span>
+                          <span>Click to pick</span>
+                        </div>
+
+                        {filteredPlants.length > 0 ? (
+                          filteredPlants.map((plant) => (
+                            <button
+                              key={plant}
+                              type="button"
+                              onClick={() => {
+                                setSpecimen(plant);
+                                setIsSpecimenOpen(false);
+                              }}
+                              className={`w-full text-left px-3.5 py-2 text-xs flex items-center justify-between transition-colors cursor-pointer ${
+                                specimen.toLowerCase() === plant.toLowerCase()
+                                  ? "bg-[#4be277]/20 text-[#4be277] font-semibold"
+                                  : "text-[#dce5d9] hover:bg-[#4be277]/10 hover:text-[#4be277]"
+                              }`}
+                            >
+                              <span className="truncate">{plant}</span>
+                              {specimen.toLowerCase() === plant.toLowerCase() && (
+                                <CheckCircle2
+                                  size={13}
+                                  className="text-[#4be277] shrink-0"
+                                />
+                              )}
+                            </button>
+                          ))
+                        ) : (
+                          <div
+                            onClick={() => setIsSpecimenOpen(false)}
+                            className="p-3 text-xs text-[#bccbb9] hover:bg-white/5 cursor-pointer"
+                          >
+                            <span className="text-[#dce5d9] font-semibold">
+                              "{specimen}"
+                            </span>
+                            <span className="text-[#4be277] block text-[10px] mt-0.5 font-mono">
+                              Custom variety (click to use this plant name)
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
 
                   <div>
