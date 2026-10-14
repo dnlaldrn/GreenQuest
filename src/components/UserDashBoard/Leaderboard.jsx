@@ -9,6 +9,8 @@ import {
   Map,
   ShieldAlert,
   Sparkles,
+  GraduationCap,
+  Briefcase,
 } from "lucide-react";
 import { sanitizeAlphanumeric } from "../../lib/validation";
 
@@ -17,7 +19,7 @@ export default function LeaderboardsTab() {
   const [scope, setScope] = useState("global");
   const [searchQuery, setSearchQuery] = useState("");
 
-  // Mock Global Rankings Array
+  // Mock Global Rankings Array with user types
   const leaders = [
     {
       rank: 1,
@@ -25,6 +27,7 @@ export default function LeaderboardsTab() {
       points: 14820,
       actions: 124,
       region: "EU",
+      userType: "student",
       avatar:
         "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&auto=format&fit=crop&q=80",
     },
@@ -34,6 +37,7 @@ export default function LeaderboardsTab() {
       points: 13950,
       actions: 98,
       region: "APAC",
+      userType: "faculty",
       avatar:
         "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80",
     },
@@ -43,6 +47,7 @@ export default function LeaderboardsTab() {
       points: 12110,
       actions: 112,
       region: "AF",
+      userType: "student",
       avatar:
         "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80",
     },
@@ -52,6 +57,7 @@ export default function LeaderboardsTab() {
       points: 9840,
       actions: 76,
       region: "NA",
+      userType: "employee",
       avatar:
         "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&auto=format&fit=crop&q=80",
     },
@@ -61,27 +67,119 @@ export default function LeaderboardsTab() {
       points: 9410,
       actions: 84,
       region: "APAC",
+      userType: "student",
       avatar:
         "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&auto=format&fit=crop&q=80",
     },
     {
-      rank: 14,
+      rank: 6,
+      name: "Leo Martinez",
+      points: 8920,
+      actions: 67,
+      region: "SA",
+      userType: "student",
+      avatar:
+        "https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?w=100&auto=format&fit=crop&q=80",
+    },
+    {
+      rank: 7,
       name: "You (EcoGuard_71)",
       points: 4120,
       actions: 34,
       region: "NA",
+      userType: "student", // Assuming current user is a student
       avatar:
         "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80",
       isUser: true,
     },
   ];
 
-  const podium = leaders.slice(0, 3);
-  const rows = leaders
+  // Function to generate mock data if less than 3 users exist
+  const generateMockDataIfNeeded = (userData) => {
+    if (userData.length < 3) {
+      // Generate additional mock data to ensure we have at least 3 users
+      const additionalMockData = [
+        {
+          rank: userData.length + 1,
+          name: "Alex Johnson",
+          points: 7500 + Math.floor(Math.random() * 2000),
+          actions: 45 + Math.floor(Math.random() * 30),
+          region: "NA",
+          userType: "student",
+          avatar:
+            "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&auto=format&fit=crop&q=80",
+        },
+        {
+          rank: userData.length + 2,
+          name: "Sam Wilson",
+          points: 6800 + Math.floor(Math.random() * 2000),
+          actions: 40 + Math.floor(Math.random() * 25),
+          region: "EU",
+          userType: "faculty",
+          avatar:
+            "https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?w=100&auto=format&fit=crop&q=80",
+        },
+        {
+          rank: userData.length + 3,
+          name: "Taylor Chen",
+          points: 6200 + Math.floor(Math.random() * 2000),
+          actions: 35 + Math.floor(Math.random() * 20),
+          region: "APAC",
+          userType: "employee",
+          avatar:
+            "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80",
+        },
+      ];
+
+      // Combine original data with mock data, ensuring we don't exceed what we need
+      const combinedData = [...userData];
+      let neededCount = 3 - userData.length;
+      for (let i = 0; i < neededCount && i < additionalMockData.length; i++) {
+        combinedData.push(additionalMockData[i]);
+      }
+      return combinedData;
+    }
+    return userData;
+  };
+
+  // Apply mock data generation if needed
+  const processedLeaders = generateMockDataIfNeeded(leaders);
+  const podium = processedLeaders.slice(0, 3);
+  const rows = processedLeaders
     .slice(3)
     .filter((player) =>
       player.name.toLowerCase().includes(searchQuery.toLowerCase()),
     );
+
+  // Helper function to get user type icon and label
+  const getUserTypeInfo = (userType) => {
+    switch (userType) {
+      case "student":
+        return {
+          icon: <GraduationCap className="w-4 h-4" />,
+          label: "Student",
+          colorClass: "text-[#4be277]",
+        };
+      case "faculty":
+        return {
+          icon: <Briefcase className="w-4 h-4" />,
+          label: "Faculty",
+          colorClass: "text-[#22c55e]",
+        };
+      case "employee":
+        return {
+          icon: <Zap className="w-4 h-4" />,
+          label: "Employee",
+          colorClass: "text-[#fbbf24]",
+        };
+      default:
+        return {
+          icon: <GraduationCap className="w-4 h-4" />,
+          label: "Student",
+          colorClass: "text-[#4be277]",
+        };
+    }
+  };
 
   return (
     <div className="space-y-6 max-w-5xl mx-auto p-4 md:p-6 bg-[#0B120F] text-slate-200">
@@ -175,6 +273,13 @@ export default function LeaderboardsTab() {
                 pts
               </span>
             </div>
+            {/* User Type Badge */}
+            <div className="flex items-center justify-center mt-2">
+              {getUserTypeInfo(podium[1].userType).icon}
+              <span className="ml-1 text-xs font-mono ${getUserTypeInfo(podium[1].userType).colorClass}">
+                {getUserTypeInfo(podium[1].userType).label}
+              </span>
+            </div>
           </div>
         )}
 
@@ -209,6 +314,13 @@ export default function LeaderboardsTab() {
                 </span>
               </span>
             </div>
+            {/* User Type Badge */}
+            <div className="flex items-center justify-center mt-2">
+              {getUserTypeInfo(podium[0].userType).icon}
+              <span className="ml-1 text-xs font-mono ${getUserTypeInfo(podium[0].userType).colorClass}">
+                {getUserTypeInfo(podium[0].userType).label}
+              </span>
+            </div>
           </div>
         )}
 
@@ -237,6 +349,13 @@ export default function LeaderboardsTab() {
                 pts
               </span>
             </div>
+            {/* User Type Badge */}
+            <div className="flex items-center justify-center mt-2">
+              {getUserTypeInfo(podium[2].userType).icon}
+              <span className="ml-1 text-xs font-mono ${getUserTypeInfo(podium[2].userType).colorClass}">
+                {getUserTypeInfo(podium[2].userType).label}
+              </span>
+            </div>
           </div>
         )}
       </div>
@@ -246,7 +365,8 @@ export default function LeaderboardsTab() {
         <div className="grid grid-cols-12 gap-2 px-4 py-2.5 bg-[#0B120F]/60 border-b border-[#14231C] text-[10px] font-mono text-slate-500 uppercase tracking-wider">
           <div className="col-span-2">Rank</div>
           <div className="col-span-6">Citizen Profile</div>
-          <div className="col-span-2 text-right">Actions</div>
+          <div className="col-span-1">Type</div>
+          <div className="col-span-1 text-right">Actions</div>
           <div className="col-span-2 text-right">Total Yield</div>
         </div>
 
@@ -284,8 +404,14 @@ export default function LeaderboardsTab() {
                 </div>
               </div>
 
+              {/* User Type column */}
+              <div className="col-span-1 flex items-center justify-center text-xs font-mono">
+                {getUserTypeInfo(player.userType).icon}
+                <span className="ml-1">{getUserTypeInfo(player.userType).label}</span>
+              </div>
+
               {/* Verified actions column */}
-              <div className="col-span-2 text-right font-mono text-slate-400">
+              <div className="col-span-1 text-right font-mono text-slate-400">
                 {player.actions}
               </div>
 

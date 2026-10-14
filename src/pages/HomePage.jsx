@@ -1,4 +1,4 @@
-import LivingHero from "../components/PlantScene/LivingHero";
+import  LivingHero  from "../components/SylvaLivingWorld/Livinghero";
 
 export default function HeroSection() {
   // Features and Leaderboard content now live inside LivingHero as
